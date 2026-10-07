@@ -1,3 +1,5 @@
+<img src="assets/icon.png" alt="Stemquill icon" width="96" align="right">
+
 # 🪶 Stemquill
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
@@ -40,6 +42,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 - 🎛️ **Sensitivity control**: slider or typed value to catch quiet notes or cut junk notes
 - 📐 **Snap to grid**: keep the original feel or lock notes to 1/8, 1/16 or triplets
 - 📦 **Batch convert**: drop in a whole set of stems and convert them in one go
+- 🧭 **Clean navigation**: sidebar pages, a full menu bar and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
 
 ---
@@ -59,6 +62,18 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 | `vocal` | The lead vocal melody as single notes |
 | `melodic` | Guitar, keys, fiddle and chords (several notes at once) |
 | `synth` | Synths and pads (several notes at once) |
+
+### ⌨️ Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| `Ctrl+O` | Add stems |
+| `Ctrl+T` | Detect tempo |
+| `Ctrl+P` | Preview |
+| `Esc` | Stop preview |
+| `Ctrl+Enter` | Convert to MIDI |
+| `Ctrl+1` to `Ctrl+4` | Convert, Drum Kit, Output, Help pages |
+| `F1` | Help |
 
 ---
 
@@ -143,6 +158,17 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 - Crash and Ride start unticked because cymbals can bring back metallic sounds. Turn them on if your stem has clear cymbals.
 - Side-stick, bell, china and left/right crash aren't detected, so add them by hand where you want them.
 - The preview uses simple placeholder sounds. Your real drum kit or synth will sound much better.
+
+---
+
+## 📂 Project Structure
+
+| Path | Role |
+|---|---|
+| `stemquill.py` | The whole app: audio analysis, MIDI writing, GUI and command line |
+| `assets/` | App icon (`icon.svg` source, PNG sizes and the Windows `stemquill.ico`) |
+| `Install.bat` / `Start Stemquill.bat` | One-click install and launch on Windows |
+| `docs/` | README screenshot |
 
 ---
 

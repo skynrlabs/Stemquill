@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2c333b"/>
+      <stop offset="1" stop-color="#16191d"/>
+    </linearGradient>
+    <linearGradient id="vane" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#c9d3db"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <!-- audio in -->
+  <path d="M30 124 H50 L60 96 L72 160 L84 72 L96 176 L108 104 L118 138 L124 124"
+        stroke="#18c6cc" stroke-width="11" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- quill -->
+  <path d="M222 30 C178 44 146 86 134 146 L152 156 C170 108 196 74 222 30 Z" fill="url(#vane)"/>
+  <path d="M222 30 C196 62 168 102 143 151" stroke="#8a97a3" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M168 80 L184 84 M156 102 L171 106 M147 124 L160 127" stroke="#2c333b" stroke-width="4" stroke-linecap="round"/>
+  <path d="M134 146 L124 184 L152 156 Z" fill="#18c6cc"/>
+  <!-- MIDI out -->
+  <rect x="140" y="182" width="34" height="14" rx="5" fill="#18c6cc"/>
+  <rect x="182" y="166" width="44" height="14" rx="5" fill="#e8eef2"/>
+  <rect x="160" y="206" width="66" height="14" rx="5" fill="#18c6cc"/>
+</svg>

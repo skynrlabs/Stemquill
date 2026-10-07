@@ -637,10 +637,15 @@ class Player:
 
 # --------------------------------------------------------------------------- window
 
+APP_VERSION = "1.0.0"
+REPO_URL = "https://github.com/skynrlabs/Stemquill"
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+
 THEME = {
     "bg": "#1b1e22", "card": "#252a30", "field": "#14171a", "line": "#353b43",
     "text": "#e8eaed", "muted": "#9aa3ad", "accent": "#18c6cc", "accent_hover": "#3fd8dd",
     "accent_text": "#0d1013", "ok": "#4cd08a", "warn": "#f0b84a",
+    "side": "#14171a", "side_hover": "#1f2328", "side_active": "#252a30",
 }
 GRID_CHOICES = {"Off (keep original timing)": 0, "1/8 note": 2, "1/8 triplet": 3,
                 "1/16 note": 4, "1/32 note": 8}
@@ -649,6 +654,52 @@ KIT_BOXES = [  # (label shown, part name, default on) - named like MT Power Drum
     ("Hi-Hat op.", "openhat", True), ("Toms", "toms", True), ("Crash", "crash", False),
     ("Ride", "ride", False),
 ]
+PAGES = [  # (key, sidebar label, page title, page subtitle)
+    ("convert", "Convert", "Convert", "Add stems, check the settings, preview, then convert"),
+    ("drums", "Drum Kit", "Drum Kit", "Which drums to write, and which note each one goes on"),
+    ("output", "Output", "Output", "Where your MIDI files are saved"),
+    ("help", "Help", "Help", "How to get the best results from Stemquill"),
+]
+
+HELP_TEXT = [
+    ("h", "Quick start"),
+    ("p", "1.  Click Add stems... and pick your audio files. The stem type is read from the file name "
+          "(Drums, Bass, Vocals, Other), or set it yourself under Stem type."),
+    ("p", "2.  Click Detect to measure the tempo, or type the BPM if you know it. Set your DAW project "
+          "to the same tempo."),
+    ("p", "3.  Click Play to hear the result before saving. Tick Mix in the original stem to check "
+          "the timing against the real audio."),
+    ("p", "4.  Adjust Sensitivity, Humanize or the Drum Kit page, and play again until it sounds right."),
+    ("p", "5.  Click Convert to MIDI. Each stem becomes <name> - <type>.mid. Drag it onto your "
+          "instrument track at bar 1."),
+    ("h", "Settings"),
+    ("p", "Sensitivity: slide right to catch quieter notes, left to cut junk notes. 0.80 is a good start."),
+    ("p", "Snap to grid: Off keeps the original timing and is safest for AI-generated stems. "
+          "1/16 note locks everything to the grid."),
+    ("p", "Humanize: adds small timing and velocity changes so parts feel played. 20-40% is natural, "
+          "and it works best with Snap to grid turned on."),
+    ("h", "Drum maps"),
+    ("p", "General MIDI: MT Power Drumkit 2, EZdrummer, Addictive Drums, Superior Drummer, "
+          "Steven Slate Drums and most drum plugins."),
+    ("p", "Pads in order: for pad samplers like FL Studio FPC, Ableton Drum Rack or MPC kits. Load "
+          "your sounds from note 36 up: kick, snare, closed hat, open hat, low tom, mid tom, "
+          "high tom, crash, ride."),
+    ("p", "Custom: type any note into a drum's box. Your custom map is remembered for next time."),
+    ("h", "Tips"),
+    ("p", "Transcription is a starting point, not a finished part. Expect to fix some notes, "
+          "especially toms, ghost notes and busy strumming."),
+    ("p", "Cleaner stems give better results. Bleed from other instruments means extra notes."),
+    ("p", "Crash and Ride start off because cymbals can bring back metallic sounds."),
+    ("p", "The preview uses simple placeholder sounds. Your real instruments will sound much better."),
+    ("h", "Keyboard shortcuts"),
+    ("k", "Ctrl+O\tAdd stems"),
+    ("k", "Ctrl+T\tDetect tempo"),
+    ("k", "Ctrl+P\tPreview"),
+    ("k", "Esc\tStop preview"),
+    ("k", "Ctrl+Enter\tConvert to MIDI"),
+    ("k", "Ctrl+1 to 4\tSwitch pages"),
+    ("k", "F1\tHelp"),
+]
 
 
 def run_gui():
@@ -656,22 +707,47 @@ def run_gui():
     import subprocess
     import tkinter as tk
     import tkinter.font as tkfont
+    import webbrowser
     from tkinter import filedialog, ttk
+
+    is_win = sys.platform.startswith("win")
+    if is_win:
+        try:  # show Stemquill's own icon on the taskbar instead of Python's
+            import ctypes
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("SkynrLabs.Stemquill")
+        except Exception:
+            pass
 
     T = THEME
     root = tk.Tk()
     root.title("Stemquill")
     root.configure(bg=T["bg"])
-    root.minsize(820, 560)
-    root.geometry("860x900")
+    root.minsize(900, 660)
+    root.geometry("1000x740")
+
+    images = {}
+    try:
+        images["app"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon.png"))
+        images["small"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-32.png"))
+        images["about"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-64.png"))
+        root.iconphoto(True, images["app"])
+    except tk.TclError:
+        pass
+    ico = os.path.join(ASSETS_DIR, "stemquill.ico")
+    if is_win and os.path.exists(ico):
+        try:
+            root.iconbitmap(default=ico)
+        except tk.TclError:
+            pass
 
     families = set(tkfont.families())
     family = next((f for f in ("Segoe UI", "Inter", "Helvetica Neue", "DejaVu Sans") if f in families),
                   tkfont.nametofont("TkDefaultFont").actual("family"))
     F = {
-        "title": (family, 20, "bold"), "sub": (family, 10), "h": (family, 11, "bold"),
-        "body": (family, 10), "small": (family, 9), "btn": (family, 10, "bold"),
-        "big": (family, 12, "bold"), "mono": ("Consolas" if "Consolas" in families else "DejaVu Sans Mono", 9),
+        "title": (family, 18, "bold"), "brand": (family, 14, "bold"), "sub": (family, 10),
+        "h": (family, 11, "bold"), "body": (family, 10), "small": (family, 9), "btn": (family, 10, "bold"),
+        "big": (family, 12, "bold"), "nav": (family, 11),
+        "mono": ("Consolas" if "Consolas" in families else "DejaVu Sans Mono", 9),
     }
 
     # ---- styles
@@ -708,8 +784,8 @@ def run_gui():
                      arrowcolor=T["text"], padding=5)
         st.map(w, fieldbackground=[("readonly", T["field"])], foreground=[("readonly", T["text"])],
                selectbackground=[("readonly", T["field"])], selectforeground=[("readonly", T["text"])])
-    st.configure("Horizontal.TScale", background=T["accent"], troughcolor=T["field"], sliderthickness=16)
     st.configure("Horizontal.TProgressbar", background=T["accent"], troughcolor=T["field"], thickness=6)
+    st.configure("Vertical.TScrollbar", background=T["line"], troughcolor=T["field"], arrowcolor=T["muted"])
     root.option_add("*TCombobox*Listbox.background", T["field"])
     root.option_add("*TCombobox*Listbox.foreground", T["text"])
     root.option_add("*TCombobox*Listbox.selectBackground", T["accent"])
@@ -724,52 +800,114 @@ def run_gui():
     SENS_MIN, SENS_MAX = 0.1, 1.5
     sens_var = tk.DoubleVar(value=0.8)
     sens_text = tk.StringVar(value="0.80")
+    human_var = tk.IntVar(value=0)
     out_dir = {"path": None}
     out_text = tk.StringVar(value="Same folder as each stem")
+    open_when_done = tk.BooleanVar(value=False)
     kit_vars = {part: tk.BooleanVar(value=on) for _, part, on in KIT_BOXES}
+    with_orig = tk.BooleanVar(value=True)
     last_out = {"dir": None}
 
-    # Everything sits in a scrollable area so the window also fits smaller laptop screens.
-    canvas = tk.Canvas(root, bg=T["bg"], highlightthickness=0)
-    vbar = ttk.Scrollbar(root, orient="vertical", command=canvas.yview)
-    canvas.configure(yscrollcommand=vbar.set)
-    vbar.pack(side="right", fill="y")
-    canvas.pack(side="left", fill="both", expand=True)
-    outer = ttk.Frame(canvas, padding=(20, 14))
-    outer_id = canvas.create_window((0, 0), window=outer, anchor="nw")
-    outer.columnconfigure(0, weight=1)
-    outer.bind("<Configure>", lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
-    canvas.bind("<Configure>", lambda e: canvas.itemconfigure(outer_id, width=e.width))
+    # ---- window layout: sidebar | (page header / pages / action bar)
+    root.columnconfigure(1, weight=1)
+    root.rowconfigure(0, weight=1)
+    side = tk.Frame(root, bg=T["side"], width=196)
+    side.grid(row=0, column=0, sticky="ns")
+    side.grid_propagate(False)
+    side.pack_propagate(False)
+    main = ttk.Frame(root, padding=(22, 16, 22, 12))
+    main.grid(row=0, column=1, sticky="nsew")
+    main.columnconfigure(0, weight=1)
+    main.rowconfigure(1, weight=1)
 
-    def on_wheel(event):
-        if outer.winfo_height() > canvas.winfo_height():
-            step = -1 if (event.num == 4 or event.delta > 0) else 1
-            canvas.yview_scroll(step * 2, "units")
-    root.bind_all("<MouseWheel>", on_wheel)
-    root.bind_all("<Button-4>", on_wheel)
-    root.bind_all("<Button-5>", on_wheel)
+    # sidebar: brand, navigation, footer
+    brand = tk.Frame(side, bg=T["side"])
+    brand.pack(fill="x", padx=18, pady=(18, 22))
+    if "small" in images:
+        tk.Label(brand, image=images["small"], bg=T["side"]).pack(side="left", padx=(0, 10))
+    tk.Label(brand, text="Stemquill", bg=T["side"], fg=T["text"], font=F["brand"]).pack(side="left")
 
-    # ---- header
-    head = ttk.Frame(outer)
-    head.grid(row=0, column=0, sticky="ew", pady=(0, 10))
-    ttk.Label(head, text="Stemquill", style="Title.TLabel").pack(anchor="w")
-    ttk.Label(head, text="Turn audio stems into MIDI you can play through your own instruments in any DAW",
-              style="Sub.TLabel").pack(anchor="w")
+    nav = {}
+    current = {"page": None}
 
-    def card(row, title, hint=None):
-        c = ttk.Frame(outer, style="Card.TFrame", padding=(16, 10))
-        c.grid(row=row, column=0, sticky="ew", pady=(0, 10))
+    def paint_nav(key, hover=False):
+        bar, label, frame = nav[key]
+        active = current["page"] == key
+        bg = T["side_active"] if active else T["side_hover"] if hover else T["side"]
+        frame.configure(bg=bg)
+        label.configure(bg=bg, fg=T["text"] if active or hover else T["muted"])
+        bar.configure(bg=T["accent"] if active else bg)
+
+    for key, text, _, _ in PAGES:
+        frame = tk.Frame(side, bg=T["side"], cursor="hand2")
+        frame.pack(fill="x")
+        bar = tk.Frame(frame, bg=T["side"], width=4)
+        bar.pack(side="left", fill="y")
+        label = tk.Label(frame, text=text, bg=T["side"], fg=T["muted"], font=F["nav"], anchor="w",
+                         padx=18, pady=10, cursor="hand2")
+        label.pack(side="left", fill="x", expand=True)
+        nav[key] = (bar, label, frame)
+        for w in (frame, label):
+            w.bind("<Button-1>", lambda e, k=key: show_page(k))
+            w.bind("<Enter>", lambda e, k=key: paint_nav(k, True))
+            w.bind("<Leave>", lambda e, k=key: paint_nav(k))
+
+    foot = tk.Frame(side, bg=T["side"])
+    foot.pack(side="bottom", fill="x", padx=18, pady=14)
+    tk.Label(foot, text=f"v{APP_VERSION}  ·  Skynr Labs", bg=T["side"], fg=T["muted"],
+             font=F["small"]).pack(anchor="w")
+
+    # page header
+    header = ttk.Frame(main)
+    header.grid(row=0, column=0, sticky="ew", pady=(0, 12))
+    page_title = tk.StringVar()
+    page_sub = tk.StringVar()
+    ttk.Label(header, textvariable=page_title, style="Title.TLabel").pack(anchor="w")
+    ttk.Label(header, textvariable=page_sub, style="Sub.TLabel").pack(anchor="w")
+
+    pages_box = ttk.Frame(main)
+    pages_box.grid(row=1, column=0, sticky="nsew")
+    pages_box.columnconfigure(0, weight=1)
+    pages_box.rowconfigure(0, weight=1)
+    pages = {}
+    for key, *_ in PAGES:
+        p = ttk.Frame(pages_box)
+        p.grid(row=0, column=0, sticky="nsew")
+        p.columnconfigure(0, weight=1)
+        pages[key] = p
+
+    def show_page(key):
+        current["page"] = key
+        pages[key].tkraise()
+        for _, _, title, sub in [x for x in PAGES if x[0] == key]:
+            page_title.set(title)
+            page_sub.set(sub)
+        for k in nav:
+            paint_nav(k)
+
+    def card(parent, row, title, hint=None, grow=False):
+        c = ttk.Frame(parent, style="Card.TFrame", padding=(16, 12))
+        c.grid(row=row, column=0, sticky="nsew", pady=(0, 12))
+        if grow:
+            parent.rowconfigure(row, weight=1)
         c.columnconfigure(1, weight=1)
         top = ttk.Frame(c, style="Card.TFrame")
-        top.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 6))
+        top.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(0, 8))
         ttk.Label(top, text=title, style="Head.TLabel").pack(side="left")
         if hint:
             ttk.Label(top, text=hint, style="Muted.TLabel").pack(side="left", padx=(10, 0))
         return c
 
-    # ---- 1. stems
-    c1 = card(1, "1  Stems", "Drums, Bass, Vocals or Other from Suno; the type is read from the name")
-    listbox = tk.Listbox(c1, height=3, bg=T["field"], fg=T["text"], selectbackground=T["accent"],
+    def slider(parent, var, lo, hi, step, command=None):
+        return tk.Scale(parent, from_=lo, to=hi, resolution=step, variable=var, orient="horizontal",
+                        length=260, showvalue=False, command=command, bg=T["accent"],
+                        activebackground=T["accent_hover"], troughcolor=T["field"], highlightthickness=0,
+                        bd=0, sliderrelief="flat", sliderlength=18, width=10)
+
+    # ================= Convert page =================
+    pc = pages["convert"]
+    c1 = card(pc, 0, "Stems", "the type is read from the file name: Drums, Bass, Vocals, Other")
+    listbox = tk.Listbox(c1, height=4, bg=T["field"], fg=T["text"], selectbackground=T["accent"],
                          selectforeground=T["accent_text"], highlightthickness=1, highlightbackground=T["line"],
                          highlightcolor=T["accent"], relief="flat", font=F["body"], activestyle="none",
                          selectmode="extended")
@@ -781,10 +919,11 @@ def run_gui():
         listbox.delete(0, "end")
         for f in files:
             kind = type_var.get() if type_var.get() != "auto" else guess_type(f)
-            listbox.insert("end", f"  {os.path.basename(f)}    \u00b7    {kind}")
+            listbox.insert("end", f"  {os.path.basename(f)}    ·    {kind}")
         if not files:
-            listbox.insert("end", "  No stems yet. Click Add stems...")
+            listbox.insert("end", "  No stems yet. Click Add stems... or press Ctrl+O")
             listbox.itemconfig(0, fg=T["muted"])
+        nav["convert"][1].configure(text=f"Convert  ({len(files)})" if files else "Convert")
         update_kit_state()
 
     def add_files():
@@ -811,9 +950,9 @@ def run_gui():
     ttk.Button(btns, text="Add stems...", command=add_files).pack(fill="x")
     ttk.Button(btns, text="Remove", command=remove_selected).pack(fill="x", pady=6)
     ttk.Button(btns, text="Clear", command=clear_files).pack(fill="x")
+    listbox.bind("<Delete>", lambda e: remove_selected())
 
-    # ---- 2. settings
-    c2 = card(2, "2  Settings", "Match the tempo to your DAW project")
+    c2 = card(pc, 1, "Settings", "match the tempo to your DAW project")
 
     def row_label(r, text, hint=None):
         ttk.Label(c2, text=text, style="Card.TLabel").grid(row=r, column=0, sticky="w", pady=4, padx=(0, 16))
@@ -821,7 +960,7 @@ def run_gui():
             ttk.Label(c2, text=hint, style="Muted.TLabel").grid(row=r, column=2, sticky="w", padx=(12, 0))
 
     row_label(1, "Stem type", "auto reads the file name")
-    type_box = ttk.Combobox(c2, textvariable=type_var, values=["auto"] + STEM_TYPES, state="readonly", width=24)
+    type_box = ttk.Combobox(c2, textvariable=type_var, values=["auto"] + STEM_TYPES, state="readonly", width=26)
     type_box.grid(row=1, column=1, sticky="w")
     type_box.bind("<<ComboboxSelected>>", lambda e: refresh_list())
 
@@ -831,11 +970,11 @@ def run_gui():
     ttk.Spinbox(tempo_f, from_=40, to=240, increment=0.1, textvariable=bpm_var, width=8).pack(side="left")
     detect_btn = ttk.Button(tempo_f, text="Detect", width=8)
     detect_btn.pack(side="left", padx=(8, 0))
-    tempo_hint = tk.StringVar(value="must match the song and your DAW project; Detect measures it from a stem")
+    tempo_hint = tk.StringVar(value="click Detect to measure it from the selected stem")
     ttk.Label(tempo_f, textvariable=tempo_hint, style="Muted.TLabel").pack(side="left", padx=(12, 0))
 
-    row_label(3, "Snap to grid", "Off is safest for Suno stems")
-    ttk.Combobox(c2, textvariable=grid_var, values=list(GRID_CHOICES), state="readonly", width=24)\
+    row_label(3, "Snap to grid", "Off is safest for AI-generated stems")
+    ttk.Combobox(c2, textvariable=grid_var, values=list(GRID_CHOICES), state="readonly", width=26)\
         .grid(row=3, column=1, sticky="w")
 
     def clamp(v):
@@ -856,10 +995,7 @@ def run_gui():
     sens = ttk.Frame(c2, style="Card.TFrame")
     sens.grid(row=4, column=1, columnspan=2, sticky="w")
     ttk.Label(sens, text="fewer notes", style="Muted.TLabel").pack(side="left")
-    tk.Scale(sens, from_=SENS_MIN, to=SENS_MAX, resolution=0.01, variable=sens_var, orient="horizontal",
-             length=240, showvalue=False, command=on_slide, bg=T["accent"], activebackground=T["accent_hover"],
-             troughcolor=T["field"], highlightthickness=0, bd=0, sliderrelief="flat", sliderlength=18,
-             width=10).pack(side="left", padx=8)
+    slider(sens, sens_var, SENS_MIN, SENS_MAX, 0.01, on_slide).pack(side="left", padx=8)
     ttk.Label(sens, text="more notes", style="Muted.TLabel").pack(side="left")
     sbox = ttk.Spinbox(sens, from_=SENS_MIN, to=SENS_MAX, increment=0.05, width=6, textvariable=sens_text,
                        command=on_typed, format="%.2f")
@@ -867,7 +1003,6 @@ def run_gui():
     sbox.bind("<Return>", on_typed)
     sbox.bind("<FocusOut>", on_typed)
 
-    human_var = tk.IntVar(value=0)
     human_text = tk.StringVar()
 
     def show_human(*_):
@@ -880,31 +1015,36 @@ def run_gui():
     hum = ttk.Frame(c2, style="Card.TFrame")
     hum.grid(row=5, column=1, columnspan=2, sticky="w")
     ttk.Label(hum, text="tight", style="Muted.TLabel").pack(side="left")
-    tk.Scale(hum, from_=0, to=100, resolution=5, variable=human_var, orient="horizontal", length=240,
-             showvalue=False, bg=T["accent"], activebackground=T["accent_hover"], troughcolor=T["field"],
-             highlightthickness=0, bd=0, sliderrelief="flat", sliderlength=18, width=10).pack(side="left", padx=8)
+    slider(hum, human_var, 0, 100, 5).pack(side="left", padx=8)
     ttk.Label(hum, text="loose", style="Muted.TLabel").pack(side="left")
     ttk.Label(hum, textvariable=human_text, style="Value.TLabel").pack(side="left", padx=(14, 0))
-    ttk.Label(c2, text="Humanize adds small timing and velocity changes so parts feel played, not programmed.",
-              style="Muted.TLabel").grid(row=6, column=1, columnspan=2, sticky="w", pady=(0, 2))
 
-    # ---- 3. drum kit
-    c3 = card(3, "3  Drum kit", "Drum stems only: which drums to write, and which note each one goes on")
+    c_log = card(pc, 2, "Activity", grow=True)
+    c_log.rowconfigure(1, weight=1)
+    logbox = tk.Text(c_log, height=4, bg=T["field"], fg=T["muted"], insertbackground=T["text"], relief="flat",
+                     font=F["mono"], highlightthickness=0, padx=10, pady=8, wrap="word")
+    logbox.grid(row=1, column=0, columnspan=3, sticky="nsew")
+    logbox.tag_configure("ok", foreground=T["ok"])
+    logbox.tag_configure("warn", foreground=T["warn"])
+    logbox.tag_configure("head", foreground=T["text"])
+
+    # ================= Drum Kit page =================
+    pd = pages["drums"]
+    c3 = card(pd, 0, "Drums to write", "drum stems only")
     kit = ttk.Frame(c3, style="Card.TFrame")
     kit.grid(row=1, column=0, columnspan=3, sticky="w")
     kit_checks = []
     for i, (label, part, _) in enumerate(KIT_BOXES):
         cb = ttk.Checkbutton(kit, text=label, variable=kit_vars[part])
-        cb.grid(row=0, column=i, sticky="w", padx=(0, 18), pady=2)
+        cb.grid(row=0, column=i, sticky="w", padx=(0, 20), pady=2)
         kit_checks.append(cb)
-    kit_note = ttk.Label(c3, text="Crash and Ride start off: they can bring back metallic sounds.",
-                         style="Muted.TLabel")
-    kit_note.grid(row=2, column=0, columnspan=3, sticky="w", pady=(4, 0))
+    kit_note = tk.StringVar()
+    ttk.Label(c3, textvariable=kit_note, style="Muted.TLabel", wraplength=680, justify="left").grid(row=2, column=0, columnspan=3, sticky="w",
+                                                                   pady=(6, 0))
 
-    # drum map: which note each drum is written on
-    mapf = ttk.Frame(c3, style="Card.TFrame")
-    mapf.grid(row=3, column=0, columnspan=3, sticky="ew", pady=(10, 0))
-    ttk.Label(mapf, text="Drum map", style="Card.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 12))
+    c3b = card(pd, 1, "Drum map", "match this to your drum plugin")
+    mapf = ttk.Frame(c3b, style="Card.TFrame")
+    mapf.grid(row=1, column=0, columnspan=3, sticky="ew")
     label_to_key = {v: k for k, v in DRUM_MAP_LABELS.items()}
     saved = load_settings()
     start_key = saved.get("drum_map", "General MIDI")
@@ -912,8 +1052,8 @@ def run_gui():
         start_key = "General MIDI"
     map_var = tk.StringVar(value=DRUM_MAP_LABELS[start_key])
     map_box = ttk.Combobox(mapf, textvariable=map_var, values=list(DRUM_MAP_LABELS.values()),
-                           state="readonly", width=48)
-    map_box.grid(row=0, column=1, columnspan=9, sticky="w")
+                           state="readonly", width=52)
+    map_box.grid(row=0, column=0, columnspan=9, sticky="w")
 
     start_notes = DRUM_MAPS.get(start_key) or {**DRUM_NOTES, **saved.get("custom_map", {})}
     note_vars, name_vars = {}, {}
@@ -926,13 +1066,13 @@ def run_gui():
             name_vars[part].set("?")
 
     for col, part in enumerate(DRUM_LABELS):
-        ttk.Label(mapf, text=DRUM_LABELS[part], style="Muted.TLabel").grid(row=1, column=col + 1, sticky="w",
-                                                                         pady=(8, 2), padx=(0, 6))
+        ttk.Label(mapf, text=DRUM_LABELS[part], style="Muted.TLabel").grid(row=1, column=col, sticky="w",
+                                                                         pady=(12, 2), padx=(0, 8))
         note_vars[part] = tk.StringVar(value=str(start_notes[part]))
         name_vars[part] = tk.StringVar()
         box = ttk.Spinbox(mapf, from_=0, to=127, increment=1, width=4, textvariable=note_vars[part])
-        box.grid(row=2, column=col + 1, sticky="w", padx=(0, 6))
-        ttk.Label(mapf, textvariable=name_vars[part], style="Muted.TLabel").grid(row=3, column=col + 1, sticky="w")
+        box.grid(row=2, column=col, sticky="w", padx=(0, 8))
+        ttk.Label(mapf, textvariable=name_vars[part], style="Muted.TLabel").grid(row=3, column=col, sticky="w")
         show_name(part)
 
         def on_edit(*_, part=part):
@@ -940,17 +1080,23 @@ def run_gui():
             if not applying["on"]:
                 map_var.set(DRUM_MAP_LABELS["Custom"])  # typing a note makes it a custom map
         note_vars[part].trace_add("write", on_edit)
-    ttk.Label(mapf, text="Note numbers. Names use 36 = C1; some DAWs label octaves differently, the note is the same.",
-              style="Muted.TLabel").grid(row=4, column=1, columnspan=9, sticky="w", pady=(4, 0))
 
-    def on_map_pick(*_):
-        key = label_to_key[map_var.get()]
+    map_help = (
+        "General MIDI works with MT Power Drumkit 2, EZdrummer, Addictive Drums, Superior Drummer and most "
+        "drum plugins.\n\nPads in order is for pad samplers (FL Studio FPC, Ableton Drum Rack, MPC): load "
+        "your sounds from note 36 up in the order shown.\n\nCustom: type any note into a box; it's remembered "
+        "for next time.\n\nNames use 36 = C1. Some DAWs label octaves differently, but the note is the same.")
+    ttk.Label(c3b, text=map_help, style="Muted.TLabel", justify="left", wraplength=680).grid(row=2, column=0, columnspan=3,
+                                                                           sticky="w", pady=(12, 0))
+
+    def apply_map(key):
         notes_for = DRUM_MAPS.get(key) or {**DRUM_NOTES, **load_settings().get("custom_map", {})}
         applying["on"] = True
         for part, var in note_vars.items():
             var.set(str(notes_for[part]))
         applying["on"] = False
-    map_box.bind("<<ComboboxSelected>>", on_map_pick)
+
+    map_box.bind("<<ComboboxSelected>>", lambda e: apply_map(label_to_key[map_var.get()]))
 
     def current_map():
         """Read the note boxes; returns (map, error message or None)."""
@@ -969,13 +1115,14 @@ def run_gui():
         drums_possible = type_var.get() in ("auto", "drums")
         for cb in kit_checks:
             cb.state(["!disabled"] if drums_possible else ["disabled"])
-        try:
-            map_box.state(["!disabled", "readonly"] if drums_possible else ["disabled"])
-        except NameError:
-            pass
+        map_box.state(["!disabled", "readonly"] if drums_possible else ["disabled"])
+        kit_note.set("Crash and Ride start off: cymbals can bring back metallic sounds. If you untick "
+                     "Hi-Hat op., open hats are written as closed hats." if drums_possible else
+                     f"Stem type is set to {type_var.get()}, so these settings are not used right now.")
 
-    # ---- 4. output
-    c4 = card(4, "4  Save to")
+    # ================= Output page =================
+    po = pages["output"]
+    c4 = card(po, 0, "Save MIDI files to")
     ttk.Label(c4, textvariable=out_text, style="Card.TLabel").grid(row=1, column=0, columnspan=2, sticky="w")
     ob = ttk.Frame(c4, style="Card.TFrame")
     ob.grid(row=1, column=2, sticky="e")
@@ -992,41 +1139,63 @@ def run_gui():
 
     ttk.Button(ob, text="Change...", command=pick_out).pack(side="left")
     ttk.Button(ob, text="Reset", command=reset_out).pack(side="left", padx=(6, 0))
+    ttk.Label(c4, text="Each stem becomes  <stem name> - <type>.mid,  for example  Drums - drums.mid",
+              style="Muted.TLabel").grid(row=2, column=0, columnspan=3, sticky="w", pady=(10, 0))
 
-    # ---- convert + progress + log
-    prev = ttk.Frame(outer, style="Card.TFrame", padding=(16, 10))
-    prev.grid(row=5, column=0, sticky="ew", pady=(0, 10))
-    ttk.Label(prev, text="Preview", style="Head.TLabel").pack(side="left")
-    ttk.Label(prev, text="hear the selected stem as MIDI before saving", style="Muted.TLabel")\
-        .pack(side="left", padx=(10, 16))
-    play_btn = ttk.Button(prev, text="Play", width=8)
-    play_btn.pack(side="left")
-    stop_btn = ttk.Button(prev, text="Stop", width=8)
-    stop_btn.pack(side="left", padx=(6, 14))
-    with_orig = tk.BooleanVar(value=True)
-    ttk.Checkbutton(prev, text="Mix in the original stem", variable=with_orig).pack(side="left")
+    c5 = card(po, 1, "When converting finishes")
+    ttk.Checkbutton(c5, text="Open the folder automatically", variable=open_when_done)\
+        .grid(row=1, column=0, columnspan=3, sticky="w")
+    ttk.Label(c5, text="Then set your DAW project to the same tempo and drag each .mid onto its instrument "
+                       "track at bar 1.", style="Muted.TLabel").grid(row=2, column=0, columnspan=3, sticky="w",
+                                                                    pady=(6, 0))
 
-    action = ttk.Frame(outer)
-    action.grid(row=6, column=0, sticky="ew", pady=(4, 8))
-    action.columnconfigure(1, weight=1)
-    go = ttk.Button(action, text="Convert to MIDI", style="Accent.TButton")
-    go.grid(row=0, column=0, sticky="w")
-    status = tk.StringVar(value="Ready")
-    status_lbl = ttk.Label(action, textvariable=status, foreground=T["muted"])
-    status_lbl.grid(row=0, column=1, sticky="w", padx=14)
+    # ================= Help page =================
+    ph = pages["help"]
+    ph.rowconfigure(0, weight=1)
+    hc = ttk.Frame(ph, style="Card.TFrame", padding=(6, 6))
+    hc.grid(row=0, column=0, sticky="nsew", pady=(0, 12))
+    hc.columnconfigure(0, weight=1)
+    hc.rowconfigure(0, weight=1)
+    help_box = tk.Text(hc, bg=T["card"], fg=T["text"], relief="flat", highlightthickness=0, wrap="word",
+                       font=F["body"], padx=14, pady=8, cursor="arrow", spacing1=2, spacing3=4,
+                       tabs=("130p",))
+    help_scroll = ttk.Scrollbar(hc, orient="vertical", command=help_box.yview)
+    help_box.configure(yscrollcommand=help_scroll.set)
+    help_box.grid(row=0, column=0, sticky="nsew")
+    help_scroll.grid(row=0, column=1, sticky="ns")
+    help_box.tag_configure("h", font=F["h"], foreground=T["accent"], spacing1=12, spacing3=4)
+    help_box.tag_configure("p", foreground=T["text"], lmargin1=4, lmargin2=4)
+    help_box.tag_configure("k", foreground=T["muted"], lmargin1=4, font=F["body"])
+    for tag, text in HELP_TEXT:
+        help_box.insert("end", text + "\n", tag)
+    help_box.configure(state="disabled")
+    help_links = ttk.Frame(ph)
+    help_links.grid(row=1, column=0, sticky="w")
+    ttk.Button(help_links, text="Stemquill on GitHub", command=lambda: webbrowser.open(REPO_URL)).pack(side="left")
+    ttk.Button(help_links, text="Report a problem",
+               command=lambda: webbrowser.open(REPO_URL + "/issues")).pack(side="left", padx=8)
+    ttk.Button(help_links, text="About", command=lambda: about()).pack(side="left")
+
+    # ================= action bar (always visible) =================
+    action = ttk.Frame(main, style="Card.TFrame", padding=(16, 12))
+    action.grid(row=2, column=0, sticky="ew", pady=(4, 0))
+    action.columnconfigure(4, weight=1)
+    ttk.Label(action, text="Preview", style="Head.TLabel").grid(row=0, column=0, sticky="w", padx=(0, 12))
+    play_btn = ttk.Button(action, text="Play", width=7)
+    play_btn.grid(row=0, column=1)
+    stop_btn = ttk.Button(action, text="Stop", width=7)
+    stop_btn.grid(row=0, column=2, padx=(6, 14))
+    ttk.Checkbutton(action, text="Mix in the original stem", variable=with_orig).grid(row=0, column=3, sticky="w")
     open_btn = ttk.Button(action, text="Open folder")
-    open_btn.grid(row=0, column=2, sticky="e")
+    open_btn.grid(row=0, column=5, sticky="e", padx=(0, 10))
     open_btn.state(["disabled"])
-    progress = ttk.Progressbar(outer, mode="determinate", style="Horizontal.TProgressbar")
-    progress.grid(row=7, column=0, sticky="ew", pady=(0, 8))
-
-    logbox = tk.Text(outer, height=7, bg=T["field"], fg=T["muted"], insertbackground=T["text"], relief="flat",
-                     font=F["mono"], highlightthickness=1, highlightbackground=T["line"], padx=10, pady=8,
-                     wrap="word")
-    logbox.grid(row=8, column=0, sticky="nsew")
-    logbox.tag_configure("ok", foreground=T["ok"])
-    logbox.tag_configure("warn", foreground=T["warn"])
-    logbox.tag_configure("head", foreground=T["text"])
+    go = ttk.Button(action, text="Convert to MIDI", style="Accent.TButton")
+    go.grid(row=0, column=6, sticky="e")
+    status = tk.StringVar(value="Ready")
+    status_lbl = ttk.Label(action, textvariable=status, style="Card.TLabel", foreground=T["muted"])
+    status_lbl.grid(row=1, column=0, columnspan=5, sticky="w", pady=(10, 0))
+    progress = ttk.Progressbar(action, mode="determinate", style="Horizontal.TProgressbar", length=200)
+    progress.grid(row=1, column=5, columnspan=2, sticky="ew", pady=(10, 0))
 
     # The conversion runs in a background thread; it hands updates to the window through
     # this queue, and the window picks them up every 100 ms (Tk is only safe on its own thread).
@@ -1060,10 +1229,11 @@ def run_gui():
         root.after(100, poll)
 
     def open_folder():
-        d = last_out["dir"]
+        d = last_out["dir"] or out_dir["path"]
         if not d:
+            say("Convert something first, then Open folder", "warn")
             return
-        if sys.platform.startswith("win"):
+        if is_win:
             os.startfile(d)
         elif sys.platform == "darwin":
             subprocess.Popen(["open", d])
@@ -1073,10 +1243,12 @@ def run_gui():
     open_btn.configure(command=open_folder)
 
     busy_buttons = [go, play_btn, detect_btn]
+    busy = {"on": False}
     player = Player()
     preview_wav = os.path.join(__import__("tempfile").gettempdir(), "stemquill_preview.wav")
 
     def set_busy(on):
+        busy["on"] = on
         for b in busy_buttons:
             b.state(["disabled"] if on else ["!disabled"])
 
@@ -1090,11 +1262,14 @@ def run_gui():
         say(f"Done: {ok_count} of {total} converted" if total else "Ready", "ok" if ok_count == total else "warn")
         if last_out["dir"]:
             open_btn.state(["!disabled"])
+            if open_when_done.get() and ok_count:
+                open_folder()
 
     def collect():
         """Read and check every setting. Returns a dict, or None after showing what's wrong."""
         if not files:
             say("Add at least one stem first", "warn")
+            show_page("convert")
             return None
         on_typed()
         try:
@@ -1103,10 +1278,12 @@ def run_gui():
                 raise ValueError
         except ValueError:
             say("Enter a tempo between 40 and 240 BPM", "warn")
+            show_page("convert")
             return None
         drum_map, err = current_map()
         if err:
             say(err, "warn")
+            show_page("drums")
             return None
         map_key = label_to_key[map_var.get()]
         settings = load_settings()
@@ -1143,6 +1320,8 @@ def run_gui():
         updates.put(("done", ok, len(files)))
 
     def start():
+        if busy["on"]:
+            return
         c = collect()
         if not c:
             return
@@ -1174,9 +1353,12 @@ def run_gui():
                     say(f"Couldn't play audio ({exc}). Preview saved to {preview_wav}", "warn")
             updates.put(("call", play_now))
         except Exception as exc:
-            updates.put(("call", lambda: (set_busy(False), say(f"Preview failed: {exc}", "warn"))))
+            msg = f"Preview failed: {exc}"
+            updates.put(("call", lambda: (set_busy(False), say(msg, "warn"))))
 
     def preview():
+        if busy["on"]:
+            return
         c = collect()
         if not c:
             return
@@ -1202,24 +1384,131 @@ def run_gui():
                 say(f"Tempo detected: {bpm:g} BPM", "ok")
             updates.put(("call", apply))
         except Exception as exc:
-            updates.put(("call", lambda: (set_busy(False), say(f"Couldn't detect tempo: {exc}", "warn"))))
+            msg = f"Couldn't detect tempo: {exc}"
+            updates.put(("call", lambda: (set_busy(False), say(msg, "warn"))))
 
     def detect():
+        if busy["on"]:
+            return
         if not files:
             say("Add a stem first, then Detect", "warn")
+            show_page("convert")
             return
         f = selected_stem()
         set_busy(True)
         say(f"Measuring tempo of {os.path.basename(f)}...")
         threading.Thread(target=detect_work, args=(f,), daemon=True).start()
 
+    def reset_settings():
+        type_var.set("auto")
+        bpm_var.set("120")
+        grid_var.set("Off (keep original timing)")
+        sens_var.set(0.8)
+        sens_text.set("0.80")
+        human_var.set(0)
+        for _, part, on in KIT_BOXES:
+            kit_vars[part].set(on)
+        map_var.set(DRUM_MAP_LABELS["General MIDI"])
+        apply_map("General MIDI")
+        reset_out()
+        open_when_done.set(False)
+        with_orig.set(True)
+        tempo_hint.set("click Detect to measure it from the selected stem")
+        refresh_list()
+        say("Settings reset to defaults", "ok")
+
+    # ---- about dialog
+    def about():
+        win = tk.Toplevel(root)
+        win.title("About Stemquill")
+        win.configure(bg=T["card"])
+        win.resizable(False, False)
+        win.transient(root)
+        box = tk.Frame(win, bg=T["card"], padx=28, pady=22)
+        box.pack()
+        if "about" in images:
+            tk.Label(box, image=images["about"], bg=T["card"]).pack()
+        tk.Label(box, text="Stemquill", bg=T["card"], fg=T["text"], font=F["title"]).pack(pady=(10, 0))
+        tk.Label(box, text=f"Version {APP_VERSION}", bg=T["card"], fg=T["muted"], font=F["body"]).pack()
+        tk.Label(box, text="Turn audio stems into MIDI for any DAW.", bg=T["card"], fg=T["text"],
+                 font=F["body"]).pack(pady=(12, 0))
+        tk.Label(box, text="© 2026 Skynr Labs  ·  MIT License", bg=T["card"], fg=T["muted"],
+                 font=F["small"]).pack(pady=(4, 14))
+        row = tk.Frame(box, bg=T["card"])
+        row.pack()
+        ttk.Button(row, text="GitHub", command=lambda: webbrowser.open(REPO_URL)).pack(side="left", padx=4)
+        ttk.Button(row, text="Close", command=win.destroy).pack(side="left", padx=4)
+        win.bind("<Escape>", lambda e: win.destroy())
+        win.update_idletasks()
+        x = root.winfo_rootx() + (root.winfo_width() - win.winfo_width()) // 2
+        y = root.winfo_rooty() + (root.winfo_height() - win.winfo_height()) // 3
+        win.geometry(f"+{x}+{y}")
+        win.grab_set()
+
+    def quit_app():
+        player.stop()
+        root.destroy()
+
+    # ---- menu bar
+    def menu(parent):
+        return tk.Menu(parent, tearoff=0, bg=T["card"], fg=T["text"], activebackground=T["accent"],
+                       activeforeground=T["accent_text"], disabledforeground=T["muted"], bd=0)
+
+    bar = menu(root)
+    m_file = menu(bar)
+    m_file.add_command(label="Add stems...", accelerator="Ctrl+O", command=add_files)
+    m_file.add_command(label="Remove selected", accelerator="Del", command=remove_selected)
+    m_file.add_command(label="Clear stems", command=clear_files)
+    m_file.add_separator()
+    m_file.add_command(label="Save MIDI to folder...", command=pick_out)
+    m_file.add_command(label="Open output folder", command=open_folder)
+    m_file.add_separator()
+    m_file.add_command(label="Exit", accelerator="Ctrl+Q", command=quit_app)
+    bar.add_cascade(label="File", menu=m_file)
+
+    m_tools = menu(bar)
+    m_tools.add_command(label="Detect tempo", accelerator="Ctrl+T", command=detect)
+    m_tools.add_command(label="Preview", accelerator="Ctrl+P", command=preview)
+    m_tools.add_command(label="Stop preview", accelerator="Esc", command=stop)
+    m_tools.add_command(label="Convert to MIDI", accelerator="Ctrl+Enter", command=start)
+    m_tools.add_separator()
+    m_tools.add_command(label="Reset settings to defaults", command=reset_settings)
+    bar.add_cascade(label="Tools", menu=m_tools)
+
+    m_view = menu(bar)
+    for i, (key, text, _, _) in enumerate(PAGES, start=1):
+        m_view.add_command(label=text, accelerator=f"Ctrl+{i}", command=lambda k=key: show_page(k))
+    bar.add_cascade(label="View", menu=m_view)
+
+    m_help = menu(bar)
+    m_help.add_command(label="How to use", accelerator="F1", command=lambda: show_page("help"))
+    m_help.add_separator()
+    m_help.add_command(label="Stemquill on GitHub", command=lambda: webbrowser.open(REPO_URL))
+    m_help.add_command(label="Report a problem", command=lambda: webbrowser.open(REPO_URL + "/issues"))
+    m_help.add_separator()
+    m_help.add_command(label="About Stemquill", command=about)
+    bar.add_cascade(label="Help", menu=m_help)
+    root.configure(menu=bar)
+
+    # ---- keyboard shortcuts
+    root.bind_all("<Control-o>", lambda e: add_files())
+    root.bind_all("<Control-t>", lambda e: detect())
+    root.bind_all("<Control-p>", lambda e: preview())
+    root.bind_all("<Control-Return>", lambda e: start())
+    root.bind_all("<Control-q>", lambda e: quit_app())
+    root.bind_all("<Escape>", lambda e: stop())
+    root.bind_all("<F1>", lambda e: show_page("help"))
+    for i, (key, *_) in enumerate(PAGES, start=1):
+        root.bind_all(f"<Control-Key-{i}>", lambda e, k=key: show_page(k))
+
     play_btn.configure(command=preview)
     stop_btn.configure(command=stop)
     detect_btn.configure(command=detect)
-    root.protocol("WM_DELETE_WINDOW", lambda: (player.stop(), root.destroy()))
-
     go.configure(command=start)
+    root.protocol("WM_DELETE_WINDOW", quit_app)
+
     refresh_list()
+    show_page("convert")
     poll()
     root.mainloop()
 
