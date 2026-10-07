@@ -85,8 +85,6 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 2. Run it and click through the installer. No Python or admin rights needed.
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
-Prefer not to install? Download the **portable zip** from the same page, unzip it anywhere and run `Stemquill.exe`.
-
 > Windows may show **"Windows protected your PC"** because the app isn't code-signed yet. Click **More info → Run anyway**.
 
 To update, run the newer installer. To remove, use **Settings → Apps → Stemquill → Uninstall**.
@@ -245,7 +243,7 @@ Every push to `main` builds and tests the Windows app; the installer appears und
 
 1. Bump `__version__` in `stemquill/__init__.py` and commit.
 2. Tag it: `git tag v1.0.1 && git push origin v1.0.1`.
-3. GitHub Actions builds the installer and portable zip and attaches them to a new release.
+3. GitHub Actions builds the installer and attaches it to a new release.
 
 ---
 
