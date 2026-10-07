@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stemquill"
+dynamic = ["version"]
+description = "Turn audio stems into MIDI for any DAW."
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Skynr Labs" }]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy",
+    "scipy",
+    "librosa",
+    "soundfile",
+    "mido",
+]
+keywords = ["audio-to-midi", "midi", "stems", "drums", "music-production"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Sound/Audio :: MIDI",
+    "Environment :: X11 Applications",
+    "Environment :: Win32 (MS Windows)",
+    "Environment :: MacOS X",
+]
+
+[project.optional-dependencies]
+chords = ["basic-pitch"]
+
+[project.urls]
+Homepage = "https://github.com/skynrlabs/Stemquill"
+Issues = "https://github.com/skynrlabs/Stemquill/issues"
+
+[project.scripts]
+stemquill = "stemquill.__main__:main"
+
+[project.gui-scripts]
+stemquill-app = "stemquill.__main__:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "stemquill.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["stemquill*"]
+
+[tool.setuptools.package-data]
+stemquill = ["assets/*"]

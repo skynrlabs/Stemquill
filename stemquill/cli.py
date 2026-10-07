@@ -2,12 +2,14 @@
 
 import argparse
 
+from . import __version__
 from .config import DEFAULT_DRUM_PARTS, DRUM_MAPS, DRUM_NOTES, STEM_TYPES
 from .core import convert
 
 
 def main():
     ap = argparse.ArgumentParser(description="Convert audio stems to MIDI.")
+    ap.add_argument("--version", action="version", version=f"Stemquill {__version__}")
     ap.add_argument("stems", nargs="+", help="audio files (wav, mp3, flac...)")
     ap.add_argument("--type", default="auto", choices=["auto"] + STEM_TYPES)
     ap.add_argument("--bpm", type=float, help="song tempo (detected if left out)")

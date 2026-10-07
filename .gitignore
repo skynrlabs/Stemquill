@@ -3,3 +3,6 @@ __pycache__/
 stemquill_settings.json
 *.mid
 *.wav
+build/
+dist/
+*.egg-info/

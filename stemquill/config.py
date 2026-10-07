@@ -2,9 +2,10 @@
 
 import json
 import os
+import sys
 
-PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASSETS_DIR = os.path.join(PROJECT_DIR, "assets")
+PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
+ASSETS_DIR = os.path.join(PACKAGE_DIR, "assets")
 REPO_URL = "https://github.com/skynrlabs/Stemquill"
 
 SR = 44100
@@ -41,7 +42,19 @@ def note_name(n):
     names = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
     return f"{names[n % 12]}{n // 12 - 2}"
 
-SETTINGS_PATH = os.path.join(PROJECT_DIR, "stemquill_settings.json")
+
+
+def _settings_dir():
+    """Your own app-data folder, so settings survive updates and work in an installed copy."""
+    if sys.platform.startswith("win"):
+        base = os.environ.get("APPDATA") or os.path.expanduser("~")
+        return os.path.join(base, "Stemquill")
+    if sys.platform == "darwin":
+        return os.path.expanduser("~/Library/Application Support/Stemquill")
+    return os.path.join(os.environ.get("XDG_CONFIG_HOME") or os.path.expanduser("~/.config"), "stemquill")
+
+
+SETTINGS_PATH = os.path.join(_settings_dir(), "settings.json")
 
 
 def load_settings():
@@ -54,6 +67,7 @@ def load_settings():
 
 def save_settings(data):
     try:
+        os.makedirs(os.path.dirname(SETTINGS_PATH), exist_ok=True)
         with open(SETTINGS_PATH, "w", encoding="utf-8") as fh:
             json.dump(data, fh, indent=2)
     except Exception:

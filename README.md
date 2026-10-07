@@ -1,4 +1,4 @@
-<img src="assets/icon.png" alt="Stemquill icon" width="96" align="right">
+<img src="stemquill/assets/icon.png" alt="Stemquill icon" width="96" align="right">
 
 # 🪶 Stemquill
 
@@ -77,28 +77,45 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ---
 
-## 📋 Requirements
+## 📥 Install
 
-- Python 3.10 or newer (Windows, macOS or Linux)
-- Optional: Python 3.10 or 3.11 for [basic-pitch](https://github.com/spotify/basic-pitch), which gives better chord detection on guitar, keys and synth stems
+### Windows (recommended)
 
----
+1. Download **`Stemquill-Setup-x.y.z.exe`** from the [latest release](https://github.com/skynrlabs/Stemquill/releases/latest).
+2. Run it and click through the installer. No Python or admin rights needed.
+3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
-## 🔧 Installing
+Prefer not to install? Download the **portable zip** from the same page, unzip it anywhere and run `Stemquill.exe`.
 
-### Windows
+> Windows may show **"Windows protected your PC"** because the app isn't code-signed yet. Click **More info → Run anyway**.
 
-1. Install [Python](https://www.python.org/downloads/). For basic-pitch chord detection, also run `py install 3.11` in Command Prompt.
-2. Download or clone this repo.
-3. Double-click **Install.bat**.
-4. Double-click **Start Stemquill.bat** to open the app.
+To update, run the newer installer. To remove, use **Settings → Apps → Stemquill → Uninstall**.
 
-### macOS / Linux
+### macOS and Linux
+
+Install with [pipx](https://pipx.pypa.io/) (Python 3.10 or newer):
+
+```bash
+pipx install git+https://github.com/skynrlabs/Stemquill.git
+stemquill
+```
+
+Run `stemquill` with no arguments to open the window, or with file names to use the command line. Update with `pipx upgrade stemquill`.
+
+### Better chord detection (optional)
+
+[basic-pitch](https://github.com/spotify/basic-pitch) improves chords on guitar, keys and synth stems. It needs Python 3.10 or 3.11:
+
+```bash
+pipx install --python python3.11 "stemquill[chords] @ git+https://github.com/skynrlabs/Stemquill.git"
+```
+
+### From source (for development)
 
 ```bash
 git clone https://github.com/skynrlabs/Stemquill.git
 cd Stemquill
-pip install -r requirements.txt
+pip install -e .
 python -m stemquill
 ```
 
@@ -106,14 +123,14 @@ python -m stemquill
 
 ## 💻 Command Line
 
-Run with file names to skip the GUI. Leave out `--bpm` and the tempo is detected for you.
+Run with file names to skip the window. Use `stemquill` if you installed with pipx, or `python -m stemquill` from source. Leave out `--bpm` and the tempo is detected for you.
 
 ```bash
-python -m stemquill "Drums.wav" --type drums --bpm 121 --grid 0 --drum-parts kick,snare,toms
-python -m stemquill "Drums.wav" --grid 4 --humanize 30
-python -m stemquill "Drums.wav" --bpm 121 --drum-map pads
-python -m stemquill "Drums.wav" --bpm 121 --map kick=35,snare=40
-python -m stemquill "Bass.wav" "Other.wav" --bpm 121 --grid 0
+stemquill "Drums.wav" --type drums --bpm 121 --grid 0 --drum-parts kick,snare,toms
+stemquill "Drums.wav" --grid 4 --humanize 30
+stemquill "Drums.wav" --bpm 121 --drum-map pads
+stemquill "Drums.wav" --bpm 121 --map kick=35,snare=40
+stemquill "Bass.wav" "Other.wav" --bpm 121 --grid 0
 ```
 
 | Option | What it does |
@@ -186,7 +203,9 @@ stemquill/
     ├── dialogs.py       About dialog
     ├── widgets.py       Shared building blocks
     └── theme.py         Colours, fonts and styles
-assets/                  App icon (SVG source, PNGs and Windows .ico)
+stemquill/assets/        App icon (SVG source, PNGs and Windows .ico)
+packaging/               Windows build: PyInstaller spec and Inno Setup installer
+.github/workflows/       Builds and tests the Windows installer on every push
 docs/                    README screenshot
 ```
 
@@ -210,12 +229,23 @@ convert("Drums.wav", "drums", bpm=bpm, humanize_amount=0.3)
 | Audio analysis | librosa, NumPy, SciPy |
 | MIDI | mido |
 | Chord detection (optional) | basic-pitch |
+| Windows app | PyInstaller + Inno Setup, built by GitHub Actions |
 
 ---
 
 ## 🔐 Privacy
 
-Stemquill runs entirely on your computer. Your audio is never uploaded anywhere. The only file it writes besides your MIDI is `stemquill_settings.json` next to the app, which remembers your last settings.
+Stemquill runs entirely on your computer. Your audio is never uploaded anywhere. The only file it writes besides your MIDI is a small `settings.json` that remembers your drum map, stored in `%APPDATA%\Stemquill` on Windows, `~/Library/Application Support/Stemquill` on macOS or `~/.config/stemquill` on Linux.
+
+---
+
+## 🚀 Releasing
+
+Every push to `main` builds and tests the Windows app; the installer appears under the run's **Artifacts** on the Actions tab. To publish a release:
+
+1. Bump `__version__` in `stemquill/__init__.py` and commit.
+2. Tag it: `git tag v1.0.1 && git push origin v1.0.1`.
+3. GitHub Actions builds the installer and portable zip and attaches them to a new release.
 
 ---
 

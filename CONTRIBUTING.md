@@ -47,7 +47,7 @@ Before opening an issue:
 1. Fork the repo and create your branch from `dev`, not `main`.
 2. Name your branch `feature/short-description` or `fix/short-description`.
 3. Keep PRs focused — one feature or fix per PR.
-4. Make sure it runs: `python -m compileall -q stemquill`, then `python -m stemquill` and convert a stem.
+4. Make sure it runs: `python -m stemquill` and convert a stem. The GitHub Actions build must pass (it builds the Windows app and converts a test stem).
 5. Write a clear PR description — what changed and why. Before/after note counts on a test stem are great for detection changes.
 6. Link any related issue in the PR body (`Closes #123`).
 
@@ -71,7 +71,7 @@ Before opening an issue:
 ```
 git clone https://github.com/skynrlabs/Stemquill.git
 cd Stemquill
-pip install -r requirements.txt
+pip install -e .
 python -m stemquill
 ```
 

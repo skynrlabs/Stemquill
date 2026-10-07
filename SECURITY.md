@@ -42,7 +42,7 @@ Out of scope:
 
 - **Local only.** Stemquill runs entirely on your computer. Audio is never uploaded.
 - **No accounts, no network calls.** The app does not contact any server.
-- **Local storage.** Settings are stored in `stemquill_settings.json` next to the app; previews are written to your system temp folder.
+- **Local storage.** Settings are stored in `settings.json` in your user app-data folder (`%APPDATA%\Stemquill` on Windows); previews are written to your system temp folder.
 
 ---
 
