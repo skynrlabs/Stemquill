@@ -47,7 +47,7 @@ Before opening an issue:
 1. Fork the repo and create your branch from `dev`, not `main`.
 2. Name your branch `feature/short-description` or `fix/short-description`.
 3. Keep PRs focused — one feature or fix per PR.
-4. Make sure it runs: `python -m py_compile stemquill.py`, then open the GUI and convert a stem.
+4. Make sure it runs: `python -m compileall -q stemquill`, then `python -m stemquill` and convert a stem.
 5. Write a clear PR description — what changed and why. Before/after note counts on a test stem are great for detection changes.
 6. Link any related issue in the PR body (`Closes #123`).
 
@@ -58,7 +58,9 @@ Before opening an issue:
 - **Language:** Python 3.10+
 - **Style:** Follow existing patterns in the file. Do not reformat unrelated code.
 - **Naming:** `snake_case` for functions and variables, `UPPER_CASE` for constants.
-- **GUI threads:** Never touch Tkinter widgets from a worker thread. Send updates through the existing queue.
+- **Keep the layers apart:** audio code goes in `stemquill/core/` and must not import Tkinter; window code goes in `stemquill/gui/`.
+- **GUI threads:** Never touch Tkinter widgets from a worker thread. Use `app.post()` and `app.log()` from `gui/app.py`.
+- **New page?** Add a module in `gui/pages/` and an entry in `PAGES`. **New workflow?** Add a journey class in `gui/journeys.py`.
 - **Dependencies:** Do not add required dependencies without discussion. Optional ones (like basic-pitch) must fail gracefully.
 - **No dead code:** Do not leave commented-out code in PRs.
 
@@ -70,7 +72,7 @@ Before opening an issue:
 git clone https://github.com/skynrlabs/Stemquill.git
 cd Stemquill
 pip install -r requirements.txt
-python stemquill.py
+python -m stemquill
 ```
 
 ---

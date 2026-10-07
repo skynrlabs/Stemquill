@@ -99,7 +99,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 git clone https://github.com/skynrlabs/Stemquill.git
 cd Stemquill
 pip install -r requirements.txt
-python stemquill.py
+python -m stemquill
 ```
 
 ---
@@ -109,11 +109,11 @@ python stemquill.py
 Run with file names to skip the GUI. Leave out `--bpm` and the tempo is detected for you.
 
 ```bash
-python stemquill.py "Drums.wav" --type drums --bpm 121 --grid 0 --drum-parts kick,snare,toms
-python stemquill.py "Drums.wav" --grid 4 --humanize 30
-python stemquill.py "Drums.wav" --bpm 121 --drum-map pads
-python stemquill.py "Drums.wav" --bpm 121 --map kick=35,snare=40
-python stemquill.py "Bass.wav" "Other.wav" --bpm 121 --grid 0
+python -m stemquill "Drums.wav" --type drums --bpm 121 --grid 0 --drum-parts kick,snare,toms
+python -m stemquill "Drums.wav" --grid 4 --humanize 30
+python -m stemquill "Drums.wav" --bpm 121 --drum-map pads
+python -m stemquill "Drums.wav" --bpm 121 --map kick=35,snare=40
+python -m stemquill "Bass.wav" "Other.wav" --bpm 121 --grid 0
 ```
 
 | Option | What it does |
@@ -163,12 +163,41 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 
 ## 📂 Project Structure
 
-| Path | Role |
-|---|---|
-| `stemquill.py` | The whole app: audio analysis, MIDI writing, GUI and command line |
-| `assets/` | App icon (`icon.svg` source, PNG sizes and the Windows `stemquill.ico`) |
-| `Install.bat` / `Start Stemquill.bat` | One-click install and launch on Windows |
-| `docs/` | README screenshot |
+```
+stemquill/
+├── __main__.py          Entry point: `python -m stemquill`
+├── cli.py               Command-line options
+├── config.py            Drum notes and maps, stem types, saved settings
+├── core/                The audio engine (no GUI code, usable from scripts)
+│   ├── pipeline.py      One stem: load → transcribe → humanize → save
+│   ├── drums.py         Drum hit detection and classification
+│   ├── melodic.py       Bass, vocal, guitar, keys and synth notes
+│   ├── tempo.py         Tempo detection
+│   ├── humanize.py      Timing and velocity feel
+│   ├── midi.py          Grid snapping and MIDI file writing
+│   └── preview.py       Preview rendering and playback
+└── gui/                 The window
+    ├── app.py           Main window and shared plumbing
+    ├── journeys.py      Convert, Preview and Detect tempo workflows
+    ├── pages/           Convert, Drum Kit, Output and Help pages
+    ├── sidebar.py       Left-hand navigation
+    ├── action_bar.py    Play, Stop, Convert and status bar
+    ├── menus.py         Menu bar and keyboard shortcuts
+    ├── dialogs.py       About dialog
+    ├── widgets.py       Shared building blocks
+    └── theme.py         Colours, fonts and styles
+assets/                  App icon (SVG source, PNGs and Windows .ico)
+docs/                    README screenshot
+```
+
+The engine can be used from your own scripts:
+
+```python
+from stemquill.core import convert, detect_tempo
+
+bpm = detect_tempo("Drums.wav")
+convert("Drums.wav", "drums", bpm=bpm, humanize_amount=0.3)
+```
 
 ---
 
