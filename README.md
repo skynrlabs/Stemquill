@@ -42,9 +42,9 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 - ▶️ **Preview before saving**: hear the MIDI with built-in sounds, with the original stem mixed in to check the timing
 - 🎚️ **Humanize**: small timing and velocity changes so parts feel played, not programmed
 - 🗺️ **Drum maps**: General MIDI (MT Power Drumkit, EZdrummer, Addictive Drums, Superior Drummer), pads in order (FL Studio FPC, Ableton Drum Rack, MPC) or your own custom notes
-- 🎛️ **Sensitivity control**: slider or typed value to catch quiet notes or cut junk notes
+- 🎛️ **Per-stem settings**: sensitivity, humanize and drums for each stem, with Apply to all
 - 📐 **Snap to grid**: keep the original feel or lock notes to 1/8, 1/16 or triplets
-- 📦 **Batch convert**: drop in a whole set of stems and convert them in one go
+- 📦 **Drag and drop**: drop stems or a whole folder onto the window and convert them in one go
 - 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
 
@@ -94,17 +94,17 @@ python -m stemquill
 
 ## ⚙️ How It Works
 
-**Convert** page:
+Everything happens on the **Convert** page, top to bottom:
 
-1. Click **Add stems...** and pick your audio files (WAV, MP3, FLAC, AIFF, OGG or M4A). The stem type is read from the file name ("Drums", "Bass", "Vocals", "Other"), or set it under **Stem type**.
-2. Click **Detect** to measure the tempo from the selected stem, or type the BPM if you know it.
-3. Click **Play** to preview the MIDI with built-in sounds. With several stems, click the one you want in the list first; the line under **Play** shows which stem will play (Detect uses the same one). Tick **Mix in the original stem** to check the timing against the real audio.
-4. Adjust **Sensitivity**, **Snap to grid** or **Humanize** and play again until it sounds right. **Reset to defaults** puts everything back.
-5. Click **Convert to MIDI**. Each stem becomes `<name> - <type>.mid`.
+1. **Drop your stems** (or a whole folder of them) onto the window, or click **Add stems...** (WAV, MP3, FLAC, AIFF, OGG or M4A). Each stem gets its own row. Its type is read from the file name ("Drums", "Bass", "Vocals", "Other"); change it in the row if needed.
+2. **Song:** click **Detect** to measure the tempo from the selected stem, or type the BPM. Tempo and **Snap to grid** are shared by every stem, because it's one song.
+3. **Click a stem** to see its own settings underneath: **Sensitivity**, **Humanize** and, for drum stems, which drums to write and the drum map. **Apply to all stems** copies them to the rest.
+4. Click **Play** on a stem's row to hear it with built-in sounds; the button turns into **Stop** while it plays. Keep **Mix in the original stem** ticked to check the timing against the real audio.
+5. Click **Convert … to MIDI** (it says how many stems). Each row shows when its file is saved as `<name> - <type>.mid`. Change a setting afterwards and the row says **changed · convert again**, so you never drag an out-of-date file into your DAW.
 
-**Drum Kit** page: tick which drums to write and pick the drum map that matches your plugin (see [Drum Maps](#-drum-maps)).
+**History** lists everything Detect, Play and Convert did; double-click a saved file to open its folder.
 
-**Output** page: choose where the `.mid` files are saved (next to each stem by default) and whether the folder opens automatically when converting finishes.
+**Settings** holds where files are saved (next to each stem by default), whether the folder opens when converting finishes, the drum note numbers (see [Drum Maps](#-drum-maps)), and **Reset everything to defaults**.
 
 Then set your DAW project to the same tempo and drag each `.mid` onto its instrument track at bar 1.
 
@@ -122,10 +122,10 @@ Then set your DAW project to the same tempo and drag each `.mid` onto its instru
 |---|---|
 | `Ctrl+O` | Add stems |
 | `Ctrl+T` | Detect tempo |
-| `Ctrl+P` | Preview |
-| `Esc` | Stop preview |
+| `Ctrl+P` | Preview the selected stem |
+| `Esc` | Stop playback |
 | `Ctrl+Enter` | Convert to MIDI |
-| `Ctrl+1` to `Ctrl+4` | Convert, Drum Kit, Output, Help pages |
+| `Ctrl+1` to `Ctrl+4` | Convert, History, Settings, Help pages |
 | `F1` | Help |
 
 ---
@@ -193,10 +193,10 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 |---|---|
 | **"Windows protected your PC"** when installing | The app isn't code-signed yet. Click **More info → Run anyway**. |
 | MIDI drifts out of time in the DAW | The project tempo doesn't match. Click **Detect** and set your DAW to that exact BPM. If it's half or double what you expect, use the number that matches the song's feel. |
-| Too many junk notes | Lower **Sensitivity** (try 0.6), or untick drums you don't need on the **Drum Kit** page. |
-| Missing quiet notes | Raise **Sensitivity** (try 1.0). |
-| Chords look messy or simplified | Make sure **Better chord detection** was ticked when installing (run the installer again to add it). The Activity feed says which chord engine was used. |
-| Drums land on the wrong sounds | Pick the drum map that matches your plugin on the **Drum Kit** page, or type your own notes (Custom). |
+| Too many junk notes | Click the stem and lower its **Sensitivity** (try 0.6); for drums, untick the drums you don't need. |
+| Missing quiet notes | Click the stem and raise its **Sensitivity** (try 1.0). |
+| Chords look messy or simplified | Make sure **Better chord detection** was ticked when installing (run the installer again to add it). The **History** page says which chord engine was used. |
+| Drums land on the wrong sounds | Pick the drum map that matches your plugin (in a drum stem's settings), or type your own note numbers on the **Settings** page. |
 | No sound when previewing | Check your output device and volume. If it can't play, the status bar shows where the preview file was saved. |
 
 Still stuck? [Open an issue](https://github.com/skynrlabs/Stemquill/issues) with your settings and, if you can share it, a short clip of the stem.
@@ -221,7 +221,10 @@ stemquill/
 └── gui/                 The window
     ├── app.py           Main window and shared plumbing
     ├── journeys.py      Convert, Preview and Detect tempo workflows
-    ├── pages/           Convert, Drum Kit, Output and Help pages
+    ├── pages/           Convert, History, Settings and Help pages
+    ├── model.py         Each stem's type, own settings and status
+    ├── stems_table.py   The stems list: a row per stem with Play, type and status
+    ├── stem_settings.py The selected stem's settings card
     ├── sidebar.py       Left-hand navigation
     ├── action_bar.py    Play, Stop, Convert and status bar
     ├── shortcuts.py     Keyboard shortcuts

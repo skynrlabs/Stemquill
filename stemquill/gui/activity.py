@@ -57,7 +57,7 @@ class ActivityLog:
     """
 
     COLUMNS = ("time", "result", "details", "saved")
-    PLACEHOLDER = "Results from Detect, Play and Convert show up here."
+    PLACEHOLDER = "Nothing here yet. Results from Detect, Play and Convert will show up here."
 
     def __init__(self, parent, fonts, on_open=None):
         self.on_open = on_open
@@ -92,6 +92,8 @@ class ActivityLog:
 
         self._saved = {}  # row id -> full path of the saved MIDI file
         self._current = None  # the action rows are being added under
+        # Shown across the middle of the table while it's empty (not as a row, so it isn't cut off)
+        self.empty_note = tk.Label(self.frame, text=self.PLACEHOLDER, bg=T["field"], fg=T["muted"], font=fonts["body"])
         self._placeholder()
 
     def grid(self, **kw):
@@ -101,11 +103,10 @@ class ActivityLog:
         self.tree.delete(*self.tree.get_children())
         self._saved.clear()
         self._current = None
-        self.tree.insert("", "end", iid="placeholder", text=self.PLACEHOLDER, tags=("muted",))
+        self.empty_note.place(relx=0.5, rely=0.55, anchor="center")
 
     def _drop_placeholder(self):
-        if self.tree.exists("placeholder"):
-            self.tree.delete("placeholder")
+        self.empty_note.place_forget()
 
     def clear(self):
         self._placeholder()
@@ -163,7 +164,7 @@ class ActivityLog:
 
         for item in self.tree.get_children():
             walk(item, 0)
-        return "\n".join(lines)
+        return "\n".join(lines) or self.PLACEHOLDER
 
 
 def short_path(path, keep=2):

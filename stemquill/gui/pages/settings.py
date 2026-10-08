@@ -1,54 +1,65 @@
-"""Drum Kit page: which drums to write, and which MIDI note each one goes on."""
+"""Settings page: where MIDI files are saved, and which note each drum is written on."""
 
 import tkinter as tk
-from tkinter import ttk
+from tkinter import filedialog, ttk
 
 from ...config import DRUM_LABELS, DRUM_MAP_LABELS, DRUM_MAPS, DRUM_NOTES, load_settings, note_name
 from ..widgets import card
 
-KIT_BOXES = [  # (label shown, part name, default on) - named like MT Power Drumkit's channels
-    ("Kick", "kick", True),
-    ("Snare", "snare", True),
-    ("Hi-Hat cl.", "hihat", True),
-    ("Hi-Hat op.", "openhat", True),
-    ("Toms", "toms", True),
-    ("Crash", "crash", False),
-    ("Ride", "ride", False),
-]
+SAME_FOLDER = "Same folder as each stem"
 MAP_HELP = (
     "General MIDI works with MT Power Drumkit 2, EZdrummer, Addictive Drums, Superior Drummer and most "
-    "drum plugins.\n\nPads in order is for pad samplers (FL Studio FPC, Ableton Drum Rack, MPC): load "
-    "your sounds from note 36 up in the order shown.\n\nCustom: type any note into a box; it's remembered "
-    "for next time.\n\nNames use 36 = C1. Some DAWs label octaves differently, but the note is the same."
+    "drum plugins. Pads in order is for pad samplers (FL Studio FPC, Ableton Drum Rack, MPC): load your "
+    "sounds from note 36 up in the order shown. Type any note into a box for a Custom map; it's remembered "
+    "for next time. Names use 36 = C1; some DAWs label octaves differently, but the note is the same."
 )
 
 
-class DrumKitPage(ttk.Frame):
-    def __init__(self, parent):
+class SettingsPage(ttk.Frame):
+    def __init__(self, parent, on_reset=None):
         super().__init__(parent)
+        self.on_reset = on_reset
         self.columnconfigure(0, weight=1)
-        self.kit_vars = {part: tk.BooleanVar(value=on) for _, part, on in KIT_BOXES}
+        self.out_dir = None
+        self.out_text = tk.StringVar(value=SAME_FOLDER)
+        self.open_when_done = tk.BooleanVar(value=False)
         self.label_to_key = {v: k for k, v in DRUM_MAP_LABELS.items()}
         self._applying = False
-        self._build_kit()
+        self._build_output()
         self._build_map()
-
-    def _build_kit(self):
-        c = card(self, 0, "Drums to write", "drum stems only")
-        kit = ttk.Frame(c, style="Card.TFrame")
-        kit.grid(row=1, column=0, columnspan=3, sticky="w")
-        self.kit_checks = []
-        for i, (label, part, _) in enumerate(KIT_BOXES):
-            cb = ttk.Checkbutton(kit, text=label, variable=self.kit_vars[part])
-            cb.grid(row=0, column=i, sticky="w", padx=(0, 20), pady=2)
-            self.kit_checks.append(cb)
-        self.kit_note = tk.StringVar()
-        ttk.Label(c, textvariable=self.kit_note, style="Muted.TLabel", wraplength=680, justify="left").grid(
-            row=2, column=0, columnspan=3, sticky="w", pady=(6, 0)
+        c = card(self, 2, "Start over", "tempo, every stem's settings, save folder and drum notes")
+        ttk.Button(c, text="Reset everything to defaults", command=lambda: self.on_reset and self.on_reset()).grid(
+            row=1, column=0, sticky="w"
         )
 
+    # ---- where files go
+    def _build_output(self):
+        c = card(self, 0, "Save MIDI files to")
+        ttk.Label(c, textvariable=self.out_text, style="Card.TLabel").grid(row=1, column=0, columnspan=2, sticky="w")
+        btns = ttk.Frame(c, style="Card.TFrame")
+        btns.grid(row=1, column=2, sticky="e")
+        ttk.Button(btns, text="Change...", command=self.pick_folder).pack(side="left")
+        ttk.Button(btns, text="Reset", command=self.reset_folder).pack(side="left", padx=(6, 0))
+        ttk.Label(
+            c, text="Each stem becomes  <stem name> - <type>.mid,  for example  Drums - drums.mid", style="Muted.TLabel"
+        ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        ttk.Checkbutton(c, text="Open the folder when converting finishes", variable=self.open_when_done).grid(
+            row=3, column=0, columnspan=3, sticky="w", pady=(10, 0)
+        )
+
+    def pick_folder(self):
+        d = filedialog.askdirectory(title="Save MIDI files to")
+        if d:
+            self.out_dir = d
+            self.out_text.set(d)
+
+    def reset_folder(self):
+        self.out_dir = None
+        self.out_text.set(SAME_FOLDER)
+
+    # ---- drum notes
     def _build_map(self):
-        c = card(self, 1, "Drum map", "match this to your drum plugin")
+        c = card(self, 1, "Drum notes", "shared by all drum stems; match this to your drum plugin")
         mapf = ttk.Frame(c, style="Card.TFrame")
         mapf.grid(row=1, column=0, columnspan=3, sticky="ew")
         saved = load_settings()
@@ -56,11 +67,11 @@ class DrumKitPage(ttk.Frame):
         if start_key not in DRUM_MAP_LABELS:
             start_key = "General MIDI"
         self.map_var = tk.StringVar(value=DRUM_MAP_LABELS[start_key])
-        self.map_box = ttk.Combobox(
+        box = ttk.Combobox(
             mapf, textvariable=self.map_var, values=list(DRUM_MAP_LABELS.values()), state="readonly", width=52
         )
-        self.map_box.grid(row=0, column=0, columnspan=9, sticky="w")
-        self.map_box.bind("<<ComboboxSelected>>", lambda e: self.apply_map(self.map_key()))
+        box.grid(row=0, column=0, columnspan=9, sticky="w")
+        box.bind("<<ComboboxSelected>>", lambda e: self.apply_map(self.map_key()))
 
         start_notes = DRUM_MAPS.get(start_key) or {**DRUM_NOTES, **saved.get("custom_map", {})}
         self.note_vars, self.name_vars = {}, {}
@@ -76,7 +87,7 @@ class DrumKitPage(ttk.Frame):
             ttk.Label(mapf, textvariable=self.name_vars[part], style="Muted.TLabel").grid(row=3, column=col, sticky="w")
             self._show_name(part)
             self.note_vars[part].trace_add("write", lambda *_, p=part: self._on_note_edit(p))
-        ttk.Label(c, text=MAP_HELP, style="Muted.TLabel", justify="left", wraplength=680).grid(
+        ttk.Label(c, text=MAP_HELP, style="Muted.TLabel", justify="left", wraplength=700).grid(
             row=2, column=0, columnspan=3, sticky="w", pady=(12, 0)
         )
 
@@ -114,24 +125,8 @@ class DrumKitPage(ttk.Frame):
             out[part] = n
         return out, None
 
-    def selected_parts(self):
-        return [p for p, v in self.kit_vars.items() if v.get()]
-
-    def update_state(self, stem_type):
-        """Grey the page out when the chosen stem type can't be drums."""
-        drums = stem_type in ("auto", "drums")
-        for cb in self.kit_checks:
-            cb.state(["!disabled"] if drums else ["disabled"])
-        self.map_box.state(["!disabled", "readonly"] if drums else ["disabled"])
-        self.kit_note.set(
-            "Crash and Ride start off: cymbals can bring back metallic sounds. If you untick "
-            "Hi-Hat op., open hats are written as closed hats."
-            if drums
-            else f"Stem type is set to {stem_type}, so these settings are not used right now."
-        )
-
     def reset(self):
-        for _, part, on in KIT_BOXES:
-            self.kit_vars[part].set(on)
+        self.reset_folder()
+        self.open_when_done.set(False)
         self.map_var.set(DRUM_MAP_LABELS["General MIDI"])
         self.apply_map("General MIDI")

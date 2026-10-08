@@ -15,6 +15,7 @@ THEME = {
     "accent_text": "#0d1013",
     "ok": "#4cd08a",
     "warn": "#f0b84a",
+    "sel": "#243a40",
     "side": "#14171a",
     "side_hover": "#1f2328",
     "side_active": "#252a30",
@@ -36,6 +37,7 @@ def make_fonts():
         "small": (family, 9),
         "btn": (family, 10, "bold"),
         "big": (family, 12, "bold"),
+        "status": (family, 14, "bold"),
         "nav": (family, 11),
         "mono": ("Consolas" if "Consolas" in families else "DejaVu Sans Mono", 9),
     }
