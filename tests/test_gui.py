@@ -6,6 +6,7 @@ skipped automatically when no display is available.
 
 import os
 import time
+from types import SimpleNamespace
 
 import pytest
 
@@ -62,7 +63,7 @@ def wait_until(app, condition, timeout=60):
 
 
 def activity(app):
-    return app.convert_page.activity.text.get("1.0", "end")
+    return app.convert_page.activity.as_text()
 
 
 def test_opens_on_convert_without_a_menu_bar(app):
@@ -107,9 +108,9 @@ def test_detect_preview_and_convert(app, monkeypatch, stems):
     assert sorted(os.listdir(out)) == ["Bass - bass.mid", "Drums - drums.mid"]
     text = activity(app)
     assert "Convert 3 stems" in text
-    assert "saved as Drums - drums.mid" in text
+    assert "Drums - drums.mid" in text
     assert "silent, skipped" in text
-    assert "Done: 2 of 3 stems" in text
+    assert "Done | 2 of 3 saved" in text
     assert app.action.status.get() == "Done: 2 of 3 converted"
 
 
@@ -143,3 +144,42 @@ def test_clear_activity(app):
     app.convert_page.activity.action("Something")
     app.convert_page.activity.clear()
     assert "show up here" in activity(app)
+
+
+def test_activity_table_newest_first_older_folded(app):
+    feed = app.convert_page.activity
+    first = feed.action("Detect tempo")
+    feed.stem("Drums.wav", "120 BPM")
+    second = feed.action("Convert 1 stem")
+    tree = feed.tree
+    assert tree.get_children()[0] == second
+    assert tree.item(second, "open") in (True, 1)
+    assert tree.item(first, "open") in (False, 0)
+
+
+def test_activity_table_scrolls(app):
+    feed = app.convert_page.activity
+    for i in range(30):
+        feed.action(f"Convert {i}")
+        feed.stem(f"Drums {i}.wav", "drums · 8 notes", "Kick 8", saved=f"/tmp/out/Drums {i} - drums.mid")
+    for item in feed.tree.get_children():
+        feed.tree.item(item, open=True)
+    app.root.update()
+    feed.tree.yview_moveto(0)
+    app.root.update()
+    top = feed.tree.yview()
+    feed.tree.yview_scroll(5, "units")
+    app.root.update()
+    assert feed.tree.yview()[0] > top[0]
+
+
+def test_double_click_saved_file_opens_its_folder(app, monkeypatch):
+    opened = []
+    monkeypatch.setattr(app.convert_page.activity, "on_open", opened.append)
+    feed = app.convert_page.activity
+    feed.action("Convert 1 stem")
+    row = feed.stem("Drums.wav", "drums · 8 notes", "Kick 8", saved="/music/out/Drums - drums.mid")
+    app.root.update()
+    x, y, _, _ = feed.tree.bbox(row)
+    feed._on_double_click(SimpleNamespace(x=x + 5, y=y + 5))  # Tk can't synthesise a double-click
+    assert opened == ["/music/out"]
