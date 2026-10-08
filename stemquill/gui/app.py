@@ -122,6 +122,7 @@ class StemquillApp:
 
     def _on_stems_changed(self):
         n = len(self.convert_page.files)
+        self.action.show_target(os.path.basename(self.convert_page.selected_stem()) if n else None, n)
         self.sidebar.set_label("convert", f"Convert  ({n})" if n else "Convert")
         self.drum_page.update_state(self.convert_page.type_var.get())
 

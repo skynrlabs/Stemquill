@@ -41,9 +41,11 @@ class ConvertPage(ttk.Frame):
         self.listbox = tk.Listbox(c, height=4, bg=T["field"], fg=T["text"], selectbackground=T["accent"],
                                   selectforeground=T["accent_text"], highlightthickness=1,
                                   highlightbackground=T["line"], highlightcolor=T["accent"], relief="flat",
-                                  font=F["body"], activestyle="none", selectmode="extended")
+                                  font=F["body"], activestyle="none", selectmode="extended",
+                                  exportselection=False)  # keep the highlight when another box gets focus
         self.listbox.grid(row=1, column=0, columnspan=2, sticky="ew")
         self.listbox.bind("<Delete>", lambda e: self.remove_selected())
+        self.listbox.bind("<<ListboxSelect>>", lambda e: self.on_stems_changed())
         btns = ttk.Frame(c, style="Card.TFrame")
         btns.grid(row=1, column=2, sticky="ns", padx=(10, 0))
         ttk.Button(btns, text="Add stems...", command=self.add_files).pack(fill="x")
@@ -52,6 +54,8 @@ class ConvertPage(ttk.Frame):
 
     def refresh_list(self):
         lb = self.listbox
+        sel = [i for i in lb.curselection() if i < len(self.files)]
+        keep = sel[0] if sel else 0
         lb.delete(0, "end")
         for f in self.files:
             kind = self.type_var.get() if self.type_var.get() != "auto" else guess_type(f)
@@ -59,6 +63,8 @@ class ConvertPage(ttk.Frame):
         if not self.files:
             lb.insert("end", "  No stems yet. Click Add stems... or press Ctrl+O")
             lb.itemconfig(0, fg=T["muted"])
+        elif keep is not None:
+            lb.selection_set(min(keep, len(self.files) - 1))  # always show which stem Play and Detect use
         self.on_stems_changed()
 
     def add_files(self):

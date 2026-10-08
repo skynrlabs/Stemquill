@@ -97,7 +97,7 @@ python -m stemquill
 
 1. Click **Add stems...** and pick your audio files (WAV, MP3, FLAC, AIFF, OGG or M4A). The stem type is read from the file name ("Drums", "Bass", "Vocals", "Other"), or set it under **Stem type**.
 2. Click **Detect** to measure the tempo from the selected stem, or type the BPM if you know it.
-3. Click **Play** to preview the MIDI with built-in sounds. Tick **Mix in the original stem** to check the timing against the real audio.
+3. Click **Play** to preview the MIDI with built-in sounds. With several stems, click the one you want in the list first; the line under **Play** shows which stem will play (Detect uses the same one). Tick **Mix in the original stem** to check the timing against the real audio.
 4. Adjust **Sensitivity**, **Snap to grid** or **Humanize** and play again until it sounds right. **Reset to defaults** puts everything back.
 5. Click **Convert to MIDI**. Each stem becomes `<name> - <type>.mid`.
 

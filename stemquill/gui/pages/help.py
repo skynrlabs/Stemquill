@@ -13,8 +13,9 @@ HELP_TEXT = [
           "(Drums, Bass, Vocals, Other), or set it yourself under Stem type."),
     ("p", "2.  Click Detect to measure the tempo, or type the BPM if you know it. Set your DAW project "
           "to the same tempo."),
-    ("p", "3.  Click Play to hear the result before saving. Tick Mix in the original stem to check "
-          "the timing against the real audio."),
+    ("p", "3.  Click Play to hear the result before saving. With several stems, click the one you want "
+          "in the list first; the bar under Play shows which stem will play. Tick Mix in the original "
+          "stem to check the timing against the real audio."),
     ("p", "4.  Adjust Sensitivity, Humanize or the Drum Kit page, and play again until it sounds right."),
     ("p", "5.  Click Convert to MIDI. Each stem becomes <name> - <type>.mid. Drag it onto your "
           "instrument track at bar 1."),
