@@ -114,6 +114,8 @@ jobs:
             [pscustomobject]@{ Name = $_.Name; MB = [math]::Round($size / 1MB, 1) }
           } | Sort-Object MB -Descending | Select-Object -First 12 | Format-Table -AutoSize
 
+      # The installer is published on itch.io, not attached to the GitHub release.
+      # Download it from this run's Artifacts and upload it to itch.io.
       - uses: actions/upload-artifact@v6
         with:
           name: Stemquill-${{ steps.ver.outputs.version }}-windows
