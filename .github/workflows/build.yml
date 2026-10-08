@@ -15,9 +15,9 @@ jobs:
   windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
 
@@ -114,13 +114,13 @@ jobs:
             [pscustomobject]@{ Name = $_.Name; MB = [math]::Round($size / 1MB, 1) }
           } | Sort-Object MB -Descending | Select-Object -First 12 | Format-Table -AutoSize
 
-      - uses: actions/upload-artifact@v5
+      - uses: actions/upload-artifact@v6
         with:
           name: Stemquill-${{ steps.ver.outputs.version }}-windows
           path: dist/installer/*.exe
 
       - name: Publish release
         if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           files: dist/installer/*.exe
