@@ -37,6 +37,7 @@ def make_fonts():
         "small": (family, 9),
         "btn": (family, 10, "bold"),
         "big": (family, 12, "bold"),
+        "status": (family, 14, "bold"),
         "nav": (family, 11),
         "mono": ("Consolas" if "Consolas" in families else "DejaVu Sans Mono", 9),
     }

@@ -149,7 +149,7 @@ def test_apply_to_all(app, monkeypatch, stems):
     p.card.apply_typed_sensitivity()
     p.apply_to_all()
     assert [s.sensitivity for s in p.stems] == [1.1, 1.1, 1.1]
-    assert "Applied" in app.action.status.get()
+    assert "Applied" in app.status_card.status.get()
 
 
 def test_changing_a_stems_type(app, monkeypatch, stems):
@@ -206,13 +206,17 @@ def test_detect_preview_and_convert(app, monkeypatch, stems):
     assert "Convert 3 stems" in text
     assert "sensitivity 1.20" in text  # per-stem setting recorded for the bass
     assert "Done | 2 of 3 saved" in text
-    assert app.action.status.get() == "Done: 2 of 3 converted"
+    assert app.status_card.status.get() == "Done: 2 of 3 converted"
+    assert app.status_card.kind == "warn"  # one stem was skipped
+    assert "1 skipped" in app.status_card.detail.get()
+    assert not app.status_card.progress.winfo_ismapped()
 
 
 def test_convert_without_stems_says_what_to_do(app):
     app.converter.start()
     app.root.update()
-    assert app.action.status.get() == "Add at least one stem first"
+    assert app.status_card.status.get() == "Add at least one stem first"
+    assert app.status_card.kind == "warn"
 
 
 def test_bad_drum_note_sends_you_to_settings(app, monkeypatch, stems):
@@ -221,7 +225,7 @@ def test_bad_drum_note_sends_you_to_settings(app, monkeypatch, stems):
     app.converter.start()
     app.root.update()
     assert app.page_title.get() == "Settings"
-    assert "0 to 127" in app.action.status.get()
+    assert "0 to 127" in app.status_card.status.get()
 
 
 def test_drum_map_is_shared_between_card_and_settings(app, monkeypatch, stems):
@@ -316,3 +320,16 @@ def test_empty_message_is_not_a_table_row(app):
     feed.clear()
     app.root.update()
     assert feed.empty_note.winfo_ismapped()
+
+
+def test_status_card_colours_and_progress(app):
+    card = app.status_card
+    assert card.status.get() == "Ready"
+    card.start_progress(4)
+    card.say("Converting 4 stems...", "busy")
+    app.root.update()
+    assert card.progress.winfo_ismapped()
+    card.say("Done: 4 of 4 converted", "ok", "Saved in ...")
+    app.root.update()
+    assert not card.progress.winfo_ismapped()
+    assert card.msg_lbl.cget("fg") == card.edge.cget("bg")  # message and edge share the colour

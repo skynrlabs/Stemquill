@@ -111,15 +111,6 @@ class StemSettingsCard(ttk.Frame):
         link.pack(side="left", padx=(12, 0))
         link.configure(cursor="hand2")
         link.bind("<Button-1>", lambda e: on_open_settings())
-        ttk.Label(
-            self.drums,
-            text="Crash and Ride start off: cymbals can bring back metallic sounds. "
-            "If Hi-Hat op. is off, open hats are written as closed hats.",
-            style="Muted.TLabel",
-            wraplength=620,
-            justify="left",
-        ).grid(row=2, column=1, sticky="w", pady=(6, 0))
-
         self.show(None)
 
     # ---- showing a stem

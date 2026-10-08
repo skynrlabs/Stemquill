@@ -77,8 +77,8 @@ class ConvertJourney:
             self._status(stem, "waiting...", "muted")
         app.set_busy(True)
         app.action.open_btn.state(["disabled"])
-        app.say("Working...")
-        app.action.progress.configure(maximum=len(stems), value=0)
+        app.say(f"Converting {plural(len(stems), 'stem')}...", "busy", "Each row shows its result as it finishes")
+        app.status_card.start_progress(len(stems))
         threading.Thread(target=self._work, args=(stems, c, app.settings_page.out_dir), daemon=True).start()
 
     def _status(self, stem, text, kind, saved=None):
@@ -97,8 +97,8 @@ class ConvertJourney:
             msg = f"Converting {name}  ({i + 1} of {len(stems)})"
             app.post(
                 lambda m=msg, v=i, s=stem: (
-                    app.say(m),
-                    app.action.progress.configure(value=v),
+                    app.say(m, "busy", "Each row shows its result as it finishes"),
+                    app.status_card.set_progress(v),
                     self._status(s, "converting...", "busy"),
                 )
             )
@@ -141,8 +141,15 @@ class ConvertJourney:
     def _finish(self, ok, total):
         app = self.app
         app.set_busy(False)
-        app.action.progress["value"] = total
-        app.say(f"Done: {ok} of {total} converted" if total else "Ready", "ok" if ok == total else "warn")
+        app.status_card.set_progress(total)
+        skipped = total - ok
+        if ok:
+            detail = f"Saved in {short_path(self.last_out_dir)} · drag each .mid onto its track at bar 1"
+            if skipped:
+                detail = f"{skipped} skipped (see the Stems list) · " + detail
+        else:
+            detail = "Check the Stems list for what went wrong"
+        app.say(f"Done: {ok} of {total} converted", "ok" if ok == total else "warn", detail)
         if self.last_out_dir:
             app.action.open_btn.state(["!disabled"])
             if app.settings_page.open_when_done.get() and ok:
@@ -166,7 +173,7 @@ class PreviewJourney:
         self.player.stop()
         stem = app.convert_page.selected_stem()
         app.set_busy(True)
-        app.say(f"Building preview of {stem.name}...")
+        app.say(f"Building preview of {stem.name}...", "busy", "This takes a few seconds")
         include = app.action.with_original.get()
         threading.Thread(target=self._work, args=(stem, c, include), daemon=True).start()
 
@@ -202,9 +209,13 @@ class PreviewJourney:
         app.set_busy(False)
         try:
             self.player.play(PREVIEW_WAV)
-            app.say(f"Playing {os.path.basename(f)}: {n} notes. Happy with it? Click Convert all to save.", "ok")
+            app.say(
+                f"Playing {os.path.basename(f)} · {n} notes",
+                "ok",
+                "Happy with it? Click Convert all to MIDI to save. Stop preview ends playback.",
+            )
         except Exception as exc:
-            app.say(f"Couldn't play audio ({exc}). Preview saved to {PREVIEW_WAV}", "warn")
+            app.say("Couldn't play the preview", "warn", f"{exc}. The preview was saved to {PREVIEW_WAV}")
 
     def stop(self):
         self.player.stop()
@@ -228,7 +239,7 @@ class TempoJourney:
             return
         f = stem.path
         app.set_busy(True)
-        app.say(f"Measuring tempo of {os.path.basename(f)}...")
+        app.say(f"Measuring the tempo of {os.path.basename(f)}...", "busy", "This takes a few seconds")
         threading.Thread(target=self._work, args=(f,), daemon=True).start()
 
     def _work(self, f):
@@ -244,7 +255,7 @@ class TempoJourney:
         app = self.app
         app.set_busy(False)
         app.convert_page.set_tempo(bpm, f)
-        app.say(f"Tempo detected: {bpm:g} BPM", "ok")
+        app.say(f"Tempo: {bpm:g} BPM", "ok", "Set your DAW project to the same tempo")
         feed = app.activity
         feed.action("Detect tempo")
         feed.stem(os.path.basename(f), f"{bpm:g} BPM", "Set your DAW project to the same tempo")

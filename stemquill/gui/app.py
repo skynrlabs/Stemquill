@@ -15,6 +15,7 @@ from .journeys import ConvertJourney, PreviewJourney, TempoJourney
 from .pages import PAGES, ConvertPage, HelpPage, HistoryPage, SettingsPage
 from .shortcuts import bind_shortcuts
 from .sidebar import Sidebar
+from .status_card import StatusCard
 from .theme import THEME, apply_styles, make_fonts
 
 IS_WINDOWS = sys.platform.startswith("win")
@@ -112,8 +113,10 @@ class StemquillApp:
         for page in self.pages.values():
             page.grid(row=0, column=0, sticky="nsew")
 
+        self.status_card = StatusCard(main, self.fonts)
+        self.status_card.grid(row=2, column=0, sticky="ew", pady=(4, 10))
         self.action = ActionBar(main)
-        self.action.grid(row=2, column=0, sticky="ew", pady=(4, 0))
+        self.action.grid(row=3, column=0, sticky="ew")
 
     def _wire_buttons(self):
         self.action.stop_btn.configure(command=self.preview.stop)
@@ -146,8 +149,9 @@ class StemquillApp:
         """Run fn on the window's thread (safe to call from a background thread)."""
         self.updates.put(fn)
 
-    def say(self, msg, color="muted"):
-        self.action.say(msg, color)
+    def say(self, msg, kind="muted", detail=""):
+        """Show a message in the status card. kind: muted, busy, ok or warn."""
+        self.status_card.say(msg, kind, detail)
 
     def set_busy(self, on):
         self.busy = on

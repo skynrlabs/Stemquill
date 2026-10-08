@@ -73,7 +73,11 @@ HELP_TEXT = [
         "especially toms, ghost notes and busy strumming.",
     ),
     ("p", "Cleaner stems give better results. Bleed from other instruments means extra notes."),
-    ("p", "Crash and Ride start off because cymbals can bring back metallic sounds."),
+    (
+        "p",
+        "Crash and Ride start off because cymbals can bring back metallic sounds. "
+        "If Hi-Hat op. is off, open hats are written as closed hats.",
+    ),
     ("p", "The preview uses simple placeholder sounds. Your real instruments will sound much better."),
     ("h", "Keyboard shortcuts"),
     ("k", "Ctrl+O\tAdd stems"),
