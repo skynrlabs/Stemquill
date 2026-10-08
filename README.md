@@ -1,7 +1,6 @@
 # <img src="stemquill/assets/icon-64.png" alt="" width="48" align="center"> Stemquill
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-[![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://github.com/skynrlabs/Stemquill/releases/latest)
 [![Tests](https://img.shields.io/github/actions/workflow/status/skynrlabs/Stemquill/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/skynrlabs/Stemquill/actions/workflows/test.yml)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
