@@ -4,34 +4,37 @@ import tkinter as tk
 import webbrowser
 from tkinter import ttk
 
-from ...config import REPO_URL
+from ...config import REPO_URL, SUPPORT_URL
 from ..theme import THEME as T
 
 HELP_TEXT = [
     ("h", "Quick start"),
     (
         "p",
-        "1.  Click Add stems... and pick your audio files. The stem type is read from the file name "
-        "(Drums, Bass, Vocals, Other), or set it yourself under Stem type.",
+        "1.  Drop your stems (or a folder of them) onto the window, or click Add stems... Each stem gets its "
+        "own row; its type is read from the file name (Drums, Bass, Vocals, Other) and you can change it there.",
     ),
     (
         "p",
-        "2.  Click Detect to measure the tempo, or type the BPM if you know it. Set your DAW project "
-        "to the same tempo.",
+        "2.  Song: click Detect to measure the tempo from the selected stem, or type the BPM. Set your DAW "
+        "project to the same tempo. Tempo and Snap to grid are shared by every stem.",
     ),
     (
         "p",
-        "3.  Click Play to hear the result before saving. With several stems, click the one you want "
-        "in the list first; the bar under Play shows which stem will play. Tick Mix in the original "
-        "stem to check the timing against the real audio.",
+        "3.  Click a stem to see its own settings underneath: Sensitivity, Humanize and, for drum stems, "
+        "which drums to write. Apply to all stems copies them to the rest.",
     ),
-    ("p", "4.  Adjust Sensitivity, Humanize or the Drum Kit page, and play again until it sounds right."),
     (
         "p",
-        "5.  Click Convert to MIDI. Each stem becomes <name> - <type>.mid. Drag it onto your "
-        "instrument track at bar 1.",
+        "4.  Click Play on a stem's row to hear it before saving; it turns into Stop while it plays (Esc also "
+        "stops). Tick Mix in the original stem to check the timing against the real audio.",
     ),
-    ("h", "Settings"),
+    (
+        "p",
+        "5.  Click Convert to MIDI. Each row shows when its file is saved as <name> - <type>.mid; if you change "
+        "a setting afterwards it says 'changed · convert again'. Drag each file onto its track at bar 1.",
+    ),
+    ("h", "Stem settings"),
     ("p", "Sensitivity: slide right to catch quieter notes, left to cut junk notes. 0.80 is a good start."),
     (
         "p",
@@ -60,7 +63,7 @@ HELP_TEXT = [
     (
         "p",
         "Guitar, keys and synth stems use basic-pitch for chords when the Better chord detection option "
-        "was ticked in the installer, and a simpler built-in mode otherwise. The Activity feed shows which "
+        "was ticked in the installer, and a simpler built-in mode otherwise. The History page shows which "
         "one was used. Run the installer again to add or remove it.",
     ),
     ("h", "Tips"),
@@ -70,13 +73,17 @@ HELP_TEXT = [
         "especially toms, ghost notes and busy strumming.",
     ),
     ("p", "Cleaner stems give better results. Bleed from other instruments means extra notes."),
-    ("p", "Crash and Ride start off because cymbals can bring back metallic sounds."),
+    (
+        "p",
+        "Crash and Ride start off because cymbals can bring back metallic sounds. "
+        "If Hi-Hat op. is off, open hats are written as closed hats.",
+    ),
     ("p", "The preview uses simple placeholder sounds. Your real instruments will sound much better."),
     ("h", "Keyboard shortcuts"),
     ("k", "Ctrl+O\tAdd stems"),
     ("k", "Ctrl+T\tDetect tempo"),
     ("k", "Ctrl+P\tPreview"),
-    ("k", "Esc\tStop preview"),
+    ("k", "Esc\tStop playback"),
     ("k", "Ctrl+Enter\tConvert to MIDI"),
     ("k", "Ctrl+1 to 4\tSwitch pages"),
     ("k", "F1\tHelp"),
@@ -120,9 +127,10 @@ class HelpPage(ttk.Frame):
         text.configure(state="disabled")
 
         links = ttk.Frame(self)
-        links.grid(row=1, column=0, sticky="w")
+        links.grid(row=1, column=0, sticky="ew")
         ttk.Button(links, text="Stemquill on GitHub", command=lambda: webbrowser.open(REPO_URL)).pack(side="left")
         ttk.Button(links, text="Report a problem", command=lambda: webbrowser.open(REPO_URL + "/issues")).pack(
             side="left", padx=8
         )
         ttk.Button(links, text="About", command=on_about).pack(side="left")
+        ttk.Button(links, text="Support Stemquill", command=lambda: webbrowser.open(SUPPORT_URL)).pack(side="right")

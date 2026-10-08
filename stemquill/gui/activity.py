@@ -50,91 +50,121 @@ def describe(result):
 
 
 class ActivityLog:
-    def __init__(self, parent, fonts):
-        F = fonts
+    """A scrollable table: one expandable row per action, with a row per stem underneath.
+
+    The newest action is at the top and opened; older ones fold away so the table stays tidy.
+    Double-click a converted stem to open the folder its MIDI file was saved in.
+    """
+
+    COLUMNS = ("time", "result", "details", "saved")
+    PLACEHOLDER = "Nothing here yet. Results from Detect, Play and Convert will show up here."
+
+    def __init__(self, parent, fonts, on_open=None):
+        self.on_open = on_open
         self.frame = tk.Frame(parent, bg=T["field"])
         self.frame.columnconfigure(0, weight=1)
         self.frame.rowconfigure(0, weight=1)
-        self.text = tk.Text(
-            self.frame,
-            height=4,
-            bg=T["field"],
-            fg=T["text"],
-            relief="flat",
-            font=F["body"],
-            highlightthickness=0,
-            padx=12,
-            pady=10,
-            wrap="word",
-            cursor="arrow",
-            spacing1=1,
-            spacing3=1,
-        )
-        scroll = ttk.Scrollbar(self.frame, orient="vertical", command=self.text.yview)
-        self.text.configure(yscrollcommand=scroll.set)
-        self.text.grid(row=0, column=0, sticky="nsew")
+        tree = ttk.Treeview(self.frame, columns=self.COLUMNS, style="Activity.Treeview", selectmode="browse")
+        self.tree = tree
+        tree.heading("#0", text="Action / stem", anchor="w")
+        tree.heading("time", text="Time", anchor="w")
+        tree.heading("result", text="Result", anchor="w")
+        tree.heading("details", text="Details", anchor="w")
+        tree.heading("saved", text="Saved as", anchor="w")
+        # Narrow fixed columns on the left; Details and Saved as share whatever room is left
+        tree.column("#0", width=180, minwidth=140, stretch=False)
+        tree.column("time", width=52, minwidth=48, stretch=False)
+        tree.column("result", width=140, minwidth=110, stretch=False)
+        tree.column("details", width=220, minwidth=120, stretch=True)
+        tree.column("saved", width=160, minwidth=110, stretch=True)
+        scroll = ttk.Scrollbar(self.frame, orient="vertical", command=tree.yview)
+        tree.configure(yscrollcommand=scroll.set)
+        tree.grid(row=0, column=0, sticky="nsew")
         scroll.grid(row=0, column=1, sticky="ns")
-        t = self.text
-        t.tag_configure("time", foreground=T["muted"], font=F["small"])
-        t.tag_configure("title", foreground=T["text"], font=F["h"], spacing1=8)
-        t.tag_configure("name", foreground=T["text"], font=F["btn"])
-        t.tag_configure("settings", foreground=T["muted"], lmargin1=44, lmargin2=44, spacing3=4)
-        t.tag_configure("stem", lmargin1=12, lmargin2=34)
-        t.tag_configure("detail", foreground=T["muted"], lmargin1=34, lmargin2=34)
-        t.tag_configure("ok", foreground=T["ok"], font=F["btn"])
-        t.tag_configure("warn", foreground=T["warn"], font=F["btn"])
-        t.tag_configure("muted", foreground=T["muted"])
-        t.tag_configure("summary", foreground=T["ok"], spacing1=4)
-        t.tag_configure("summary_warn", foreground=T["warn"], spacing1=4)
-        t.configure(state="disabled")
-        self._empty = True
+
+        tree.tag_configure("action", font=fonts["btn"], foreground=T["text"])
+        tree.tag_configure("stem", foreground=T["text"])
+        tree.tag_configure("problem", foreground=T["warn"])
+        tree.tag_configure("summary", foreground=T["ok"])
+        tree.tag_configure("summary_warn", foreground=T["warn"])
+        tree.tag_configure("muted", foreground=T["muted"])
+        tree.bind("<Double-1>", self._on_double_click)
+
+        self._saved = {}  # row id -> full path of the saved MIDI file
+        self._current = None  # the action rows are being added under
+        # Shown across the middle of the table while it's empty (not as a row, so it isn't cut off)
+        self.empty_note = tk.Label(self.frame, text=self.PLACEHOLDER, bg=T["field"], fg=T["muted"], font=fonts["body"])
         self._placeholder()
 
     def grid(self, **kw):
         self.frame.grid(**kw)
 
-    # ---- low-level writing (the widget is read-only for the user)
-    def _write(self, *parts):
-        t = self.text
-        t.configure(state="normal")
-        if self._empty:
-            t.delete("1.0", "end")
-            self._empty = False
-        for text, tag in parts:
-            t.insert("end", text, tag)
-        t.configure(state="disabled")
-        t.see("end")
-
     def _placeholder(self):
-        t = self.text
-        t.configure(state="normal")
-        t.delete("1.0", "end")
-        t.insert("end", "Results from Detect, Play and Convert show up here.", "muted")
-        t.configure(state="disabled")
-        self._empty = True
+        self.tree.delete(*self.tree.get_children())
+        self._saved.clear()
+        self._current = None
+        self.empty_note.place(relx=0.5, rely=0.55, anchor="center")
+
+    def _drop_placeholder(self):
+        self.empty_note.place_forget()
 
     def clear(self):
         self._placeholder()
 
     # ---- entries
-    def action(self, title, detail=None):
-        """Start a new entry, e.g. 'Convert 3 stems' with the settings underneath."""
-        lead = "" if self._empty else "\n"
-        parts = [(lead + time.strftime("%H:%M") + "   ", "time"), (title + "\n", "title")]
-        if detail:
-            parts.append((detail + "\n", "settings"))
-        self._write(*parts)
+    def action(self, title, detail=""):
+        """Start a new action at the top of the table, e.g. 'Convert 3 stems' with its settings."""
+        self._drop_placeholder()
+        for item in self.tree.get_children():
+            self.tree.item(item, open=False)  # fold older actions away
+        self._current = self.tree.insert(
+            "", 0, text=title, values=(time.strftime("%H:%M"), "", detail, ""), open=True, tags=("action",)
+        )
+        self.tree.see(self._current)
+        return self._current
 
-    def stem_ok(self, name, line, extra=None):
-        self._write(("•  ", ("ok", "stem")), (name, ("name", "stem")), ("   " + line + "\n", ("muted", "stem")))
-        if extra:
-            self._write((extra + "\n", "detail"))
+    def _child(self, text, values, tags):
+        if self._current is None:
+            self.action("Activity")
+        row = self.tree.insert(self._current, "end", text=text, values=values, tags=tags)
+        self.tree.see(row)
+        self.tree.see(self._current)  # keep the newest action's title in view at the top
+        return row
 
-    def stem_problem(self, name, reason):
-        self._write(("!  ", ("warn", "stem")), (name, ("name", "stem")), ("   " + reason + "\n", ("muted", "stem")))
+    def stem(self, name, result, details="", saved=None):
+        """A stem that worked: what it is, what was found, and the file it was saved to (if any)."""
+        row = self._child(name, ("", result, details, os.path.basename(saved) if saved else ""), ("stem",))
+        if saved:
+            self._saved[row] = saved
+        return row
 
-    def summary(self, text, good=True):
-        self._write((text + "\n", "summary" if good else "summary_warn"))
+    def problem(self, name, reason):
+        """A stem that was skipped or failed."""
+        return self._child(name, ("", reason, "", ""), ("problem",))
+
+    def summary(self, label, result="", details="", good=True):
+        """The closing row of an action, e.g. 'Done | 3 of 4 saved | in ...\\Stems'."""
+        return self._child(label, ("", result, details, ""), ("summary" if good else "summary_warn",))
+
+    # ---- double-click opens the folder of a saved file
+    def _on_double_click(self, event):
+        row = self.tree.identify_row(event.y)
+        if row in self._saved and self.on_open:
+            self.on_open(os.path.dirname(self._saved[row]))
+
+    # ---- for tests and copying: the table as plain text, top to bottom
+    def as_text(self):
+        lines = []
+
+        def walk(item, depth):
+            values = [v for v in self.tree.item(item, "values") if v]
+            lines.append("  " * depth + " | ".join([self.tree.item(item, "text"), *map(str, values)]))
+            for child in self.tree.get_children(item):
+                walk(child, depth + 1)
+
+        for item in self.tree.get_children():
+            walk(item, 0)
+        return "\n".join(lines) or self.PLACEHOLDER
 
 
 def short_path(path, keep=2):

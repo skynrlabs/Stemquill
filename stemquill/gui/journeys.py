@@ -8,6 +8,7 @@ the Activity feed as short, readable entries (see activity.py).
 import os
 import tempfile
 import threading
+import wave
 
 from ..core import Player, detect_tempo, render_preview, save_result, transcribe
 from .activity import describe, short_path
@@ -28,16 +29,29 @@ class EngineNotes:
         return [m for m in self.lines if "failed" in m]
 
 
-def run_transcribe(path, c, notes):
+def run_transcribe(stem, c, notes):
+    """Transcribe one stem with the shared song settings (c) and the stem's own settings."""
     return transcribe(
-        path, c["stem_type"], c["bpm"], c["grid"], c["sensitivity"], c["parts"], notes, c["drum_map"], c["humanize"]
+        stem.path,
+        stem.stem_type,
+        c["bpm"],
+        c["grid"],
+        stem.sensitivity,
+        stem.parts,
+        notes,
+        c["drum_map"],
+        stem.humanize / 100.0,
     )
 
 
-def settings_line(c):
+def song_line(c):
     snap = "no snap" if not c["grid"] else f"snap {c['grid_label']}"
-    human = f"humanize {int(c['humanize'] * 100)}%" if c["humanize"] else "no humanize"
-    return f"{c['bpm']:g} BPM · {snap} · sensitivity {c['sensitivity']:.2f} · {human} · {c['map_key']} drum map"
+    return f"{c['bpm']:g} BPM · {snap} · {c['map_key']} drum map"
+
+
+def stem_line(stem):
+    human = f"humanize {stem.humanize}%" if stem.humanize else "no humanize"
+    return f"sensitivity {stem.sensitivity:.2f} · {human}"
 
 
 def plural(n, word):
@@ -58,60 +72,92 @@ class ConvertJourney:
         c = app.collect()
         if not c:
             return
-        files = list(app.convert_page.files)
-        app.convert_page.activity.action(f"Convert {plural(len(files), 'stem')}", settings_line(c))
+        stems = list(app.convert_page.stems)
+        app.activity.action(f"Convert {plural(len(stems), 'stem')}", song_line(c))
+        # remember the settings each file is made with, to spot later changes ("changed since saved")
+        self.sigs = {id(s): app.convert_page.signature(s) for s in stems}
+        for stem in stems:
+            stem.saved_sig = None
+            self._status(stem, "waiting...", "muted")
         app.set_busy(True)
         app.action.open_btn.state(["disabled"])
-        app.say("Working...")
-        app.action.progress.configure(maximum=len(files), value=0)
-        threading.Thread(target=self._work, args=(files, c, app.output_page.out_dir), daemon=True).start()
+        app.say(f"Converting {plural(len(stems), 'stem')}...", "busy", "Each row shows its result as it finishes")
+        app.status_card.start_progress(len(stems))
+        threading.Thread(target=self._work, args=(stems, c, app.settings_page.out_dir), daemon=True).start()
 
-    def _work(self, files, c, out_dir):
+    def _status(self, stem, text, kind, saved=None):
+        """Update a stem's status (call on the window's thread)."""
+        stem.status, stem.status_kind = text, kind
+        if saved:
+            stem.saved = saved
+        self.app.convert_page.show_status(stem)
+
+    def _work(self, stems, c, out_dir):
         app = self.app
-        feed = app.convert_page.activity
+        feed = app.activity
         ok = 0
-        for i, f in enumerate(files):
-            name = os.path.basename(f)
-            msg = f"Converting {name}  ({i + 1} of {len(files)})"
-            app.post(lambda m=msg, v=i: (app.say(m), app.action.progress.configure(value=v)))
+        for i, stem in enumerate(stems):
+            name = stem.name
+            msg = f"Converting {name}  ({i + 1} of {len(stems)})"
+            app.post(
+                lambda m=msg, v=i, s=stem: (
+                    app.say(m, "busy", "Each row shows its result as it finishes"),
+                    app.status_card.set_progress(v),
+                    self._status(s, "converting...", "busy"),
+                )
+            )
             notes = EngineNotes()
             try:
-                result = run_transcribe(f, c, notes)
+                result = run_transcribe(stem, c, notes)
                 if not result:
-                    app.post(lambda n=name: feed.stem_problem(n, "silent, skipped"))
+                    app.post(
+                        lambda n=name, s=stem: (
+                            feed.problem(n, "silent, skipped"),
+                            self._status(s, "silent, skipped", "warn"),
+                        )
+                    )
                     continue
                 out = save_result(result, out_dir, notes)
                 ok += 1
                 self.last_out_dir = os.path.dirname(out)
-                line = (
-                    f"{result['stem_type']} · {plural(len(result['notes']), 'note')} · saved as {os.path.basename(out)}"
-                )
-                extra = describe(result)
+                count = plural(len(result["notes"]), "note")
+                found = f"{result['stem_type']} · {count}"
+                details = describe(result) + f" · {stem_line(stem)}"
                 for w in notes.warnings():
-                    extra += f"  ({w})"
-                app.post(lambda n=name, ln=line, ex=extra: feed.stem_ok(n, ln, ex))
+                    details += f"  ({w})"
+                done = f"saved · {count}"
+                app.post(
+                    lambda n=name, r=found, d=details, o=out, s=stem, t=done: (
+                        feed.stem(n, r, d, saved=o),
+                        self._status(s, t, "ok", saved=o),
+                        app.convert_page.mark_saved(s, self.sigs[id(s)]),
+                    )
+                )
             except Exception as exc:  # keep going with the other stems
                 err = f"couldn't convert: {exc}"
-                app.post(lambda n=name, e=err: feed.stem_problem(n, e))
+                app.post(lambda n=name, e=err, s=stem: (feed.problem(n, e), self._status(s, e, "warn")))
         if ok:
-            where = short_path(self.last_out_dir)
-            summary = (
-                f"Done: {ok} of {plural(len(files), 'stem')} saved to {where}. "
-                "Drag the .mid files onto your tracks at bar 1."
-            )
+            summary = ("Done", f"{ok} of {len(stems)} saved", f"in {short_path(self.last_out_dir)}")
         else:
-            summary = "Nothing was converted."
-        app.post(lambda: feed.summary(summary, good=ok == len(files)))
-        app.post(lambda: self._finish(ok, len(files)))
+            summary = ("Nothing was converted", "", "")
+        app.post(lambda: feed.summary(*summary, good=ok == len(stems)))
+        app.post(lambda: self._finish(ok, len(stems)))
 
     def _finish(self, ok, total):
         app = self.app
         app.set_busy(False)
-        app.action.progress["value"] = total
-        app.say(f"Done: {ok} of {total} converted" if total else "Ready", "ok" if ok == total else "warn")
+        app.status_card.set_progress(total)
+        skipped = total - ok
+        if ok:
+            detail = f"Saved in {short_path(self.last_out_dir)} · drag each .mid onto its track at bar 1"
+            if skipped:
+                detail = f"{skipped} skipped (see the Stems list) · " + detail
+        else:
+            detail = "Check the Stems list for what went wrong"
+        app.say(f"Done: {ok} of {total} converted", "ok" if ok == total else "warn", detail)
         if self.last_out_dir:
             app.action.open_btn.state(["!disabled"])
-            if app.output_page.open_when_done.get() and ok:
+            if app.settings_page.open_when_done.get() and ok:
                 app.open_folder()
 
 
@@ -130,50 +176,70 @@ class PreviewJourney:
         if not c:
             return
         self.player.stop()
-        f = app.convert_page.selected_stem()
+        self.token = None
+        app.convert_page.set_playing(None)
+        stem = app.convert_page.selected_stem()
         app.set_busy(True)
-        app.say(f"Building preview of {os.path.basename(f)}...")
+        app.say(f"Building preview of {stem.name}...", "busy", "This takes a few seconds")
         include = app.action.with_original.get()
-        threading.Thread(target=self._work, args=(f, c, include), daemon=True).start()
+        threading.Thread(target=self._work, args=(stem, c, include), daemon=True).start()
 
-    def _work(self, f, c, include_original):
+    def _work(self, stem, c, include_original):
         app = self.app
-        feed = app.convert_page.activity
-        name = os.path.basename(f)
+        feed = app.activity
+        name = stem.name
         try:
-            result = run_transcribe(f, c, EngineNotes())
+            result = run_transcribe(stem, c, EngineNotes())
             if not result:
                 app.post(
                     lambda: (
                         app.set_busy(False),
                         app.say("That stem is silent", "warn"),
                         feed.action(f"Preview {name}"),
-                        feed.stem_problem(name, "silent"),
+                        feed.problem(name, "silent"),
                     )
                 )
                 return
             render_preview(result, PREVIEW_WAV, include_original)
             n = len(result["notes"])
-            line = f"{result['stem_type']} · {plural(n, 'note')}"
-            extra = describe(result)
-            app.post(lambda: (feed.action(f"Preview {name}", settings_line(c)), feed.stem_ok(name, line, extra)))
-            app.post(lambda: self._play(f, n))
+            found = f"{result['stem_type']} · {plural(n, 'note')}"
+            details = describe(result) + f" · {stem_line(stem)}"
+            app.post(lambda: (feed.action(f"Preview {name}", song_line(c)), feed.stem(name, found, details)))
+            with wave.open(PREVIEW_WAV, "rb") as w:
+                seconds = w.getnframes() / w.getframerate()
+            app.post(lambda: self._play(stem, n, seconds))
         except Exception as exc:
             msg = f"Preview failed: {exc}"
             app.post(lambda: (app.set_busy(False), app.say(msg, "warn")))
 
-    def _play(self, f, n):
+    def _play(self, stem, n, seconds):
         app = self.app
         app.set_busy(False)
         try:
             self.player.play(PREVIEW_WAV)
-            app.say(f"Playing {os.path.basename(f)}: {n} notes. Happy with it? Click Convert to save.", "ok")
         except Exception as exc:
-            app.say(f"Couldn't play audio ({exc}). Preview saved to {PREVIEW_WAV}", "warn")
+            app.say("Couldn't play the preview", "warn", f"{exc}. The preview was saved to {PREVIEW_WAV}")
+            return
+        app.say(
+            f"Playing {stem.name} · {n} notes",
+            "ok",
+            "Click Stop on its row (or press Esc) to stop. Happy with it? Convert to save the MIDI.",
+        )
+        app.convert_page.set_playing(stem)
+        # the row goes back to "Play" when the preview finishes on its own
+        self.token = token = object()
+        app.root.after(int(seconds * 1000) + 300, lambda: self._ended(token))
+
+    def _ended(self, token):
+        if getattr(self, "token", None) is token:
+            self.token = None
+            self.app.convert_page.set_playing(None)
 
     def stop(self):
         self.player.stop()
-        self.app.say("Stopped")
+        self.token = None
+        self.app.convert_page.set_playing(None)
+        self.app.say("Stopped", detail="Click Play on a stem to hear it again")
 
 
 class TempoJourney:
@@ -186,13 +252,14 @@ class TempoJourney:
         app = self.app
         if app.busy:
             return
-        if not app.convert_page.files:
+        stem = app.convert_page.selected_stem()
+        if stem is None:
             app.say("Add a stem first, then Detect", "warn")
             app.show_page("convert")
             return
-        f = app.convert_page.selected_stem()
+        f = stem.path
         app.set_busy(True)
-        app.say(f"Measuring tempo of {os.path.basename(f)}...")
+        app.say(f"Measuring the tempo of {os.path.basename(f)}...", "busy", "This takes a few seconds")
         threading.Thread(target=self._work, args=(f,), daemon=True).start()
 
     def _work(self, f):
@@ -208,7 +275,7 @@ class TempoJourney:
         app = self.app
         app.set_busy(False)
         app.convert_page.set_tempo(bpm, f)
-        app.say(f"Tempo detected: {bpm:g} BPM", "ok")
-        feed = app.convert_page.activity
+        app.say(f"Tempo: {bpm:g} BPM", "ok", "Set your DAW project to the same tempo")
+        feed = app.activity
         feed.action("Detect tempo")
-        feed.stem_ok(os.path.basename(f), f"{bpm:g} BPM", "Set your DAW project to the same tempo.")
+        feed.stem(os.path.basename(f), f"{bpm:g} BPM", "Set your DAW project to the same tempo")

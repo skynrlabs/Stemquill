@@ -15,6 +15,7 @@ THEME = {
     "accent_text": "#0d1013",
     "ok": "#4cd08a",
     "warn": "#f0b84a",
+    "sel": "#243a40",
     "side": "#14171a",
     "side_hover": "#1f2328",
     "side_active": "#252a30",
@@ -36,6 +37,7 @@ def make_fonts():
         "small": (family, 9),
         "btn": (family, 10, "bold"),
         "big": (family, 12, "bold"),
+        "status": (family, 14, "bold"),
         "nav": (family, 11),
         "mono": ("Consolas" if "Consolas" in families else "DejaVu Sans Mono", 9),
     }
@@ -106,7 +108,50 @@ def apply_styles(root, F):
             selectforeground=[("readonly", T["text"])],
         )
     st.configure("Horizontal.TProgressbar", background=T["accent"], troughcolor=T["field"], thickness=6)
-    st.configure("Vertical.TScrollbar", background=T["line"], troughcolor=T["field"], arrowcolor=T["muted"])
+    # Dark, flat scrollbars (the default clam look is a pale bar with a grip in the middle)
+    for orient in ("Vertical", "Horizontal"):
+        st.configure(
+            f"{orient}.TScrollbar",
+            background=T["line"],
+            troughcolor=T["field"],
+            bordercolor=T["field"],
+            lightcolor=T["line"],
+            darkcolor=T["line"],
+            arrowcolor=T["muted"],
+            gripcount=0,
+            arrowsize=12,
+        )
+        st.map(f"{orient}.TScrollbar", background=[("active", "#4a525c"), ("pressed", T["accent"])])
+    # The Activity table
+    st.configure(
+        "Activity.Treeview",
+        background=T["field"],
+        fieldbackground=T["field"],
+        foreground=T["text"],
+        bordercolor=T["field"],
+        lightcolor=T["field"],
+        darkcolor=T["field"],
+        rowheight=26,
+        font=F["body"],
+    )
+    st.map(
+        "Activity.Treeview",
+        background=[("selected", "#243a40")],
+        foreground=[("selected", T["text"])],
+    )
+    st.configure(
+        "Activity.Treeview.Heading",
+        background=T["card"],
+        foreground=T["muted"],
+        font=F["small"],
+        relief="flat",
+        bordercolor=T["card"],
+        lightcolor=T["card"],
+        darkcolor=T["card"],
+        padding=(6, 4),
+    )
+    st.map("Activity.Treeview.Heading", background=[("active", T["line"])])
+    st.layout("Activity.Treeview", [("Treeview.treearea", {"sticky": "nswe"})])  # no inner border
     root.option_add("*TCombobox*Listbox.background", T["field"])
     root.option_add("*TCombobox*Listbox.foreground", T["text"])
     root.option_add("*TCombobox*Listbox.selectBackground", T["accent"])
