@@ -48,8 +48,8 @@ class StemquillApp:
         root = self.root
         root.title("Stemquill")
         root.configure(bg=THEME["bg"])
-        root.minsize(900, 660)
-        root.geometry("1000x740")
+        root.minsize(900, 680)
+        root.geometry("1040x800")
         ico = os.path.join(ASSETS_DIR, "stemquill.ico")
         if IS_WINDOWS and os.path.exists(ico):
             with contextlib.suppress(tk.TclError):
@@ -114,6 +114,7 @@ class StemquillApp:
         self.action.convert_btn.configure(command=self.converter.start)
         self.action.open_btn.configure(command=self.open_folder)
         self.convert_page.detect_btn.configure(command=self.tempo.start)
+        self.convert_page.activity.on_open = self.open_path
 
     # ---- navigation
     def show_page(self, key):
@@ -178,6 +179,10 @@ class StemquillApp:
         if not d:
             self.say("Convert something first, then Open folder", "warn")
             return
+        self.open_path(d)
+
+    def open_path(self, d):
+        """Show a folder in Explorer / Finder / the file manager."""
         if IS_WINDOWS:
             os.startfile(d)
         elif sys.platform == "darwin":

@@ -78,30 +78,24 @@ class ConvertJourney:
             try:
                 result = run_transcribe(f, c, notes)
                 if not result:
-                    app.post(lambda n=name: feed.stem_problem(n, "silent, skipped"))
+                    app.post(lambda n=name: feed.problem(n, "silent, skipped"))
                     continue
                 out = save_result(result, out_dir, notes)
                 ok += 1
                 self.last_out_dir = os.path.dirname(out)
-                line = (
-                    f"{result['stem_type']} · {plural(len(result['notes']), 'note')} · saved as {os.path.basename(out)}"
-                )
-                extra = describe(result)
+                found = f"{result['stem_type']} · {plural(len(result['notes']), 'note')}"
+                details = describe(result)
                 for w in notes.warnings():
-                    extra += f"  ({w})"
-                app.post(lambda n=name, ln=line, ex=extra: feed.stem_ok(n, ln, ex))
+                    details += f"  ({w})"
+                app.post(lambda n=name, r=found, d=details, o=out: feed.stem(n, r, d, saved=o))
             except Exception as exc:  # keep going with the other stems
                 err = f"couldn't convert: {exc}"
-                app.post(lambda n=name, e=err: feed.stem_problem(n, e))
+                app.post(lambda n=name, e=err: feed.problem(n, e))
         if ok:
-            where = short_path(self.last_out_dir)
-            summary = (
-                f"Done: {ok} of {plural(len(files), 'stem')} saved to {where}. "
-                "Drag the .mid files onto your tracks at bar 1."
-            )
+            summary = ("Done", f"{ok} of {len(files)} saved", f"in {short_path(self.last_out_dir)}")
         else:
-            summary = "Nothing was converted."
-        app.post(lambda: feed.summary(summary, good=ok == len(files)))
+            summary = ("Nothing was converted", "", "")
+        app.post(lambda: feed.summary(*summary, good=ok == len(files)))
         app.post(lambda: self._finish(ok, len(files)))
 
     def _finish(self, ok, total):
@@ -148,15 +142,15 @@ class PreviewJourney:
                         app.set_busy(False),
                         app.say("That stem is silent", "warn"),
                         feed.action(f"Preview {name}"),
-                        feed.stem_problem(name, "silent"),
+                        feed.problem(name, "silent"),
                     )
                 )
                 return
             render_preview(result, PREVIEW_WAV, include_original)
             n = len(result["notes"])
-            line = f"{result['stem_type']} · {plural(n, 'note')}"
-            extra = describe(result)
-            app.post(lambda: (feed.action(f"Preview {name}", settings_line(c)), feed.stem_ok(name, line, extra)))
+            found = f"{result['stem_type']} · {plural(n, 'note')}"
+            details = describe(result)
+            app.post(lambda: (feed.action(f"Preview {name}", settings_line(c)), feed.stem(name, found, details)))
             app.post(lambda: self._play(f, n))
         except Exception as exc:
             msg = f"Preview failed: {exc}"
@@ -211,4 +205,4 @@ class TempoJourney:
         app.say(f"Tempo detected: {bpm:g} BPM", "ok")
         feed = app.convert_page.activity
         feed.action("Detect tempo")
-        feed.stem_ok(os.path.basename(f), f"{bpm:g} BPM", "Set your DAW project to the same tempo.")
+        feed.stem(os.path.basename(f), f"{bpm:g} BPM", "Set your DAW project to the same tempo")

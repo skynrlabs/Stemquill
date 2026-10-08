@@ -214,7 +214,7 @@ class ConvertPage(ttk.Frame):
 
     # ---- activity log
     def _build_log(self, F):
-        c = card(self, 2, "Activity", grow=True)
+        c = card(self, 2, "Activity", "double-click a saved file to open its folder", grow=True)
         c.rowconfigure(1, weight=1)
         self.activity = ActivityLog(c, F)
         self.activity.grid(row=1, column=0, columnspan=3, sticky="nsew")
