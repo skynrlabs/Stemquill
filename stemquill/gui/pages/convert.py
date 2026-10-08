@@ -76,6 +76,7 @@ class ConvertPage(ttk.Frame):
             lb.itemconfig(0, fg=T["muted"])
         elif keep is not None:
             lb.selection_set(min(keep, len(self.files) - 1))  # always show which stem Play and Detect use
+        self._show_scope()
         self.on_stems_changed()
 
     def add_files(self):
@@ -105,7 +106,10 @@ class ConvertPage(ttk.Frame):
 
     # ---- settings
     def _build_settings(self):
-        c = card(self, 1, "Settings", "match the tempo to your DAW project")
+        c = card(self, 1, "Settings")
+        # Says which stems these settings apply to (all of them; Detect and Play use the selected one)
+        self.scope = tk.StringVar()
+        ttk.Label(c.top, textvariable=self.scope, style="Muted.TLabel").pack(side="left", padx=(10, 0))
         ttk.Button(c.top, text="Reset to defaults", style="Small.TButton", command=lambda: self.on_reset()).pack(
             side="right"
         )
@@ -164,6 +168,18 @@ class ConvertPage(ttk.Frame):
         slider(hum, self.human_var, 0, 100, 5).pack(side="left", padx=8)
         ttk.Label(hum, text="loose", style="Muted.TLabel").pack(side="left")
         ttk.Label(hum, textvariable=self.human_text, style="Value.TLabel").pack(side="left", padx=(14, 0))
+
+    def _show_scope(self):
+        n = len(self.files)
+        if n == 0:
+            text = "apply to every stem you add"
+        elif n == 1:
+            text = f"apply to {os.path.basename(self.files[0])}"
+        else:
+            text = f"apply to all {n} stems · Detect and Play use the selected one"
+        if self.type_var.get() != "auto" and n:
+            text += f" · all treated as {self.type_var.get()}"
+        self.scope.set(text)
 
     def apply_typed_sensitivity(self, *_):
         try:

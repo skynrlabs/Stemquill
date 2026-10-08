@@ -195,3 +195,15 @@ def test_empty_message_is_not_a_table_row(app):
     feed.clear()
     app.root.update()
     assert feed.empty_note.winfo_ismapped()
+
+
+def test_settings_card_says_which_stems_it_applies_to(app, monkeypatch, stems):
+    page = app.convert_page
+    assert page.scope.get() == "apply to every stem you add"
+    add_stems(app, monkeypatch, [stems["beat"][0]])
+    assert page.scope.get() == "apply to Drums.wav"
+    add_stems(app, monkeypatch, [stems["bass"][0]])
+    assert page.scope.get().startswith("apply to all 2 stems")
+    page.type_var.set("drums")
+    page.refresh_list()
+    assert page.scope.get().endswith("all treated as drums")
