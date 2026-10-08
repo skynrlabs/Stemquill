@@ -5,6 +5,7 @@ import numpy as np
 
 from ..config import DRUM_NOTES, DRUM_PARTS, HOP
 from .midi import clean_overlaps, snap
+from .onsets import refine_onset
 
 
 def band_flux(S, freqs, lo, hi):
@@ -101,7 +102,8 @@ def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
             elif h > thr:
                 found.append(("hihat", h))
 
-        t = snap(max(0.0, librosa.frames_to_time(f, sr=sr, hop_length=HOP) - pad / sr), bpm, grid)
+        t_frame = librosa.frames_to_time(f, sr=sr, hop_length=HOP)
+        t = snap(max(0.0, refine_onset(y, sr, t_frame, before=0.01, after=0.04) - pad / sr), bpm, grid)
         for part, strength in found:
             if part == "openhat" and part not in want and "hihat" in want:
                 part = "hihat"  # open hats become closed hats if open hats are switched off

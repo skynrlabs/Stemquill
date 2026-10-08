@@ -6,6 +6,7 @@ import scipy.ndimage
 
 from ..config import HOP, PITCH_RANGES
 from .midi import clean_overlaps, snap
+from .onsets import refine_onset
 
 
 def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
@@ -36,7 +37,7 @@ def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
         j = i
         while j + 1 < n and pitch[j + 1] == pitch[i] and not ((j + 1) in onsets and j + 1 - i > 6):
             j += 1
-        start = librosa.frames_to_time(i, sr=sr, hop_length=HOP)
+        start = refine_onset(y, sr, librosa.frames_to_time(i, sr=sr, hop_length=HOP), before=0.05, after=0.015)
         end = librosa.frames_to_time(j + 1, sr=sr, hop_length=HOP)
         if end - start >= min_len:
             vel = int(np.clip(40 + 87 * np.sqrt(rms[i : j + 1].max() / peak_rms), 1, 127))
