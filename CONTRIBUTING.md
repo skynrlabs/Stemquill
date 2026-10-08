@@ -47,7 +47,7 @@ Before opening an issue:
 1. Fork the repo and create your branch from `dev`, not `main`.
 2. Name your branch `feature/short-description` or `fix/short-description`.
 3. Keep PRs focused — one feature or fix per PR.
-4. Make sure it runs: `python -m stemquill` and convert a stem. The GitHub Actions build must pass (it builds the Windows app and converts a test stem).
+4. Run the checks locally (see **Tests and lint** below). On GitHub, both workflows must pass: **Lint and test** (Linux) and **Build Windows app** (builds the installer and converts test stems).
 5. Write a clear PR description — what changed and why. Before/after note counts on a test stem are great for detection changes.
 6. Link any related issue in the PR body (`Closes #123`).
 
@@ -71,9 +71,24 @@ Before opening an issue:
 ```
 git clone https://github.com/skynrlabs/Stemquill.git
 cd Stemquill
-pip install -e .
+pip install -e ".[dev]"
 python -m stemquill
 ```
+
+---
+
+## Tests and lint
+
+```
+ruff check .            # lint
+ruff format .           # format (CI runs `ruff format --check`)
+pytest                  # all tests, about 15 seconds
+```
+
+- The tests build **synthetic stems with a known right answer** (`tests/synth.py`): exact drum hits, exact tempos, exact notes. They check the right drum, note and timing come out, not just that nothing crashes.
+- **Window tests** (`tests/test_gui.py`) open the real app. They need a display: on Linux run `xvfb-run -a pytest`; without one they're skipped.
+- **Snapshot tests** (`tests/snapshots/`) catch any change to results. If you changed detection on purpose, run `pytest --update-snapshots` and commit the updated files so the change is visible in review.
+- Add a test with every bug fix: reproduce it with a synthetic stem first.
 
 ---
 

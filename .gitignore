@@ -6,3 +6,5 @@ stemquill_settings.json
 build/
 dist/
 *.egg-info/
+.pytest_cache/
+.ruff_cache/
