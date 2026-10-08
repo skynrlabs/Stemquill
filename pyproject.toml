@@ -16,6 +16,7 @@ dependencies = [
     "librosa",
     "soundfile",
     "mido",
+    "tkinterdnd2",  # drag and drop stems onto the window
 ]
 keywords = ["audio-to-midi", "midi", "stems", "drums", "music-production"]
 classifiers = [

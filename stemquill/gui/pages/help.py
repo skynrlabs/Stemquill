@@ -11,8 +11,8 @@ HELP_TEXT = [
     ("h", "Quick start"),
     (
         "p",
-        "1.  Click Add stems... and pick your audio files. Each stem gets its own row; its type is read "
-        "from the file name (Drums, Bass, Vocals, Other) and you can change it in the row.",
+        "1.  Drop your stems (or a folder of them) onto the window, or click Add stems... Each stem gets its "
+        "own row; its type is read from the file name (Drums, Bass, Vocals, Other) and you can change it there.",
     ),
     (
         "p",
@@ -26,13 +26,13 @@ HELP_TEXT = [
     ),
     (
         "p",
-        "4.  Click Play on a stem's row to hear it before saving. Tick Mix in the original stem to check "
-        "the timing against the real audio. Stop preview ends playback.",
+        "4.  Click Play on a stem's row to hear it before saving; it turns into Stop while it plays (Esc also "
+        "stops). Tick Mix in the original stem to check the timing against the real audio.",
     ),
     (
         "p",
-        "5.  Click Convert all to MIDI. Each row shows when its file is saved as <name> - <type>.mid. "
-        "Drag each file onto its instrument track at bar 1. The History page lists everything that happened.",
+        "5.  Click Convert to MIDI. Each row shows when its file is saved as <name> - <type>.mid; if you change "
+        "a setting afterwards it says 'changed · convert again'. Drag each file onto its track at bar 1.",
     ),
     ("h", "Stem settings"),
     ("p", "Sensitivity: slide right to catch quieter notes, left to cut junk notes. 0.80 is a good start."),
@@ -83,7 +83,7 @@ HELP_TEXT = [
     ("k", "Ctrl+O\tAdd stems"),
     ("k", "Ctrl+T\tDetect tempo"),
     ("k", "Ctrl+P\tPreview"),
-    ("k", "Esc\tStop preview"),
+    ("k", "Esc\tStop playback"),
     ("k", "Ctrl+Enter\tConvert to MIDI"),
     ("k", "Ctrl+1 to 4\tSwitch pages"),
     ("k", "F1\tHelp"),

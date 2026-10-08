@@ -8,6 +8,7 @@ the Activity feed as short, readable entries (see activity.py).
 import os
 import tempfile
 import threading
+import wave
 
 from ..core import Player, detect_tempo, render_preview, save_result, transcribe
 from .activity import describe, short_path
@@ -73,7 +74,10 @@ class ConvertJourney:
             return
         stems = list(app.convert_page.stems)
         app.activity.action(f"Convert {plural(len(stems), 'stem')}", song_line(c))
+        # remember the settings each file is made with, to spot later changes ("changed since saved")
+        self.sigs = {id(s): app.convert_page.signature(s) for s in stems}
         for stem in stems:
+            stem.saved_sig = None
             self._status(stem, "waiting...", "muted")
         app.set_busy(True)
         app.action.open_btn.state(["disabled"])
@@ -126,6 +130,7 @@ class ConvertJourney:
                     lambda n=name, r=found, d=details, o=out, s=stem, t=done: (
                         feed.stem(n, r, d, saved=o),
                         self._status(s, t, "ok", saved=o),
+                        app.convert_page.mark_saved(s, self.sigs[id(s)]),
                     )
                 )
             except Exception as exc:  # keep going with the other stems
@@ -171,6 +176,8 @@ class PreviewJourney:
         if not c:
             return
         self.player.stop()
+        self.token = None
+        app.convert_page.set_playing(None)
         stem = app.convert_page.selected_stem()
         app.set_busy(True)
         app.say(f"Building preview of {stem.name}...", "busy", "This takes a few seconds")
@@ -181,7 +188,6 @@ class PreviewJourney:
         app = self.app
         feed = app.activity
         name = stem.name
-        f = stem.path
         try:
             result = run_transcribe(stem, c, EngineNotes())
             if not result:
@@ -199,27 +205,41 @@ class PreviewJourney:
             found = f"{result['stem_type']} · {plural(n, 'note')}"
             details = describe(result) + f" · {stem_line(stem)}"
             app.post(lambda: (feed.action(f"Preview {name}", song_line(c)), feed.stem(name, found, details)))
-            app.post(lambda: self._play(f, n))
+            with wave.open(PREVIEW_WAV, "rb") as w:
+                seconds = w.getnframes() / w.getframerate()
+            app.post(lambda: self._play(stem, n, seconds))
         except Exception as exc:
             msg = f"Preview failed: {exc}"
             app.post(lambda: (app.set_busy(False), app.say(msg, "warn")))
 
-    def _play(self, f, n):
+    def _play(self, stem, n, seconds):
         app = self.app
         app.set_busy(False)
         try:
             self.player.play(PREVIEW_WAV)
-            app.say(
-                f"Playing {os.path.basename(f)} · {n} notes",
-                "ok",
-                "Happy with it? Click Convert all to MIDI to save. Stop preview ends playback.",
-            )
         except Exception as exc:
             app.say("Couldn't play the preview", "warn", f"{exc}. The preview was saved to {PREVIEW_WAV}")
+            return
+        app.say(
+            f"Playing {stem.name} · {n} notes",
+            "ok",
+            "Click Stop on its row (or press Esc) to stop. Happy with it? Convert to save the MIDI.",
+        )
+        app.convert_page.set_playing(stem)
+        # the row goes back to "Play" when the preview finishes on its own
+        self.token = token = object()
+        app.root.after(int(seconds * 1000) + 300, lambda: self._ended(token))
+
+    def _ended(self, token):
+        if getattr(self, "token", None) is token:
+            self.token = None
+            self.app.convert_page.set_playing(None)
 
     def stop(self):
         self.player.stop()
-        self.app.say("Stopped")
+        self.token = None
+        self.app.convert_page.set_playing(None)
+        self.app.say("Stopped", detail="Click Play on a stem to hear it again")
 
 
 class TempoJourney:

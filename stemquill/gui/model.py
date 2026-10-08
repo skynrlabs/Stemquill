@@ -20,6 +20,8 @@ class Stem:
     status: str = "not converted yet"
     status_kind: str = "muted"  # muted, busy, ok or warn
     saved: str = None
+    saved_sig: tuple = None  # the settings the saved file was made with (see ConvertPage.signature)
+    saved_status: str = ""  # the "saved · N notes" text, restored if settings change back
 
     def __post_init__(self):
         if not self.stem_type:

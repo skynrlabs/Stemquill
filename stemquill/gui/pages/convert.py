@@ -12,15 +12,32 @@ from ..widgets import card
 GRID_CHOICES = {"Off (keep original timing)": 0, "1/8 note": 2, "1/8 triplet": 3, "1/16 note": 4, "1/32 note": 8}
 DEFAULT_GRID = "Off (keep original timing)"
 TEMPO_HINT = "Detect measures it from the selected stem"
+AUDIO_EXTENSIONS = (".wav", ".mp3", ".flac", ".aif", ".aiff", ".ogg", ".m4a")
+CHANGED = "changed · convert again"
+
+
+def audio_files(paths):
+    """Expand dropped or picked paths: audio files as-is, folders to the audio files inside them."""
+    out = []
+    for p in paths:
+        if os.path.isdir(p):
+            for name in sorted(os.listdir(p)):
+                full = os.path.join(p, name)
+                if os.path.isfile(full) and name.lower().endswith(AUDIO_EXTENSIONS):
+                    out.append(full)
+        elif p.lower().endswith(AUDIO_EXTENSIONS):
+            out.append(p)
+    return out
 
 
 class ConvertPage(ttk.Frame):
-    def __init__(self, parent, fonts, settings_page, on_change, on_play, on_open_settings):
+    def __init__(self, parent, fonts, settings_page, on_change, on_play, on_stop, on_open_settings):
         super().__init__(parent)
         self.columnconfigure(0, weight=1)
         self.settings_page = settings_page
         self.on_change = on_change
         self.on_play = on_play
+        self.on_stop = on_stop
         self.stems = []
         self.selected = None
         self.bpm_var = tk.StringVar(value="120")
@@ -35,9 +52,13 @@ class ConvertPage(ttk.Frame):
             on_map_pick=lambda: settings_page.apply_map(settings_page.map_key()),
             on_apply_all=self.apply_to_all,
             on_open_settings=on_open_settings,
+            on_change=self.refresh_staleness,
         )
         self.card.grid(row=2, column=0, sticky="nsew", pady=(0, 12))
         self.rowconfigure(3, weight=1)
+        # anything that changes what a saved file would contain marks it as out of date
+        for var in (self.bpm_var, self.grid_var, settings_page.map_var, *settings_page.note_vars.values()):
+            var.trace_add("write", lambda *_: self.refresh_staleness())
 
     # ---- song: one tempo and grid for every stem
     def _build_song(self):
@@ -83,12 +104,21 @@ class ConvertPage(ttk.Frame):
             title="Choose stems",
             filetypes=[("Audio", "*.wav *.mp3 *.flac *.aif *.aiff *.ogg *.m4a"), ("All files", "*.*")],
         )
-        known = {s.path for s in self.stems}
-        new = [Stem(f) for f in chosen if f not in known]
-        if not new:
-            return
-        self.stems.extend(new)
-        self.refresh(select=len(self.stems) - len(new))
+        return self.add_paths(chosen)
+
+    def add_paths(self, paths):
+        """Add stems from file and folder paths (from Add stems... or drag and drop). Returns how many."""
+        known = {os.path.normcase(os.path.abspath(s.path)) for s in self.stems}
+        new = []
+        for f in audio_files(paths):
+            key = os.path.normcase(os.path.abspath(f))
+            if key not in known:
+                known.add(key)
+                new.append(Stem(f))
+        if new:
+            self.stems.extend(new)
+            self.refresh(select=len(self.stems) - len(new))
+        return len(new)
 
     def remove(self, index):
         if not 0 <= index < len(self.stems):
@@ -107,6 +137,7 @@ class ConvertPage(ttk.Frame):
         self.stems[index].stem_type = stem_type
         if index == self.selected:
             self.card.show(self.stems[index], len(self.stems))
+        self.refresh_staleness()
         self.on_change()
 
     def select(self, index):
@@ -120,8 +151,15 @@ class ConvertPage(ttk.Frame):
         self.on_change()
 
     def _play(self, index):
+        """A row's Play button: plays that stem, or stops it if it's the one playing."""
+        if self.table.playing == index:
+            self.on_stop()
+            return
         self.select(index)
         self.on_play()
+
+    def set_playing(self, stem):
+        self.table.set_playing(self.stems.index(stem) if stem in self.stems else None)
 
     def refresh(self, select=None):
         """Rebuild the rows after stems were added or removed."""
@@ -144,7 +182,38 @@ class ConvertPage(ttk.Frame):
         for stem in self.stems:
             if stem is not src:
                 stem.copy_settings_from(src)
+        self.refresh_staleness()
         self.on_change(f"Applied {src.name}'s settings to all {len(self.stems)} stems")
+
+    # ---- "changed since saved"
+    def signature(self, stem):
+        """Everything that decides what a stem's MIDI file contains."""
+        sp = self.settings_page
+        drums = stem.stem_type == "drums"
+        return (
+            stem.stem_type,
+            round(stem.sensitivity, 2),
+            stem.humanize,
+            tuple(stem.parts) if drums else (),
+            self.bpm_var.get(),
+            self.grid_var.get(),
+            tuple(v.get() for v in sp.note_vars.values()) if drums else (),
+        )
+
+    def mark_saved(self, stem, sig):
+        stem.saved_sig = sig
+        stem.saved_status = stem.status
+
+    def refresh_staleness(self):
+        """Saved stems whose settings changed since saving say so; changing back restores 'saved'."""
+        for stem in self.stems:
+            if stem.saved_sig is None or stem.status_kind == "busy":
+                continue
+            if self.signature(stem) == stem.saved_sig:
+                stem.status, stem.status_kind = stem.saved_status, "ok"
+            else:
+                stem.status, stem.status_kind = CHANGED, "warn"
+            self.show_status(stem)
 
     def show_status(self, stem):
         if stem in self.stems:

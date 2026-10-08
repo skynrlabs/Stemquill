@@ -27,9 +27,10 @@ def humanize_word(v):
 
 
 class StemSettingsCard(ttk.Frame):
-    def __init__(self, parent, fonts, map_var, on_map_pick, on_apply_all, on_open_settings):
+    def __init__(self, parent, fonts, map_var, on_map_pick, on_apply_all, on_open_settings, on_change=None):
         super().__init__(parent, style="Card.TFrame", padding=(16, 12))
         self.stem = None
+        self.on_change = on_change
         self._loading = False
         self.columnconfigure(1, weight=1)
 
@@ -152,6 +153,8 @@ class StemSettingsCard(ttk.Frame):
         self.stem.sensitivity = round(float(self.sens_var.get()), 2)
         self.stem.humanize = int(self.human_var.get())
         self.stem.parts = [p for _, p in KIT_BOXES if self.kit_vars[p].get()]
+        if self.on_change:
+            self.on_change()
 
     def _on_slide(self, value):
         self.sens_text.set(f"{float(value):.2f}")

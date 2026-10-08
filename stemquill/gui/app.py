@@ -36,6 +36,7 @@ class StemquillApp:
         self.tempo = TempoJourney(self)
 
         self._build_layout()
+        self.dnd_enabled = self._enable_drag_and_drop()
         bind_shortcuts(self)
         self._wire_buttons()
         root.protocol("WM_DELETE_WINDOW", self.quit)
@@ -68,6 +69,37 @@ class StemquillApp:
             pass
         return images
 
+    def _enable_drag_and_drop(self):
+        """Let people drop stems (or a folder of stems) from Explorer/Finder onto the window."""
+        try:
+            from tkinterdnd2 import DND_FILES, TkinterDnD
+
+            TkinterDnD._require(self.root)
+        except Exception:
+            return False  # optional: Add stems... still works
+        table = self.convert_page.table
+        # the main area and the stems list (the top-level window itself can't be a drop target)
+        targets = [self.main, self.convert_page, table.canvas, table.body, table.empty]
+        for w in targets:
+            w.drop_target_register(DND_FILES)
+            w.dnd_bind("<<DropEnter>>", lambda e: (table.set_drop_highlight(True), e.action)[1])
+            w.dnd_bind("<<DropPosition>>", lambda e: e.action)
+            w.dnd_bind("<<DropLeave>>", lambda e: (table.set_drop_highlight(False), e.action)[1])
+            w.dnd_bind("<<Drop>>", self._on_drop)
+        return True
+
+    def _on_drop(self, event):
+        self.convert_page.table.set_drop_highlight(False)
+        paths = self.root.tk.splitlist(event.data)
+        added = self.convert_page.add_paths(paths)
+        self.show_page("convert")
+        if added:
+            self.say(f"Added {added} stem{'s' if added != 1 else ''}", "ok")
+        else:
+            detail = "Stemquill reads WAV, MP3, FLAC, AIFF, OGG and M4A"
+            self.say("No new audio files in what you dropped", "warn", detail)
+        return event.action
+
     def _build_layout(self):
         root = self.root
         root.columnconfigure(1, weight=1)
@@ -77,7 +109,7 @@ class StemquillApp:
         )
         self.sidebar.grid(row=0, column=0, sticky="ns")
 
-        main = ttk.Frame(root, padding=(22, 16, 22, 12))
+        main = self.main = ttk.Frame(root, padding=(22, 16, 22, 12))
         main.grid(row=0, column=1, sticky="nsew")
         main.columnconfigure(0, weight=1)
         main.rowconfigure(1, weight=1)
@@ -101,6 +133,7 @@ class StemquillApp:
             self.settings_page,
             on_change=self._on_stems_changed,
             on_play=lambda: self.preview.start(),
+            on_stop=lambda: self.preview.stop(),
             on_open_settings=lambda: self.show_page("settings"),
         )
         self.help_page = HelpPage(box, self.fonts, self.about)
@@ -119,7 +152,6 @@ class StemquillApp:
         self.action.grid(row=3, column=0, sticky="ew")
 
     def _wire_buttons(self):
-        self.action.stop_btn.configure(command=self.preview.stop)
         self.action.convert_btn.configure(command=self.converter.start)
         self.action.open_btn.configure(command=self.open_folder)
         self.convert_page.detect_btn.configure(command=self.tempo.start)
@@ -141,6 +173,7 @@ class StemquillApp:
     def _on_stems_changed(self, message=None):
         n = len(self.convert_page.stems)
         self.sidebar.set_label("convert", f"Convert  ({n})" if n else "Convert")
+        self.action.set_convert_label(self.convert_page.stems)
         if message:
             self.say(message, "ok")
 

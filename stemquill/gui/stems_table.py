@@ -56,10 +56,12 @@ class StemsTable(ttk.Frame):
             w.bind("<Button-4>", self._wheel)
             w.bind("<Button-5>", self._wheel)
 
+        self.playing = None
         self.empty = tk.Label(
             self.canvas,
-            text="No stems yet. Click Add stems... (Ctrl+O). The type is read from the file name: "
+            text="Drop stems here, or click Add stems... (Ctrl+O).\nThe type is read from the file name: "
             "Drums, Bass, Vocals, Other.",
+            justify="center",
             bg=T["field"],
             fg=T["muted"],
             font=fonts["body"],
@@ -86,6 +88,7 @@ class StemsTable(ttk.Frame):
             self.empty.place(relx=0.5, rely=0.5, anchor="center")
         self.select(selected)
         self.set_enabled(self.enabled)
+        self.set_playing(self.playing if self.playing is not None and self.playing < n else None)
 
     def _make_row(self, i, stem):
         F = self.F
@@ -138,6 +141,17 @@ class StemsTable(ttk.Frame):
             for key in ("play", "remove"):
                 row[key].state(["!disabled"] if on else ["disabled"])
             row["box"].state(["!disabled", "readonly"] if on else ["disabled"])
+
+    def set_playing(self, index):
+        """The row being previewed shows Stop instead of Play."""
+        self.playing = index
+        for i, row in enumerate(self.rows):
+            row["play"].configure(text="Stop" if i == index else "Play")
+
+    def set_drop_highlight(self, on):
+        """Light up the list while files are dragged over the window."""
+        self.canvas.configure(bg=T["sel"] if on else T["field"])
+        self.empty.configure(bg=T["sel"] if on else T["field"])
 
     # ---- scrolling
     def _wheel(self, event):

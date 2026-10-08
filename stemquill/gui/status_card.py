@@ -20,7 +20,7 @@ class StatusCard(tk.Frame):
         self.edge = tk.Frame(self, bg=T["line"], width=5)
         self.edge.grid(row=0, column=0, rowspan=2, sticky="ns")
         self.status = tk.StringVar(value="Ready")
-        self.detail = tk.StringVar(value="Add your stems, set the tempo, then Convert all")
+        self.detail = tk.StringVar(value="Drop your stems onto the window, set the tempo, then Convert")
         self.kind = "muted"
         self.msg_lbl = tk.Label(
             self, textvariable=self.status, bg=T["card"], fg=T["text"], font=fonts["status"], anchor="w"

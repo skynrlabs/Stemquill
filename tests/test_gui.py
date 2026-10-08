@@ -333,3 +333,110 @@ def test_status_card_colours_and_progress(app):
     app.root.update()
     assert not card.progress.winfo_ismapped()
     assert card.msg_lbl.cget("fg") == card.edge.cget("bg")  # message and edge share the colour
+
+
+# ---- Play/Stop on the row, the Convert label, "changed since saved", drag and drop
+
+
+def test_convert_button_says_what_it_will_convert(app, monkeypatch, stems):
+    assert app.action.convert_btn.cget("text") == "Convert to MIDI"
+    add_stems(app, monkeypatch, [stems["beat"][0]])
+    assert app.action.convert_btn.cget("text") == "Convert Drums.wav to MIDI"
+    add_stems(app, monkeypatch, [stems["bass"][0], stems["vocal"][0]])
+    assert app.action.convert_btn.cget("text") == "Convert 3 stems to MIDI"
+    page(app).clear_stems()
+    assert app.action.convert_btn.cget("text") == "Convert to MIDI"
+
+
+def test_play_turns_into_stop_on_that_row(app, monkeypatch, stems):
+    add_stems(app, monkeypatch, [stems["beat"][0], stems["bass"][0]])
+    p = page(app)
+    rows = p.table.rows
+    p._play(1)
+    wait_until(app, lambda: not app.busy)
+    assert rows[1]["play"].cget("text") == "Stop"
+    assert rows[0]["play"].cget("text") == "Play"
+    assert p.selected_stem().name == "Bass.wav"
+    assert app.status_card.status.get().startswith("Playing Bass.wav")
+    p._play(1)  # same row again = Stop
+    assert rows[1]["play"].cget("text") == "Play"
+    assert app.status_card.status.get() == "Stopped"
+
+
+def test_row_goes_back_to_play_when_the_preview_ends(app, monkeypatch, stems):
+    add_stems(app, monkeypatch, [stems["beat"][0]])
+    p = page(app)
+    p._play(0)
+    wait_until(app, lambda: not app.busy)
+    assert p.table.rows[0]["play"].cget("text") == "Stop"
+    app.preview._ended(app.preview.token)  # what the timer does when playback finishes
+    assert p.table.rows[0]["play"].cget("text") == "Play"
+
+
+def test_changed_since_saved(app, monkeypatch, stems):
+    from stemquill.gui.pages.convert import CHANGED
+
+    add_stems(app, monkeypatch, [stems["beat"][0], stems["bass"][0]])
+    p = page(app)
+    app.converter.start()
+    wait_until(app, lambda: not app.busy)
+    drums, bass = p.stems
+    saved_text = drums.status
+    assert saved_text.startswith("saved") and drums.status_kind == "ok"
+
+    # this stem's own setting changes -> only this row is out of date
+    p.select(0)
+    p.card.sens_text.set("0.60")
+    p.card.apply_typed_sensitivity()
+    assert (drums.status, drums.status_kind) == (CHANGED, "warn")
+    assert bass.status.startswith("saved")
+
+    # changing it back restores "saved"
+    p.card.sens_text.set("0.80")
+    p.card.apply_typed_sensitivity()
+    assert (drums.status, drums.status_kind) == (saved_text, "ok")
+
+    # drum note numbers only matter for drum stems
+    app.settings_page.note_vars["kick"].set("35")
+    assert drums.status == CHANGED
+    assert bass.status.startswith("saved")
+    app.settings_page.note_vars["kick"].set("36")
+    assert drums.status == saved_text
+
+    # the song tempo matters for every stem
+    p.bpm_var.set("128")
+    assert drums.status == CHANGED and bass.status == CHANGED
+
+    # converting again makes them current
+    app.converter.start()
+    wait_until(app, lambda: not app.busy)
+    assert drums.status.startswith("saved") and bass.status.startswith("saved")
+
+
+def test_audio_files_expands_folders(tmp_path):
+    from stemquill.gui.pages.convert import audio_files
+
+    (tmp_path / "Drums.wav").write_bytes(b"")
+    (tmp_path / "Bass.MP3").write_bytes(b"")
+    (tmp_path / "notes.txt").write_text("x")
+    (tmp_path / "sub").mkdir()
+    got = audio_files([str(tmp_path), str(tmp_path / "notes.txt")])
+    assert [os.path.basename(f) for f in got] == ["Bass.MP3", "Drums.wav"]
+
+
+def test_drop_files_and_folders(app, stems, tmp_path):
+    import shutil
+
+    assert app.dnd_enabled, "tkinterdnd2 should be installed with Stemquill"
+    folder = tmp_path / "My Stems"  # a space in the name, like real folders
+    folder.mkdir()
+    shutil.copy(stems["bass"][0], folder / "Bass.wav")
+    shutil.copy(stems["vocal"][0], folder / "Vocals.wav")
+    data = f"{{{folder}}} {{{stems['beat'][0]}}}"  # how Tk hands over dropped paths
+    app._on_drop(SimpleNamespace(data=data, action="copy"))
+    p = page(app)
+    assert sorted(s.name for s in p.stems) == ["Bass.wav", "Drums.wav", "Vocals.wav"]
+    assert app.status_card.status.get() == "Added 3 stems"
+    app._on_drop(SimpleNamespace(data=f"{{{folder}}}", action="copy"))  # dropping again adds nothing
+    assert len(p.stems) == 3
+    assert app.status_card.kind == "warn"

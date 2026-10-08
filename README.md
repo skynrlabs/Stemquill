@@ -44,7 +44,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 - 🗺️ **Drum maps**: General MIDI (MT Power Drumkit, EZdrummer, Addictive Drums, Superior Drummer), pads in order (FL Studio FPC, Ableton Drum Rack, MPC) or your own custom notes
 - 🎛️ **Per-stem settings**: sensitivity, humanize and drums for each stem, with Apply to all
 - 📐 **Snap to grid**: keep the original feel or lock notes to 1/8, 1/16 or triplets
-- 📦 **Batch convert**: drop in a whole set of stems and convert them in one go
+- 📦 **Drag and drop**: drop stems or a whole folder onto the window and convert them in one go
 - 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
 
@@ -96,11 +96,11 @@ python -m stemquill
 
 Everything happens on the **Convert** page, top to bottom:
 
-1. **Add stems...** and pick your audio files (WAV, MP3, FLAC, AIFF, OGG or M4A). Each stem gets its own row. Its type is read from the file name ("Drums", "Bass", "Vocals", "Other"); change it in the row if needed.
+1. **Drop your stems** (or a whole folder of them) onto the window, or click **Add stems...** (WAV, MP3, FLAC, AIFF, OGG or M4A). Each stem gets its own row. Its type is read from the file name ("Drums", "Bass", "Vocals", "Other"); change it in the row if needed.
 2. **Song:** click **Detect** to measure the tempo from the selected stem, or type the BPM. Tempo and **Snap to grid** are shared by every stem, because it's one song.
 3. **Click a stem** to see its own settings underneath: **Sensitivity**, **Humanize** and, for drum stems, which drums to write and the drum map. **Apply to all stems** copies them to the rest.
-4. Click **Play** on a stem's row to hear it with built-in sounds. Keep **Mix in the original stem** ticked to check the timing against the real audio.
-5. **Convert all to MIDI.** Each row shows when its file is saved as `<name> - <type>.mid`.
+4. Click **Play** on a stem's row to hear it with built-in sounds; the button turns into **Stop** while it plays. Keep **Mix in the original stem** ticked to check the timing against the real audio.
+5. Click **Convert … to MIDI** (it says how many stems). Each row shows when its file is saved as `<name> - <type>.mid`. Change a setting afterwards and the row says **changed · convert again**, so you never drag an out-of-date file into your DAW.
 
 **History** lists everything Detect, Play and Convert did; double-click a saved file to open its folder.
 
@@ -123,8 +123,8 @@ Then set your DAW project to the same tempo and drag each `.mid` onto its instru
 | `Ctrl+O` | Add stems |
 | `Ctrl+T` | Detect tempo |
 | `Ctrl+P` | Preview the selected stem |
-| `Esc` | Stop preview |
-| `Ctrl+Enter` | Convert all to MIDI |
+| `Esc` | Stop playback |
+| `Ctrl+Enter` | Convert to MIDI |
 | `Ctrl+1` to `Ctrl+4` | Convert, History, Settings, Help pages |
 | `F1` | Help |
 
