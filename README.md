@@ -1,7 +1,6 @@
 # <img src="stemquill/assets/icon-64.png" alt="" width="48" align="center"> Stemquill
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-[![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://skynrlabs.itch.io/stemquill)
 [![Tests](https://img.shields.io/github/actions/workflow/status/skynrlabs/Stemquill/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/skynrlabs/Stemquill/actions/workflows/test.yml)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
@@ -238,8 +237,8 @@ stemquill/
     └── theme.py         Colours, fonts and styles
 stemquill/assets/        App icon (SVG source, PNGs and Windows .ico)
 tests/                   Tests with synthetic stems (pytest), incl. window tests
-packaging/               Windows build: PyInstaller spec and Inno Setup installer
-.github/workflows/       Lint and tests on Linux; builds and tests the Windows installer
+packaging/               Windows build: PyInstaller spec, Inno Setup installer and build.ps1
+.github/workflows/       Lint and tests on Linux
 docs/                    README screenshot
 ```
 
@@ -263,7 +262,7 @@ convert("Drums.wav", "drums", bpm=bpm, humanize_amount=0.3)
 | Audio analysis | librosa, NumPy, SciPy |
 | MIDI | mido |
 | Chord detection (optional) | basic-pitch on ONNX Runtime |
-| Windows app | PyInstaller + Inno Setup, built by GitHub Actions |
+| Windows app | PyInstaller + Inno Setup |
 
 ---
 
