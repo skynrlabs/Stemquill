@@ -37,7 +37,7 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-Name: "chords"; Description: "Better chord detection for guitar, keys and synth stems (basic-pitch, adds about 70 MB)"; GroupDescription: "Optional features:"
+Name: "chords"; Description: "Better chord detection for guitar, keys and synth stems (basic-pitch, adds about 45 MB)"; GroupDescription: "Optional features:"
 
 [InstallDelete]
 ; Start the add-on fresh on every install; it's copied back below if the box is ticked.

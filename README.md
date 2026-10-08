@@ -54,7 +54,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 ### Windows (recommended)
 
 1. Download **`Stemquill-Setup-x.y.z.exe`** from the [latest release](https://github.com/skynrlabs/Stemquill/releases/latest).
-2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 70 MB).
+2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
 > Windows may show **"Windows protected your PC"** because the app isn't code-signed yet. Click **More info → Run anyway**.
