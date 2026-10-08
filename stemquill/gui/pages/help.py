@@ -4,7 +4,7 @@ import tkinter as tk
 import webbrowser
 from tkinter import ttk
 
-from ...config import REPO_URL
+from ...config import REPO_URL, SUPPORT_URL
 from ..theme import THEME as T
 
 HELP_TEXT = [
@@ -127,9 +127,10 @@ class HelpPage(ttk.Frame):
         text.configure(state="disabled")
 
         links = ttk.Frame(self)
-        links.grid(row=1, column=0, sticky="w")
+        links.grid(row=1, column=0, sticky="ew")
         ttk.Button(links, text="Stemquill on GitHub", command=lambda: webbrowser.open(REPO_URL)).pack(side="left")
         ttk.Button(links, text="Report a problem", command=lambda: webbrowser.open(REPO_URL + "/issues")).pack(
             side="left", padx=8
         )
         ttk.Button(links, text="About", command=on_about).pack(side="left")
+        ttk.Button(links, text="Support Stemquill", command=lambda: webbrowser.open(SUPPORT_URL)).pack(side="right")

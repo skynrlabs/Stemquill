@@ -5,7 +5,7 @@ import webbrowser
 from tkinter import ttk
 
 from .. import __version__
-from ..config import REPO_URL
+from ..config import REPO_URL, SUPPORT_URL
 from .theme import THEME as T
 
 
@@ -30,6 +30,10 @@ def show_about(root, fonts, logo=None):
     )
     row = tk.Frame(box, bg=T["card"])
     row.pack()
+    support = ttk.Button(
+        row, text="Support Stemquill", style="Accent.TButton", command=lambda: webbrowser.open(SUPPORT_URL)
+    )
+    support.pack(side="left", padx=4)
     ttk.Button(row, text="GitHub", command=lambda: webbrowser.open(REPO_URL)).pack(side="left", padx=4)
     ttk.Button(row, text="Close", command=win.destroy).pack(side="left", padx=4)
     win.bind("<Escape>", lambda e: win.destroy())

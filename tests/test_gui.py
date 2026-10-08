@@ -440,3 +440,15 @@ def test_drop_files_and_folders(app, stems, tmp_path):
     app._on_drop(SimpleNamespace(data=f"{{{folder}}}", action="copy"))  # dropping again adds nothing
     assert len(p.stems) == 3
     assert app.status_card.kind == "warn"
+
+
+def test_support_link_opens_the_sponsor_page(app, monkeypatch):
+    import webbrowser
+
+    from stemquill.config import SUPPORT_URL
+
+    opened = []
+    monkeypatch.setattr(webbrowser, "open", opened.append)
+    app.sidebar.support.event_generate("<Button-1>")
+    app.root.update()
+    assert opened == [SUPPORT_URL]

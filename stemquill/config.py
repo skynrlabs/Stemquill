@@ -7,6 +7,7 @@ import sys
 PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSETS_DIR = os.path.join(PACKAGE_DIR, "assets")
 REPO_URL = "https://github.com/skynrlabs/Stemquill"
+SUPPORT_URL = "https://github.com/sponsors/skynrlabs"  # "Support Stemquill" links in the app
 
 SR = 44100
 HOP = 256
