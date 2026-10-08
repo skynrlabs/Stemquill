@@ -1,7 +1,7 @@
 # <img src="stemquill/assets/icon-64.png" alt="" width="48" align="center"> Stemquill
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-[![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://github.com/skynrlabs/Stemquill/releases/latest)
+[![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://skynrlabs.itch.io/stemquill)
 [![Tests](https://img.shields.io/github/actions/workflow/status/skynrlabs/Stemquill/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/skynrlabs/Stemquill/actions/workflows/test.yml)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
@@ -57,7 +57,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ### Windows (recommended)
 
-1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want, $0 is fine). GitHub releases list what changed in each version; the installer itself is on itch.io.
+1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want, $0 is fine).
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
