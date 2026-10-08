@@ -3,7 +3,7 @@
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 [![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://github.com/skynrlabs/Stemquill/releases/latest)
 [![Tests](https://img.shields.io/github/actions/workflow/status/skynrlabs/Stemquill/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/skynrlabs/Stemquill/actions/workflows/test.yml)
-[![Downloads](https://img.shields.io/github/downloads/skynrlabs/Stemquill/total?style=flat-square)](https://github.com/skynrlabs/Stemquill/releases)
+[![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 
@@ -11,8 +11,11 @@
 > Drums, bass, vocals, keys and synths, ready to play through your own instruments.
 
 <p>
-  <a href="https://github.com/skynrlabs/Stemquill/releases/latest"><img src="https://img.shields.io/badge/Download_for_Windows-18c6cc?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://skynrlabs.itch.io/stemquill"><img src="https://img.shields.io/badge/Download_for_Windows-18c6cc?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://github.com/skynrlabs/Stemquill/releases/latest"><img src="https://img.shields.io/badge/GitHub_Releases-24292f?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Releases"></a>
 </p>
+
+Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/stemquill) if it saves you time.
 
 ![Stemquill screenshot](docs/screenshot.png)
 
@@ -39,12 +42,13 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 - 🥁 **Full drum kit detection**: kick, snare, closed and open hi-hat, high/mid/low toms, crash and ride
 - 🎸 **Melodic stems**: bass and vocal lines as single notes, guitar, keys and synths as chords
 - ⏱️ **Tempo detection**: measures the real BPM from a stem so your MIDI lines up with your DAW grid
-- ▶️ **Preview before saving**: hear the MIDI with built-in sounds, with the original stem mixed in to check the timing
+- ▶️ **Preview before saving**: play any stem from its row with built-in sounds, with the original stem mixed in to check the timing
 - 🎚️ **Humanize**: small timing and velocity changes so parts feel played, not programmed
 - 🗺️ **Drum maps**: General MIDI (MT Power Drumkit, EZdrummer, Addictive Drums, Superior Drummer), pads in order (FL Studio FPC, Ableton Drum Rack, MPC) or your own custom notes
 - 🎛️ **Per-stem settings**: sensitivity, humanize and drums for each stem, with Apply to all
 - 📐 **Snap to grid**: keep the original feel or lock notes to 1/8, 1/16 or triplets
 - 📦 **Drag and drop**: drop stems or a whole folder onto the window and convert them in one go
+- ✅ **Always know where you stand**: each stem shows when it's saved, and says *changed · convert again* if you tweak it afterwards
 - 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
 
@@ -54,7 +58,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ### Windows (recommended)
 
-1. Download **`Stemquill-Setup-x.y.z.exe`** from the [latest release](https://github.com/skynrlabs/Stemquill/releases/latest).
+1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want, $0 is fine) or from the [latest GitHub release](https://github.com/skynrlabs/Stemquill/releases/latest). It's the same installer.
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
@@ -197,7 +201,7 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 | Missing quiet notes | Click the stem and raise its **Sensitivity** (try 1.0). |
 | Chords look messy or simplified | Make sure **Better chord detection** was ticked when installing (run the installer again to add it). The **History** page says which chord engine was used. |
 | Drums land on the wrong sounds | Pick the drum map that matches your plugin (in a drum stem's settings), or type your own note numbers on the **Settings** page. |
-| No sound when previewing | Check your output device and volume. If it can't play, the status bar shows where the preview file was saved. |
+| No sound when previewing | Check your output device and volume. If it can't play, the status card shows where the preview file was saved. |
 
 Still stuck? [Open an issue](https://github.com/skynrlabs/Stemquill/issues) with your settings and, if you can share it, a short clip of the stem.
 
@@ -226,7 +230,9 @@ stemquill/
     ├── stems_table.py   The stems list: a row per stem with Play, type and status
     ├── stem_settings.py The selected stem's settings card
     ├── sidebar.py       Left-hand navigation
-    ├── action_bar.py    Play, Stop, Convert and status bar
+    ├── status_card.py   The large status message above the buttons
+    ├── action_bar.py    Preview option, Open folder and Convert
+    ├── activity.py      The History table
     ├── shortcuts.py     Keyboard shortcuts
     ├── dialogs.py       About dialog
     ├── widgets.py       Shared building blocks
@@ -293,4 +299,4 @@ You are free to use, modify, and distribute this software, including in commerci
 
 ---
 
-Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
+Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/stemquill) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
