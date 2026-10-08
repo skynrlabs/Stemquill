@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   windows:
@@ -118,9 +118,3 @@ jobs:
         with:
           name: Stemquill-${{ steps.ver.outputs.version }}-windows
           path: dist/installer/*.exe
-
-      - name: Publish release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v3
-        with:
-          files: dist/installer/*.exe
