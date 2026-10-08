@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   windows:
@@ -114,13 +114,9 @@ jobs:
             [pscustomobject]@{ Name = $_.Name; MB = [math]::Round($size / 1MB, 1) }
           } | Sort-Object MB -Descending | Select-Object -First 12 | Format-Table -AutoSize
 
+      # The installer is published on itch.io, not attached to the GitHub release.
+      # Download it from this run's Artifacts and upload it to itch.io.
       - uses: actions/upload-artifact@v6
         with:
           name: Stemquill-${{ steps.ver.outputs.version }}-windows
           path: dist/installer/*.exe
-
-      - name: Publish release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v3
-        with:
-          files: dist/installer/*.exe
