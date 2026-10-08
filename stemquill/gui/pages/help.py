@@ -9,31 +9,66 @@ from ..theme import THEME as T
 
 HELP_TEXT = [
     ("h", "Quick start"),
-    ("p", "1.  Click Add stems... and pick your audio files. The stem type is read from the file name "
-          "(Drums, Bass, Vocals, Other), or set it yourself under Stem type."),
-    ("p", "2.  Click Detect to measure the tempo, or type the BPM if you know it. Set your DAW project "
-          "to the same tempo."),
-    ("p", "3.  Click Play to hear the result before saving. Tick Mix in the original stem to check "
-          "the timing against the real audio."),
+    (
+        "p",
+        "1.  Click Add stems... and pick your audio files. The stem type is read from the file name "
+        "(Drums, Bass, Vocals, Other), or set it yourself under Stem type.",
+    ),
+    (
+        "p",
+        "2.  Click Detect to measure the tempo, or type the BPM if you know it. Set your DAW project "
+        "to the same tempo.",
+    ),
+    (
+        "p",
+        "3.  Click Play to hear the result before saving. With several stems, click the one you want "
+        "in the list first; the bar under Play shows which stem will play. Tick Mix in the original "
+        "stem to check the timing against the real audio.",
+    ),
     ("p", "4.  Adjust Sensitivity, Humanize or the Drum Kit page, and play again until it sounds right."),
-    ("p", "5.  Click Convert to MIDI. Each stem becomes <name> - <type>.mid. Drag it onto your "
-          "instrument track at bar 1."),
+    (
+        "p",
+        "5.  Click Convert to MIDI. Each stem becomes <name> - <type>.mid. Drag it onto your "
+        "instrument track at bar 1.",
+    ),
     ("h", "Settings"),
     ("p", "Sensitivity: slide right to catch quieter notes, left to cut junk notes. 0.80 is a good start."),
-    ("p", "Snap to grid: Off keeps the original timing and is safest for AI-generated stems. "
-          "1/16 note locks everything to the grid."),
-    ("p", "Humanize: adds small timing and velocity changes so parts feel played. 20-40% is natural, "
-          "and it works best with Snap to grid turned on."),
+    (
+        "p",
+        "Snap to grid: Off keeps the original timing and is safest for AI-generated stems. "
+        "1/16 note locks everything to the grid.",
+    ),
+    (
+        "p",
+        "Humanize: adds small timing and velocity changes so parts feel played. 20-40% is natural, "
+        "and it works best with Snap to grid turned on.",
+    ),
     ("h", "Drum maps"),
-    ("p", "General MIDI: MT Power Drumkit 2, EZdrummer, Addictive Drums, Superior Drummer, "
-          "Steven Slate Drums and most drum plugins."),
-    ("p", "Pads in order: for pad samplers like FL Studio FPC, Ableton Drum Rack or MPC kits. Load "
-          "your sounds from note 36 up: kick, snare, closed hat, open hat, low tom, mid tom, "
-          "high tom, crash, ride."),
+    (
+        "p",
+        "General MIDI: MT Power Drumkit 2, EZdrummer, Addictive Drums, Superior Drummer, "
+        "Steven Slate Drums and most drum plugins.",
+    ),
+    (
+        "p",
+        "Pads in order: for pad samplers like FL Studio FPC, Ableton Drum Rack or MPC kits. Load "
+        "your sounds from note 36 up: kick, snare, closed hat, open hat, low tom, mid tom, "
+        "high tom, crash, ride.",
+    ),
     ("p", "Custom: type any note into a drum's box. Your custom map is remembered for next time."),
+    ("h", "Chords"),
+    (
+        "p",
+        "Guitar, keys and synth stems use basic-pitch for chords when the Better chord detection option "
+        "was ticked in the installer, and a simpler built-in mode otherwise. The Activity feed shows which "
+        "one was used. Run the installer again to add or remove it.",
+    ),
     ("h", "Tips"),
-    ("p", "Transcription is a starting point, not a finished part. Expect to fix some notes, "
-          "especially toms, ghost notes and busy strumming."),
+    (
+        "p",
+        "Transcription is a starting point, not a finished part. Expect to fix some notes, "
+        "especially toms, ghost notes and busy strumming.",
+    ),
     ("p", "Cleaner stems give better results. Bleed from other instruments means extra notes."),
     ("p", "Crash and Ride start off because cymbals can bring back metallic sounds."),
     ("p", "The preview uses simple placeholder sounds. Your real instruments will sound much better."),
@@ -58,8 +93,21 @@ class HelpPage(ttk.Frame):
         box.grid(row=0, column=0, sticky="nsew", pady=(0, 12))
         box.columnconfigure(0, weight=1)
         box.rowconfigure(0, weight=1)
-        text = tk.Text(box, bg=T["card"], fg=T["text"], relief="flat", highlightthickness=0, wrap="word",
-                       font=F["body"], padx=14, pady=8, cursor="arrow", spacing1=2, spacing3=4, tabs=("130p",))
+        text = tk.Text(
+            box,
+            bg=T["card"],
+            fg=T["text"],
+            relief="flat",
+            highlightthickness=0,
+            wrap="word",
+            font=F["body"],
+            padx=14,
+            pady=8,
+            cursor="arrow",
+            spacing1=2,
+            spacing3=4,
+            tabs=("130p",),
+        )
         scroll = ttk.Scrollbar(box, orient="vertical", command=text.yview)
         text.configure(yscrollcommand=scroll.set)
         text.grid(row=0, column=0, sticky="nsew")
@@ -74,6 +122,7 @@ class HelpPage(ttk.Frame):
         links = ttk.Frame(self)
         links.grid(row=1, column=0, sticky="w")
         ttk.Button(links, text="Stemquill on GitHub", command=lambda: webbrowser.open(REPO_URL)).pack(side="left")
-        ttk.Button(links, text="Report a problem",
-                   command=lambda: webbrowser.open(REPO_URL + "/issues")).pack(side="left", padx=8)
+        ttk.Button(links, text="Report a problem", command=lambda: webbrowser.open(REPO_URL + "/issues")).pack(
+            side="left", padx=8
+        )
         ttk.Button(links, text="About", command=on_about).pack(side="left")

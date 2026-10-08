@@ -9,8 +9,8 @@ def humanize(notes, bpm, amount, is_drums, seed=7):
     if amount <= 0:
         return notes
     rng = np.random.default_rng(seed)
-    max_shift = 0.018 * amount            # up to ~18 ms early/late
-    vel_spread = 14 * amount              # velocity wobble
+    max_shift = 0.018 * amount  # up to ~18 ms early/late
+    vel_spread = 14 * amount  # velocity wobble
     out = []
     for start, end, note, vel in notes:
         shift = float(np.clip(rng.normal(0, max_shift / 2), -max_shift, max_shift))

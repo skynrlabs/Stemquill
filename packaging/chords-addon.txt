@@ -1,0 +1,14 @@
+# The optional "better chord detection" add-on for the Windows installer.
+# Installed with --no-deps: Stemquill already bundles numpy, scipy, librosa, numba and mido,
+# and basic-pitch's own requirements would pull in TensorFlow, which it doesn't need with ONNX.
+basic-pitch==0.4.0
+onnxruntime
+flatbuffers
+protobuf
+packaging
+pretty_midi
+six
+importlib_resources
+mir_eval
+decorator
+resampy<0.4.3

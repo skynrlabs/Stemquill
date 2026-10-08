@@ -23,7 +23,22 @@ def card(parent, row, title, hint=None, grow=False):
 
 
 def slider(parent, var, lo, hi, step, command=None):
-    return tk.Scale(parent, from_=lo, to=hi, resolution=step, variable=var, orient="horizontal",
-                    length=260, showvalue=False, command=command, bg=T["accent"],
-                    activebackground=T["accent_hover"], troughcolor=T["field"], highlightthickness=0,
-                    bd=0, sliderrelief="flat", sliderlength=18, width=10)
+    return tk.Scale(
+        parent,
+        from_=lo,
+        to=hi,
+        resolution=step,
+        variable=var,
+        orient="horizontal",
+        length=260,
+        showvalue=False,
+        command=command,
+        bg=T["accent"],
+        activebackground=T["accent_hover"],
+        troughcolor=T["field"],
+        highlightthickness=0,
+        bd=0,
+        sliderrelief="flat",
+        sliderlength=18,
+        width=10,
+    )

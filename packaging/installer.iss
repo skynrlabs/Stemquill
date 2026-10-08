@@ -37,13 +37,22 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
+Name: "chords"; Description: "Better chord detection for guitar, keys and synth stems (basic-pitch, adds about 45 MB)"; GroupDescription: "Optional features:"
+
+[InstallDelete]
+; Start the add-on fresh on every install; it's copied back below if the box is ticked.
+Type: filesandordirs; Name: "{app}\addons\chords"
 
 [Files]
 Source: "..\dist\Stemquill\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "..\dist\addons\chords\*"; DestDir: "{app}\addons\chords"; Tasks: chords; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
 Name: "{autoprograms}\Stemquill"; Filename: "{app}\Stemquill.exe"
 Name: "{autodesktop}\Stemquill"; Filename: "{app}\Stemquill.exe"; Tasks: desktopicon
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\addons"
 
 [Run]
 Filename: "{app}\Stemquill.exe"; Description: "{cm:LaunchProgram,Stemquill}"; Flags: nowait postinstall skipifsilent

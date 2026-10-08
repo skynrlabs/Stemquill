@@ -25,8 +25,17 @@ class Sidebar(tk.Frame):
             frame.pack(fill="x")
             bar = tk.Frame(frame, bg=T["side"], width=4)
             bar.pack(side="left", fill="y")
-            label = tk.Label(frame, text=text, bg=T["side"], fg=T["muted"], font=fonts["nav"], anchor="w",
-                             padx=18, pady=10, cursor="hand2")
+            label = tk.Label(
+                frame,
+                text=text,
+                bg=T["side"],
+                fg=T["muted"],
+                font=fonts["nav"],
+                anchor="w",
+                padx=18,
+                pady=10,
+                cursor="hand2",
+            )
             label.pack(side="left", fill="x", expand=True)
             self.items[key] = (bar, label, frame)
             for w in (frame, label):
@@ -36,8 +45,9 @@ class Sidebar(tk.Frame):
 
         foot = tk.Frame(self, bg=T["side"])
         foot.pack(side="bottom", fill="x", padx=18, pady=14)
-        tk.Label(foot, text=f"v{__version__}  ·  Skynr Labs", bg=T["side"], fg=T["muted"],
-                 font=fonts["small"]).pack(anchor="w")
+        tk.Label(foot, text=f"v{__version__}  ·  Skynr Labs", bg=T["side"], fg=T["muted"], font=fonts["small"]).pack(
+            anchor="w"
+        )
 
     def _paint(self, key, hover=False):
         bar, label, frame = self.items[key]

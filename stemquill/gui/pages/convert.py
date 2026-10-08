@@ -6,11 +6,11 @@ from tkinter import filedialog, ttk
 
 from ...config import STEM_TYPES
 from ...core import guess_type
+from ..activity import ActivityLog
 from ..theme import THEME as T
 from ..widgets import card, slider
 
-GRID_CHOICES = {"Off (keep original timing)": 0, "1/8 note": 2, "1/8 triplet": 3,
-                "1/16 note": 4, "1/32 note": 8}
+GRID_CHOICES = {"Off (keep original timing)": 0, "1/8 note": 2, "1/8 triplet": 3, "1/16 note": 4, "1/32 note": 8}
 DEFAULT_GRID = "Off (keep original timing)"
 SENS_MIN, SENS_MAX, SENS_DEFAULT = 0.1, 1.5, 0.8
 TEMPO_HINT = "click Detect to measure it from the selected stem"
@@ -38,12 +38,25 @@ class ConvertPage(ttk.Frame):
     # ---- stems
     def _build_stems(self, F):
         c = card(self, 0, "Stems", "the type is read from the file name: Drums, Bass, Vocals, Other")
-        self.listbox = tk.Listbox(c, height=4, bg=T["field"], fg=T["text"], selectbackground=T["accent"],
-                                  selectforeground=T["accent_text"], highlightthickness=1,
-                                  highlightbackground=T["line"], highlightcolor=T["accent"], relief="flat",
-                                  font=F["body"], activestyle="none", selectmode="extended")
+        self.listbox = tk.Listbox(
+            c,
+            height=4,
+            bg=T["field"],
+            fg=T["text"],
+            selectbackground=T["accent"],
+            selectforeground=T["accent_text"],
+            highlightthickness=1,
+            highlightbackground=T["line"],
+            highlightcolor=T["accent"],
+            relief="flat",
+            font=F["body"],
+            activestyle="none",
+            selectmode="extended",
+            exportselection=False,
+        )  # keep the highlight when another box gets focus
         self.listbox.grid(row=1, column=0, columnspan=2, sticky="ew")
         self.listbox.bind("<Delete>", lambda e: self.remove_selected())
+        self.listbox.bind("<<ListboxSelect>>", lambda e: self.on_stems_changed())
         btns = ttk.Frame(c, style="Card.TFrame")
         btns.grid(row=1, column=2, sticky="ns", padx=(10, 0))
         ttk.Button(btns, text="Add stems...", command=self.add_files).pack(fill="x")
@@ -52,6 +65,8 @@ class ConvertPage(ttk.Frame):
 
     def refresh_list(self):
         lb = self.listbox
+        sel = [i for i in lb.curselection() if i < len(self.files)]
+        keep = sel[0] if sel else 0
         lb.delete(0, "end")
         for f in self.files:
             kind = self.type_var.get() if self.type_var.get() != "auto" else guess_type(f)
@@ -59,12 +74,15 @@ class ConvertPage(ttk.Frame):
         if not self.files:
             lb.insert("end", "  No stems yet. Click Add stems... or press Ctrl+O")
             lb.itemconfig(0, fg=T["muted"])
+        elif keep is not None:
+            lb.selection_set(min(keep, len(self.files) - 1))  # always show which stem Play and Detect use
         self.on_stems_changed()
 
     def add_files(self):
         chosen = filedialog.askopenfilenames(
             title="Choose stems",
-            filetypes=[("Audio", "*.wav *.mp3 *.flac *.aif *.aiff *.ogg *.m4a"), ("All files", "*.*")])
+            filetypes=[("Audio", "*.wav *.mp3 *.flac *.aif *.aiff *.ogg *.m4a"), ("All files", "*.*")],
+        )
         for f in chosen:
             if f not in self.files:
                 self.files.append(f)
@@ -88,8 +106,9 @@ class ConvertPage(ttk.Frame):
     # ---- settings
     def _build_settings(self):
         c = card(self, 1, "Settings", "match the tempo to your DAW project")
-        ttk.Button(c.top, text="Reset to defaults", style="Small.TButton",
-                   command=lambda: self.on_reset()).pack(side="right")
+        ttk.Button(c.top, text="Reset to defaults", style="Small.TButton", command=lambda: self.on_reset()).pack(
+            side="right"
+        )
 
         def row_label(r, text, hint=None):
             ttk.Label(c, text=text, style="Card.TLabel").grid(row=r, column=0, sticky="w", pady=4, padx=(0, 16))
@@ -110,18 +129,28 @@ class ConvertPage(ttk.Frame):
         ttk.Label(tempo, textvariable=self.tempo_hint, style="Muted.TLabel").pack(side="left", padx=(12, 0))
 
         row_label(3, "Snap to grid", "Off is safest for AI-generated stems")
-        ttk.Combobox(c, textvariable=self.grid_var, values=list(GRID_CHOICES), state="readonly", width=26)\
-            .grid(row=3, column=1, sticky="w")
+        ttk.Combobox(c, textvariable=self.grid_var, values=list(GRID_CHOICES), state="readonly", width=26).grid(
+            row=3, column=1, sticky="w"
+        )
 
         row_label(4, "Sensitivity")
         sens = ttk.Frame(c, style="Card.TFrame")
         sens.grid(row=4, column=1, columnspan=2, sticky="w")
         ttk.Label(sens, text="fewer notes", style="Muted.TLabel").pack(side="left")
-        slider(sens, self.sens_var, SENS_MIN, SENS_MAX, 0.01,
-               lambda v: self.sens_text.set(f"{float(v):.2f}")).pack(side="left", padx=8)
+        slider(sens, self.sens_var, SENS_MIN, SENS_MAX, 0.01, lambda v: self.sens_text.set(f"{float(v):.2f}")).pack(
+            side="left", padx=8
+        )
         ttk.Label(sens, text="more notes", style="Muted.TLabel").pack(side="left")
-        sbox = ttk.Spinbox(sens, from_=SENS_MIN, to=SENS_MAX, increment=0.05, width=6,
-                           textvariable=self.sens_text, command=self.apply_typed_sensitivity, format="%.2f")
+        sbox = ttk.Spinbox(
+            sens,
+            from_=SENS_MIN,
+            to=SENS_MAX,
+            increment=0.05,
+            width=6,
+            textvariable=self.sens_text,
+            command=self.apply_typed_sensitivity,
+            format="%.2f",
+        )
         sbox.pack(side="left", padx=(14, 0))
         sbox.bind("<Return>", self.apply_typed_sensitivity)
         sbox.bind("<FocusOut>", self.apply_typed_sensitivity)
@@ -160,9 +189,14 @@ class ConvertPage(ttk.Frame):
                 raise ValueError
         except ValueError:
             return None, "Enter a tempo between 40 and 240 BPM"
-        return {"stem_type": self.type_var.get(), "bpm": bpm, "grid": GRID_CHOICES[self.grid_var.get()],
-                "grid_label": self.grid_var.get(), "sensitivity": self.sens_var.get(),
-                "humanize": self.human_var.get() / 100.0}, None
+        return {
+            "stem_type": self.type_var.get(),
+            "bpm": bpm,
+            "grid": GRID_CHOICES[self.grid_var.get()],
+            "grid_label": self.grid_var.get(),
+            "sensitivity": self.sens_var.get(),
+            "humanize": self.human_var.get() / 100.0,
+        }, None
 
     def set_tempo(self, bpm, source):
         self.bpm_var.set(f"{bpm:g}")
@@ -182,19 +216,6 @@ class ConvertPage(ttk.Frame):
     def _build_log(self, F):
         c = card(self, 2, "Activity", grow=True)
         c.rowconfigure(1, weight=1)
-        self.logbox = tk.Text(c, height=4, bg=T["field"], fg=T["muted"], insertbackground=T["text"],
-                              relief="flat", font=F["mono"], highlightthickness=0, padx=10, pady=8, wrap="word")
-        self.logbox.grid(row=1, column=0, columnspan=3, sticky="nsew")
-        self.logbox.tag_configure("ok", foreground=T["ok"])
-        self.logbox.tag_configure("warn", foreground=T["warn"])
-        self.logbox.tag_configure("head", foreground=T["text"])
-
-    def write_log(self, msg):
-        tag = "ok" if msg.strip().startswith(("saved", "Done")) else \
-              "warn" if ("Error" in msg or "skipped" in msg or "failed" in msg or "Nothing" in msg) else \
-              "head" if "->" in msg else ""
-        self.logbox.insert("end", msg + "\n", tag)
-        self.logbox.see("end")
-
-    def clear_log(self):
-        self.logbox.delete("1.0", "end")
+        self.activity = ActivityLog(c, F)
+        self.activity.grid(row=1, column=0, columnspan=3, sticky="nsew")
+        ttk.Button(c.top, text="Clear", style="Small.TButton", command=self.activity.clear).pack(side="right")

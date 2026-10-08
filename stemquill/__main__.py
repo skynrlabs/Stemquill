@@ -16,9 +16,17 @@ def _check_libraries():
 def _prepare_environment():
     """Make a packaged (double-clicked) copy behave like a normal one."""
     if sys.stdout is None:  # windowed app: no console to print to
-        sys.stdout = open(os.devnull, "w")
+        sys.stdout = open(os.devnull, "w")  # noqa: SIM115 - stays open for the life of the app
     if sys.stderr is None:
-        sys.stderr = open(os.devnull, "w")
+        sys.stderr = open(os.devnull, "w")  # noqa: SIM115
+    # Optional add-ons the Windows installer can put next to the app (e.g. basic-pitch chord detection)
+    if getattr(sys, "frozen", False):
+        addons = os.path.join(os.path.dirname(sys.executable), "addons")
+        if os.path.isdir(addons):
+            for name in sorted(os.listdir(addons)):
+                path = os.path.join(addons, name)
+                if os.path.isdir(path) and path not in sys.path:
+                    sys.path.append(path)
     # librosa's speed-ups cache compiled code; point that somewhere writable
     os.environ.setdefault("NUMBA_CACHE_DIR", os.path.join(tempfile.gettempdir(), "stemquill-numba"))
 
@@ -28,9 +36,11 @@ def main():
     _check_libraries()
     if len(sys.argv) > 1:
         from .cli import main as cli_main
+
         cli_main()
     else:
         from .gui import run_gui
+
         run_gui()
 
 

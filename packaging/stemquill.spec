@@ -15,6 +15,8 @@ datas += collect_data_files("librosa")  # includes the .pyi stubs librosa's lazy
 UNUSED = ("librosa.display", "librosa.segment", "librosa.decompose")
 hidden = collect_submodules("librosa", filter=lambda name: not name.startswith(UNUSED))
 hidden += collect_submodules("stemquill")
+# Parts of the bundled libraries that only the optional chord add-on (basic-pitch) uses
+hidden += ["scipy.io", "scipy.io.wavfile", "scipy.fftpack", "struct"]
 
 a = Analysis(
     [os.path.join(SPECPATH, "launch.py")],
