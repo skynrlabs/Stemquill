@@ -29,14 +29,32 @@ def guess_type(path):
 _cache = {}
 
 
-def transcribe(path, stem_type="auto", bpm=None, grid=4, sensitivity=0.8,
-               drum_parts=DEFAULT_DRUM_PARTS, log=log_default, drum_map=None, humanize_amount=0.0):
+def transcribe(
+    path,
+    stem_type="auto",
+    bpm=None,
+    grid=4,
+    sensitivity=0.8,
+    drum_parts=DEFAULT_DRUM_PARTS,
+    log=log_default,
+    drum_map=None,
+    humanize_amount=0.0,
+):
     """Turn one stem into notes. Returns a dict, or None if the stem is silent."""
     if stem_type == "auto":
         stem_type = guess_type(path)
     drum_map = {**DRUM_NOTES, **(drum_map or {})}
-    key = (os.path.abspath(path), os.path.getmtime(path), stem_type, bpm, grid, round(sensitivity, 3),
-           tuple(sorted(drum_parts)), tuple(sorted(drum_map.items())), round(humanize_amount, 3))
+    key = (
+        os.path.abspath(path),
+        os.path.getmtime(path),
+        stem_type,
+        bpm,
+        grid,
+        round(sensitivity, 3),
+        tuple(sorted(drum_parts)),
+        tuple(sorted(drum_map.items())),
+        round(humanize_amount, 3),
+    )
     if key in _cache:
         log(f"\n{os.path.basename(path)}  ->  {stem_type}  (using the preview result)")
         return _cache[key]
@@ -78,8 +96,16 @@ def transcribe(path, stem_type="auto", bpm=None, grid=4, sensitivity=0.8,
         notes = humanize(notes, bpm, humanize_amount, stem_type == "drums")
         log(f"  humanized ({int(humanize_amount * 100)}%)")
 
-    result = {"notes": notes, "bpm": bpm, "stem_type": stem_type, "channel": channel,
-              "program": program, "drum_map": drum_map, "path": path, "engine": engine}
+    result = {
+        "notes": notes,
+        "bpm": bpm,
+        "stem_type": stem_type,
+        "channel": channel,
+        "program": program,
+        "drum_map": drum_map,
+        "path": path,
+        "engine": engine,
+    }
     _cache[key] = result
     return result
 
@@ -90,13 +116,22 @@ def save_result(result, out_dir=None, log=log_default):
     os.makedirs(out_dir, exist_ok=True)
     base = os.path.splitext(os.path.basename(path))[0]
     out_path = os.path.join(out_dir, f"{base} - {stem_type}.mid")
-    write_midi(result["notes"], out_path, result["bpm"], f"{base} ({stem_type})",
-               result["channel"], result["program"])
+    write_midi(result["notes"], out_path, result["bpm"], f"{base} ({stem_type})", result["channel"], result["program"])
     log(f"  saved: {out_path}")
     return out_path
 
 
-def convert(path, stem_type="auto", bpm=None, grid=4, sensitivity=0.8,
-            drum_parts=DEFAULT_DRUM_PARTS, out_dir=None, log=log_default, drum_map=None, humanize_amount=0.0):
+def convert(
+    path,
+    stem_type="auto",
+    bpm=None,
+    grid=4,
+    sensitivity=0.8,
+    drum_parts=DEFAULT_DRUM_PARTS,
+    out_dir=None,
+    log=log_default,
+    drum_map=None,
+    humanize_amount=0.0,
+):
     result = transcribe(path, stem_type, bpm, grid, sensitivity, drum_parts, log, drum_map, humanize_amount)
     return save_result(result, out_dir, log) if result else None

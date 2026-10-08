@@ -22,15 +22,19 @@ class OutputPage(ttk.Frame):
         btns.grid(row=1, column=2, sticky="e")
         ttk.Button(btns, text="Change...", command=self.pick_folder).pack(side="left")
         ttk.Button(btns, text="Reset", command=self.reset_folder).pack(side="left", padx=(6, 0))
-        ttk.Label(c, text="Each stem becomes  <stem name> - <type>.mid,  for example  Drums - drums.mid",
-                  style="Muted.TLabel").grid(row=2, column=0, columnspan=3, sticky="w", pady=(10, 0))
+        ttk.Label(
+            c, text="Each stem becomes  <stem name> - <type>.mid,  for example  Drums - drums.mid", style="Muted.TLabel"
+        ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(10, 0))
 
         c2 = card(self, 1, "When converting finishes")
-        ttk.Checkbutton(c2, text="Open the folder automatically", variable=self.open_when_done)\
-            .grid(row=1, column=0, columnspan=3, sticky="w")
-        ttk.Label(c2, text="Then set your DAW project to the same tempo and drag each .mid onto its instrument "
-                           "track at bar 1.", style="Muted.TLabel")\
-            .grid(row=2, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        ttk.Checkbutton(c2, text="Open the folder automatically", variable=self.open_when_done).grid(
+            row=1, column=0, columnspan=3, sticky="w"
+        )
+        ttk.Label(
+            c2,
+            text="Then set your DAW project to the same tempo and drag each .mid onto its instrument track at bar 1.",
+            style="Muted.TLabel",
+        ).grid(row=2, column=0, columnspan=3, sticky="w", pady=(6, 0))
 
     def pick_folder(self):
         d = filedialog.askdirectory(title="Save MIDI files to")

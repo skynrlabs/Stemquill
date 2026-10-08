@@ -7,15 +7,20 @@ from ...config import DRUM_LABELS, DRUM_MAP_LABELS, DRUM_MAPS, DRUM_NOTES, load_
 from ..widgets import card
 
 KIT_BOXES = [  # (label shown, part name, default on) - named like MT Power Drumkit's channels
-    ("Kick", "kick", True), ("Snare", "snare", True), ("Hi-Hat cl.", "hihat", True),
-    ("Hi-Hat op.", "openhat", True), ("Toms", "toms", True), ("Crash", "crash", False),
+    ("Kick", "kick", True),
+    ("Snare", "snare", True),
+    ("Hi-Hat cl.", "hihat", True),
+    ("Hi-Hat op.", "openhat", True),
+    ("Toms", "toms", True),
+    ("Crash", "crash", False),
     ("Ride", "ride", False),
 ]
 MAP_HELP = (
     "General MIDI works with MT Power Drumkit 2, EZdrummer, Addictive Drums, Superior Drummer and most "
     "drum plugins.\n\nPads in order is for pad samplers (FL Studio FPC, Ableton Drum Rack, MPC): load "
     "your sounds from note 36 up in the order shown.\n\nCustom: type any note into a box; it's remembered "
-    "for next time.\n\nNames use 36 = C1. Some DAWs label octaves differently, but the note is the same.")
+    "for next time.\n\nNames use 36 = C1. Some DAWs label octaves differently, but the note is the same."
+)
 
 
 class DrumKitPage(ttk.Frame):
@@ -38,8 +43,9 @@ class DrumKitPage(ttk.Frame):
             cb.grid(row=0, column=i, sticky="w", padx=(0, 20), pady=2)
             self.kit_checks.append(cb)
         self.kit_note = tk.StringVar()
-        ttk.Label(c, textvariable=self.kit_note, style="Muted.TLabel", wraplength=680, justify="left")\
-            .grid(row=2, column=0, columnspan=3, sticky="w", pady=(6, 0))
+        ttk.Label(c, textvariable=self.kit_note, style="Muted.TLabel", wraplength=680, justify="left").grid(
+            row=2, column=0, columnspan=3, sticky="w", pady=(6, 0)
+        )
 
     def _build_map(self):
         c = card(self, 1, "Drum map", "match this to your drum plugin")
@@ -50,26 +56,29 @@ class DrumKitPage(ttk.Frame):
         if start_key not in DRUM_MAP_LABELS:
             start_key = "General MIDI"
         self.map_var = tk.StringVar(value=DRUM_MAP_LABELS[start_key])
-        self.map_box = ttk.Combobox(mapf, textvariable=self.map_var, values=list(DRUM_MAP_LABELS.values()),
-                                    state="readonly", width=52)
+        self.map_box = ttk.Combobox(
+            mapf, textvariable=self.map_var, values=list(DRUM_MAP_LABELS.values()), state="readonly", width=52
+        )
         self.map_box.grid(row=0, column=0, columnspan=9, sticky="w")
         self.map_box.bind("<<ComboboxSelected>>", lambda e: self.apply_map(self.map_key()))
 
         start_notes = DRUM_MAPS.get(start_key) or {**DRUM_NOTES, **saved.get("custom_map", {})}
         self.note_vars, self.name_vars = {}, {}
         for col, part in enumerate(DRUM_LABELS):
-            ttk.Label(mapf, text=DRUM_LABELS[part], style="Muted.TLabel")\
-                .grid(row=1, column=col, sticky="w", pady=(12, 2), padx=(0, 8))
+            ttk.Label(mapf, text=DRUM_LABELS[part], style="Muted.TLabel").grid(
+                row=1, column=col, sticky="w", pady=(12, 2), padx=(0, 8)
+            )
             self.note_vars[part] = tk.StringVar(value=str(start_notes[part]))
             self.name_vars[part] = tk.StringVar()
-            ttk.Spinbox(mapf, from_=0, to=127, increment=1, width=4, textvariable=self.note_vars[part])\
-                .grid(row=2, column=col, sticky="w", padx=(0, 8))
-            ttk.Label(mapf, textvariable=self.name_vars[part], style="Muted.TLabel")\
-                .grid(row=3, column=col, sticky="w")
+            ttk.Spinbox(mapf, from_=0, to=127, increment=1, width=4, textvariable=self.note_vars[part]).grid(
+                row=2, column=col, sticky="w", padx=(0, 8)
+            )
+            ttk.Label(mapf, textvariable=self.name_vars[part], style="Muted.TLabel").grid(row=3, column=col, sticky="w")
             self._show_name(part)
             self.note_vars[part].trace_add("write", lambda *_, p=part: self._on_note_edit(p))
-        ttk.Label(c, text=MAP_HELP, style="Muted.TLabel", justify="left", wraplength=680)\
-            .grid(row=2, column=0, columnspan=3, sticky="w", pady=(12, 0))
+        ttk.Label(c, text=MAP_HELP, style="Muted.TLabel", justify="left", wraplength=680).grid(
+            row=2, column=0, columnspan=3, sticky="w", pady=(12, 0)
+        )
 
     def _show_name(self, part):
         try:
@@ -114,9 +123,12 @@ class DrumKitPage(ttk.Frame):
         for cb in self.kit_checks:
             cb.state(["!disabled"] if drums else ["disabled"])
         self.map_box.state(["!disabled", "readonly"] if drums else ["disabled"])
-        self.kit_note.set("Crash and Ride start off: cymbals can bring back metallic sounds. If you untick "
-                          "Hi-Hat op., open hats are written as closed hats." if drums else
-                          f"Stem type is set to {stem_type}, so these settings are not used right now.")
+        self.kit_note.set(
+            "Crash and Ride start off: cymbals can bring back metallic sounds. If you untick "
+            "Hi-Hat op., open hats are written as closed hats."
+            if drums
+            else f"Stem type is set to {stem_type}, so these settings are not used right now."
+        )
 
     def reset(self):
         for _, part, on in KIT_BOXES:

@@ -22,11 +22,11 @@ def band_energy(S, freqs, lo, hi):
 
 def ring_ratio(env, f, after):
     """How much of a hit's energy is still ringing `after` frames later (0 = gone, 1 = still full)."""
-    pre = env[max(0, f - 4):f].min() if f > 0 else 0.0
-    peak = env[f:f + 4].max() - pre
+    pre = env[max(0, f - 4) : f].min() if f > 0 else 0.0
+    peak = env[f : f + 4].max() - pre
     if peak <= 0:
         return 0.0
-    later = env[min(len(env) - 1, f + after):min(len(env), f + after + 3)].mean() - pre
+    later = env[min(len(env) - 1, f + after) : min(len(env), f + after + 3)].mean() - pre
     return float(np.clip(later / peak, 0.0, 1.5))
 
 
@@ -42,24 +42,24 @@ def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
     y = np.concatenate([np.zeros(pad), y])
     S = np.abs(librosa.stft(y, n_fft=2048, hop_length=HOP))
     freqs = librosa.fft_frequencies(sr=sr, n_fft=2048)
-    E = S ** 2
-    bands = {"low": (30, 130), "lowmid": (90, 400), "mid": (1500, 5000),
-             "upper": (3000, 7000), "high": (7000, 16000)}
+    E = S**2
+    bands = {"low": (30, 130), "lowmid": (90, 400), "mid": (1500, 5000), "upper": (3000, 7000), "high": (7000, 16000)}
     env = {k: band_energy(E, freqs, *v) for k, v in bands.items()}
     ref = {k: (np.percentile(v, 99.5) or 1.0) for k, v in env.items()}  # "loud" level per band
 
     def rise(band, f):
         """How big a jump this hit makes in a band, compared with the loudest hits (about 0..1)."""
         e = env[band]
-        before = e[max(0, f - 4):f].min() if f > 0 else 0.0
-        jump = e[f:f + 4].max() - before
+        before = e[max(0, f - 4) : f].min() if f > 0 else 0.0
+        jump = e[f : f + 4].max() - before
         return float(np.sqrt(max(0.0, jump) / ref[band]))
 
     # timing: spectral flux across all bands
     flux = np.maximum.reduce([band_flux(S, freqs, *bands[k]) for k in ("low", "lowmid", "mid", "high")])
     delta = max(0.02, 0.12 * (1.6 - sensitivity))  # sensitivity 0.1 .. 1.5
-    frames = librosa.util.peak_pick(flux, pre_max=3, post_max=3, pre_avg=10, post_avg=10,
-                                    delta=delta, wait=max(1, int(0.05 * sr / HOP)))
+    frames = librosa.util.peak_pick(
+        flux, pre_max=3, post_max=3, pre_avg=10, post_avg=10, delta=delta, wait=max(1, int(0.05 * sr / HOP))
+    )
     k = 1.6 - sensitivity
     thr, snare_thr, tom_thr = 0.25 * k, 0.35 * k, 0.3 * k
     fps = sr / HOP
@@ -69,7 +69,7 @@ def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
     length = 60.0 / bpm / 4  # sixteenth note
     notes, counts = [], {p: 0 for p in DRUM_NOTES}
     for f in frames:
-        l, lm, m, up, h = (rise(b, f) for b in ("low", "lowmid", "mid", "upper", "high"))
+        lo, lm, m, up, h = (rise(b, f) for b in ("low", "lowmid", "mid", "upper", "high"))
         mid_ring = ring_ratio(env["mid"], f, f150)
         high_ring = ring_ratio(env["high"], f, f150)
         high_long = ring_ratio(env["high"], f, f450)
@@ -81,15 +81,15 @@ def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
         is_crash = h > thr * 1.5 and high_long > 0.35
 
         # Kick or tom: both thump; toms sit higher in pitch and ring on.
-        if l > thr or lm > tom_thr:
-            spec = S[tom_bins, f:f + int(0.1 * fps)].mean(axis=1)
+        if lo > thr or lm > tom_thr:
+            spec = S[tom_bins, f : f + int(0.1 * fps)].mean(axis=1)
             pitch = freqs[tom_bins][int(np.argmax(spec))]
             tom_ring = ring_ratio(env["lowmid"], f, f150)
             if pitch >= 95 and tom_ring > 0.1 and lm > tom_thr and not is_snare:
                 tom = "tom_hi" if pitch >= 170 else "tom_mid" if pitch >= 120 else "tom_low"
                 found.append((tom, lm))
-            elif l > thr:
-                found.append(("kick", l))
+            elif lo > thr:
+                found.append(("kick", lo))
         if is_snare:
             found.append(("snare", m))
         if is_crash:

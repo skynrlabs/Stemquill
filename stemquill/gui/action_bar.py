@@ -16,10 +16,13 @@ class ActionBar(ttk.Frame):
         self.stop_btn = ttk.Button(self, text="Stop", width=7)
         self.stop_btn.grid(row=0, column=2, padx=(6, 14))
         self.with_original = tk.BooleanVar(value=True)
-        ttk.Checkbutton(self, text="Mix in the original stem", variable=self.with_original)\
-            .grid(row=0, column=3, sticky="w")
+        ttk.Checkbutton(self, text="Mix in the original stem", variable=self.with_original).grid(
+            row=0, column=3, sticky="w"
+        )
         self.target = tk.StringVar()
-        ttk.Label(self, textvariable=self.target, style="Muted.TLabel").grid(row=1, column=1, columnspan=4, sticky="w", pady=(6, 0))
+        ttk.Label(self, textvariable=self.target, style="Muted.TLabel").grid(
+            row=1, column=1, columnspan=4, sticky="w", pady=(6, 0)
+        )
         self.open_btn = ttk.Button(self, text="Open folder")
         self.open_btn.grid(row=0, column=5, sticky="e", padx=(0, 10))
         self.open_btn.state(["disabled"])

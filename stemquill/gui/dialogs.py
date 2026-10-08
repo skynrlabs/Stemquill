@@ -22,10 +22,12 @@ def show_about(root, fonts, logo=None):
         tk.Label(box, image=logo, bg=T["card"]).pack()
     tk.Label(box, text="Stemquill", bg=T["card"], fg=T["text"], font=F["title"]).pack(pady=(10, 0))
     tk.Label(box, text=f"Version {__version__}", bg=T["card"], fg=T["muted"], font=F["body"]).pack()
-    tk.Label(box, text="Turn audio stems into MIDI for any DAW.", bg=T["card"], fg=T["text"],
-             font=F["body"]).pack(pady=(12, 0))
-    tk.Label(box, text="© 2026 Skynr Labs  ·  MIT License", bg=T["card"], fg=T["muted"],
-             font=F["small"]).pack(pady=(4, 14))
+    tk.Label(box, text="Turn audio stems into MIDI for any DAW.", bg=T["card"], fg=T["text"], font=F["body"]).pack(
+        pady=(12, 0)
+    )
+    tk.Label(box, text="© 2026 Skynr Labs  ·  MIT License", bg=T["card"], fg=T["muted"], font=F["small"]).pack(
+        pady=(4, 14)
+    )
     row = tk.Frame(box, bg=T["card"])
     row.pack()
     ttk.Button(row, text="GitHub", command=lambda: webbrowser.open(REPO_URL)).pack(side="left", padx=4)

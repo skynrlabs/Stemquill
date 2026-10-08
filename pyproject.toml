@@ -29,6 +29,7 @@ classifiers = [
 
 [project.optional-dependencies]
 chords = ["basic-pitch"]
+dev = ["pytest", "ruff"]
 
 [project.urls]
 Homepage = "https://github.com/skynrlabs/Stemquill"
@@ -48,3 +49,26 @@ include = ["stemquill*"]
 
 [tool.setuptools.package-data]
 stemquill = ["assets/*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+extend-exclude = ["packaging/stemquill.spec"]
+
+[tool.ruff.lint]
+# pycodestyle, pyflakes, import order, likely bugs, modern syntax, simplifications
+select = ["E", "W", "F", "I", "B", "UP", "SIM"]
+ignore = [
+    "SIM108",  # ternaries aren't always clearer
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["B011"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
+markers = [
+    "gui: opens the window (needs a display; run under xvfb on Linux)",
+    "slow: takes more than a few seconds",
+]
