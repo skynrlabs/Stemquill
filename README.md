@@ -1,6 +1,4 @@
-<img src="stemquill/assets/icon.png" alt="Stemquill icon" width="96" align="right">
-
-# 🪶 Stemquill
+# <img src="stemquill/assets/icon-64.png" alt="" width="48" align="center"> Stemquill
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 [![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://github.com/skynrlabs/Stemquill/releases/latest)
