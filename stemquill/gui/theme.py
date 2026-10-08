@@ -15,6 +15,7 @@ THEME = {
     "accent_text": "#0d1013",
     "ok": "#4cd08a",
     "warn": "#f0b84a",
+    "sel": "#243a40",
     "side": "#14171a",
     "side_hover": "#1f2328",
     "side_active": "#252a30",

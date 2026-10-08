@@ -12,7 +12,7 @@ from ..config import ASSETS_DIR, load_settings, save_settings
 from .action_bar import ActionBar
 from .dialogs import show_about
 from .journeys import ConvertJourney, PreviewJourney, TempoJourney
-from .pages import PAGES, ConvertPage, DrumKitPage, HelpPage, OutputPage
+from .pages import PAGES, ConvertPage, HelpPage, HistoryPage, SettingsPage
 from .shortcuts import bind_shortcuts
 from .sidebar import Sidebar
 from .theme import THEME, apply_styles, make_fonts
@@ -39,7 +39,7 @@ class StemquillApp:
         self._wire_buttons()
         root.protocol("WM_DELETE_WINDOW", self.quit)
 
-        self.convert_page.refresh_list()
+        self.convert_page.refresh()
         self.show_page("convert")
         self._poll()
 
@@ -92,14 +92,21 @@ class StemquillApp:
         box.grid(row=1, column=0, sticky="nsew")
         box.columnconfigure(0, weight=1)
         box.rowconfigure(0, weight=1)
-        self.convert_page = ConvertPage(box, self.fonts, self._on_stems_changed, self.reset_settings)
-        self.drum_page = DrumKitPage(box)
-        self.output_page = OutputPage(box)
+        self.settings_page = SettingsPage(box, on_reset=self.reset_settings)
+        self.history_page = HistoryPage(box, self.fonts)
+        self.convert_page = ConvertPage(
+            box,
+            self.fonts,
+            self.settings_page,
+            on_change=self._on_stems_changed,
+            on_play=lambda: self.preview.start(),
+            on_open_settings=lambda: self.show_page("settings"),
+        )
         self.help_page = HelpPage(box, self.fonts, self.about)
         self.pages = {
             "convert": self.convert_page,
-            "drums": self.drum_page,
-            "output": self.output_page,
+            "history": self.history_page,
+            "settings": self.settings_page,
             "help": self.help_page,
         }
         for page in self.pages.values():
@@ -109,12 +116,11 @@ class StemquillApp:
         self.action.grid(row=2, column=0, sticky="ew", pady=(4, 0))
 
     def _wire_buttons(self):
-        self.action.play_btn.configure(command=self.preview.start)
         self.action.stop_btn.configure(command=self.preview.stop)
         self.action.convert_btn.configure(command=self.converter.start)
         self.action.open_btn.configure(command=self.open_folder)
         self.convert_page.detect_btn.configure(command=self.tempo.start)
-        self.convert_page.activity.on_open = self.open_path
+        self.activity.on_open = self.open_path
 
     # ---- navigation
     def show_page(self, key):
@@ -125,11 +131,15 @@ class StemquillApp:
                 self.page_sub.set(sub)
         self.sidebar.set_active(key)
 
-    def _on_stems_changed(self):
-        n = len(self.convert_page.files)
-        self.action.show_target(os.path.basename(self.convert_page.selected_stem()) if n else None, n)
+    @property
+    def activity(self):
+        return self.history_page.activity
+
+    def _on_stems_changed(self, message=None):
+        n = len(self.convert_page.stems)
         self.sidebar.set_label("convert", f"Convert  ({n})" if n else "Convert")
-        self.drum_page.update_state(self.convert_page.type_var.get())
+        if message:
+            self.say(message, "ok")
 
     # ---- plumbing shared by the journeys
     def post(self, fn):
@@ -141,8 +151,8 @@ class StemquillApp:
 
     def set_busy(self, on):
         self.busy = on
-        for b in self.action.busy_buttons() + [self.convert_page.detect_btn]:
-            b.state(["disabled"] if on else ["!disabled"])
+        self.action.convert_btn.state(["disabled"] if on else ["!disabled"])
+        self.convert_page.set_enabled(not on)
 
     def _poll(self):
         try:
@@ -153,29 +163,30 @@ class StemquillApp:
         self.root.after(100, self._poll)
 
     def collect(self):
-        """Gather and check every setting from all pages. Returns a dict, or None after saying what's wrong."""
-        c, err = self.convert_page.read_settings()
+        """Gather and check the shared settings (song + drum notes). Returns a dict, or None after saying
+        what's wrong. Each stem's own settings are added per stem by the journeys (see stem_config)."""
+        c, err = self.convert_page.read_song()
         if err:
             self.say(err, "warn")
             self.show_page("convert")
             return None
-        drum_map, err = self.drum_page.current_map()
+        drum_map, err = self.settings_page.current_map()
         if err:
             self.say(err, "warn")
-            self.show_page("drums")
+            self.show_page("settings")
             return None
-        map_key = self.drum_page.map_key()
+        map_key = self.settings_page.map_key()
         settings = load_settings()
         settings["drum_map"] = map_key
         if map_key == "Custom":
             settings["custom_map"] = drum_map
         save_settings(settings)
-        c.update(parts=self.drum_page.selected_parts(), drum_map=drum_map, map_key=map_key)
+        c.update(drum_map=drum_map, map_key=map_key)
         return c
 
     # ---- commands
     def open_folder(self):
-        d = self.converter.last_out_dir or self.output_page.out_dir
+        d = self.converter.last_out_dir or self.settings_page.out_dir
         if not d:
             self.say("Convert something first, then Open folder", "warn")
             return
@@ -192,8 +203,7 @@ class StemquillApp:
 
     def reset_settings(self):
         self.convert_page.reset()
-        self.drum_page.reset()
-        self.output_page.reset()
+        self.settings_page.reset()
         self.action.with_original.set(True)
         self.say("Settings reset to defaults", "ok")
 

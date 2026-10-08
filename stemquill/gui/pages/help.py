@@ -11,27 +11,30 @@ HELP_TEXT = [
     ("h", "Quick start"),
     (
         "p",
-        "1.  Click Add stems... and pick your audio files. The stem type is read from the file name "
-        "(Drums, Bass, Vocals, Other), or set it yourself under Stem type.",
+        "1.  Click Add stems... and pick your audio files. Each stem gets its own row; its type is read "
+        "from the file name (Drums, Bass, Vocals, Other) and you can change it in the row.",
     ),
     (
         "p",
-        "2.  Click Detect to measure the tempo, or type the BPM if you know it. Set your DAW project "
-        "to the same tempo.",
+        "2.  Song: click Detect to measure the tempo from the selected stem, or type the BPM. Set your DAW "
+        "project to the same tempo. Tempo and Snap to grid are shared by every stem.",
     ),
     (
         "p",
-        "3.  Click Play to hear the result before saving. With several stems, click the one you want "
-        "in the list first; the bar under Play shows which stem will play. Tick Mix in the original "
-        "stem to check the timing against the real audio.",
+        "3.  Click a stem to see its own settings underneath: Sensitivity, Humanize and, for drum stems, "
+        "which drums to write. Apply to all stems copies them to the rest.",
     ),
-    ("p", "4.  Adjust Sensitivity, Humanize or the Drum Kit page, and play again until it sounds right."),
     (
         "p",
-        "5.  Click Convert to MIDI. Each stem becomes <name> - <type>.mid. Drag it onto your "
-        "instrument track at bar 1.",
+        "4.  Click Play on a stem's row to hear it before saving. Tick Mix in the original stem to check "
+        "the timing against the real audio. Stop preview ends playback.",
     ),
-    ("h", "Settings"),
+    (
+        "p",
+        "5.  Click Convert all to MIDI. Each row shows when its file is saved as <name> - <type>.mid. "
+        "Drag each file onto its instrument track at bar 1. The History page lists everything that happened.",
+    ),
+    ("h", "Stem settings"),
     ("p", "Sensitivity: slide right to catch quieter notes, left to cut junk notes. 0.80 is a good start."),
     (
         "p",
@@ -60,7 +63,7 @@ HELP_TEXT = [
     (
         "p",
         "Guitar, keys and synth stems use basic-pitch for chords when the Better chord detection option "
-        "was ticked in the installer, and a simpler built-in mode otherwise. The Activity feed shows which "
+        "was ticked in the installer, and a simpler built-in mode otherwise. The History page shows which "
         "one was used. Run the installer again to add or remove it.",
     ),
     ("h", "Tips"),
