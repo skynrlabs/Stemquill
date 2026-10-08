@@ -32,7 +32,12 @@ def describe(result):
     if not notes:
         return "no notes found"
     pitches = [n for _, _, n, _ in notes]
-    return f"range {note_name(min(pitches))} to {note_name(max(pitches))}"
+    line = f"range {note_name(min(pitches))} to {note_name(max(pitches))}"
+    if result.get("engine") == "basic-pitch":
+        line += " · chords by basic-pitch"
+    elif result.get("engine") == "built-in":
+        line += " · built-in chord detection"
+    return line
 
 
 class ActivityLog:

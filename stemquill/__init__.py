@@ -1,3 +1,3 @@
 """Stemquill: turn audio stems into MIDI for any DAW."""
 
-__version__ = "1.0.2"
+__version__ = "1.1.0"

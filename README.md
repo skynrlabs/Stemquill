@@ -54,7 +54,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 ### Windows (recommended)
 
 1. Download **`Stemquill-Setup-x.y.z.exe`** from the [latest release](https://github.com/skynrlabs/Stemquill/releases/latest).
-2. Run it and click through the installer. No Python or admin rights needed.
+2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 70 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
 > Windows may show **"Windows protected your PC"** because the app isn't code-signed yet. Click **More info → Run anyway**.
@@ -74,7 +74,7 @@ Run `stemquill` with no arguments to open the window, or with file names to use 
 
 ### Better chord detection (optional)
 
-[basic-pitch](https://github.com/spotify/basic-pitch) improves chords on guitar, keys and synth stems. It isn't included in the Windows app; add it to a pipx install using Python 3.10 or 3.11:
+[basic-pitch](https://github.com/spotify/basic-pitch) improves chords on guitar, keys and synth stems. On Windows, it's the **Better chord detection** box in the installer; run the installer again to add or remove it. With pipx, use Python 3.10 or 3.11:
 
 ```bash
 pipx install --python python3.11 "stemquill[chords] @ git+https://github.com/skynrlabs/Stemquill.git"
@@ -194,6 +194,7 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 | MIDI drifts out of time in the DAW | The project tempo doesn't match. Click **Detect** and set your DAW to that exact BPM. If it's half or double what you expect, use the number that matches the song's feel. |
 | Too many junk notes | Lower **Sensitivity** (try 0.6), or untick drums you don't need on the **Drum Kit** page. |
 | Missing quiet notes | Raise **Sensitivity** (try 1.0). |
+| Chords look messy or simplified | Make sure **Better chord detection** was ticked when installing (run the installer again to add it). The Activity feed says which chord engine was used. |
 | Drums land on the wrong sounds | Pick the drum map that matches your plugin on the **Drum Kit** page, or type your own notes (Custom). |
 | No sound when previewing | Check your output device and volume. If it can't play, the status bar shows where the preview file was saved. |
 
@@ -251,7 +252,7 @@ convert("Drums.wav", "drums", bpm=bpm, humanize_amount=0.3)
 | UI | Tkinter |
 | Audio analysis | librosa, NumPy, SciPy |
 | MIDI | mido |
-| Chord detection (optional) | basic-pitch |
+| Chord detection (optional) | basic-pitch on ONNX Runtime |
 | Windows app | PyInstaller + Inno Setup, built by GitHub Actions |
 
 ---

@@ -62,6 +62,37 @@ jobs:
           Stop-Process -Id $p.Id
           Write-Output "Window opened and stayed open"
 
+      - name: Build chord-detection add-on
+        shell: pwsh
+        run: |
+          pip install --no-deps --target dist\addons\chords -r packaging\chords-addon.txt
+          # trim parts basic-pitch never uses
+          Remove-Item -Recurse -Force dist\addons\chords\bin -ErrorAction SilentlyContinue
+          Remove-Item -Force dist\addons\chords\pretty_midi\*.sf2
+          Remove-Item -Recurse -Force dist\addons\chords\onnxruntime\transformers, dist\addons\chords\onnxruntime\quantization, dist\addons\chords\onnxruntime\tools -ErrorAction SilentlyContinue
+          Remove-Item -Recurse -Force dist\addons\chords\basic_pitch\saved_models\icassp_2022\nmp -ErrorAction SilentlyContinue
+          Remove-Item -Force dist\addons\chords\basic_pitch\saved_models\icassp_2022\*.tflite -ErrorAction SilentlyContinue
+          $size = (Get-ChildItem dist\addons\chords -Recurse -File | Measure-Object Length -Sum).Sum
+          "::notice title=Chord add-on::$([math]::Round($size / 1MB, 0)) MB installed"
+
+      - name: Smoke test - chords with and without the add-on
+        shell: pwsh
+        run: |
+          python packaging/make_test_stem.py test-chords.wav chords
+          $env:STEMQUILL_LOG = "$PWD\builtin.log"
+          $p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" `
+               -ArgumentList '"test-chords.wav" --type melodic --bpm 120 --out smoke-chords' -Wait -PassThru
+          if ($p.ExitCode -ne 0) { Write-Error "Built-in chord mode failed"; exit 1 }
+          if (-not (Select-String -Path builtin.log -Pattern "built-in polyphonic" -Quiet)) { Get-Content builtin.log; Write-Error "Expected built-in mode"; exit 1 }
+          Copy-Item -Recurse dist\addons dist\Stemquill\addons
+          $env:STEMQUILL_LOG = "$PWD\addon.log"
+          $p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" `
+               -ArgumentList '"test-chords.wav" --type melodic --bpm 120 --out smoke-chords' -Wait -PassThru
+          Remove-Item -Recurse -Force dist\Stemquill\addons
+          Get-Content addon.log
+          if ($p.ExitCode -ne 0) { Write-Error "Chord add-on run failed"; exit 1 }
+          if (-not (Select-String -Path addon.log -Pattern "\(basic-pitch\)" -Quiet)) { Write-Error "basic-pitch add-on was not used"; exit 1 }
+
       - name: Build installer
         shell: pwsh
         run: |

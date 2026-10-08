@@ -1,6 +1,7 @@
 """Command line: python -m stemquill "Drums.wav" --bpm 121"""
 
 import argparse
+import os
 
 from . import __version__
 from .config import DEFAULT_DRUM_PARTS, DRUM_MAPS, DRUM_NOTES, STEM_TYPES
@@ -32,6 +33,14 @@ def main():
             if name not in DRUM_NOTES or not num.strip().isdigit() or not 0 <= int(num) <= 127:
                 ap.error(f"bad --map entry '{pair}'. Use names like {', '.join(DRUM_NOTES)} with notes 0-127")
             drum_map[name] = int(num)
+    log_file = os.environ.get("STEMQUILL_LOG")  # optional: also write the log to a file (used by the build tests)
+
+    def log(msg):
+        print(msg, flush=True)
+        if log_file:
+            with open(log_file, "a", encoding="utf-8") as fh:
+                fh.write(msg + "\n")
+
     for stem in a.stems:
-        convert(stem, a.type, a.bpm, a.grid, a.sensitivity, a.drum_parts.split(","), a.out, drum_map=drum_map,
-                humanize_amount=max(0, min(100, a.humanize)) / 100)
+        convert(stem, a.type, a.bpm, a.grid, a.sensitivity, a.drum_parts.split(","), a.out, log=log,
+                drum_map=drum_map, humanize_amount=max(0, min(100, a.humanize)) / 100)

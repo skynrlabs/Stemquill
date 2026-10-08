@@ -32,6 +32,10 @@ HELP_TEXT = [
           "your sounds from note 36 up: kick, snare, closed hat, open hat, low tom, mid tom, "
           "high tom, crash, ride."),
     ("p", "Custom: type any note into a drum's box. Your custom map is remembered for next time."),
+    ("h", "Chords"),
+    ("p", "Guitar, keys and synth stems use basic-pitch for chords when the Better chord detection option "
+          "was ticked in the installer, and a simpler built-in mode otherwise. The Activity feed shows which "
+          "one was used. Run the installer again to add or remove it."),
     ("h", "Tips"),
     ("p", "Transcription is a starting point, not a finished part. Expect to fix some notes, "
           "especially toms, ghost notes and busy strumming."),

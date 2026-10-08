@@ -1,4 +1,8 @@
-"""Write a short synthetic drum loop (kick, snare, hats) for the build smoke test."""
+"""Write a short synthetic test stem for the build smoke tests.
+
+    python make_test_stem.py out.wav          drum loop (kick, snare, hats)
+    python make_test_stem.py out.wav chords   a few sustained chords
+"""
 
 import sys
 
@@ -28,4 +32,10 @@ for b in range(bars * 4):
     hit(t, kick if b % 2 == 0 else snare)
     hit(t, hat)
     hit(t + beat / 2, hat)
+if len(sys.argv) > 2 and sys.argv[2] == "chords":
+    y[:] = 0
+    t = np.arange(int(sr * beat * 4)) / sr
+    for i, chord in enumerate([(60, 64, 67), (57, 60, 64), (53, 57, 60), (55, 59, 62)]):
+        tone = sum(np.sin(2 * np.pi * 440 * 2 ** ((n - 69) / 12) * t) for n in chord) * np.exp(-t * 0.8)
+        hit(i * beat * 4, tone)
 sf.write(sys.argv[1] if len(sys.argv) > 1 else "test-drums.wav", y / np.abs(y).max() * 0.9, sr)

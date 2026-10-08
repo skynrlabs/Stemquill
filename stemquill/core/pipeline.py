@@ -52,6 +52,7 @@ def transcribe(path, stem_type="auto", bpm=None, grid=4, sensitivity=0.8,
         log(f"  detected tempo: {bpm:g} BPM")
     grid_steps = None if not grid else int(grid)
 
+    engine = None  # which chord engine was used, for polyphonic stems
     if stem_type == "drums":
         notes = transcribe_drums(y, sr, bpm, grid_steps, sensitivity, set(drum_parts), log, drum_map)
         channel, program = 9, None
@@ -61,11 +62,16 @@ def transcribe(path, stem_type="auto", bpm=None, grid=4, sensitivity=0.8,
     else:
         try:
             notes = transcribe_poly_basic_pitch(path, bpm, grid_steps, stem_type, sensitivity, log)
-        except ImportError:
+            engine = "basic-pitch"
+        except ImportError as exc:
+            if getattr(exc, "name", None) != "basic_pitch":  # installed, but something it needs is missing
+                log(f"  basic-pitch couldn't load ({exc}); using built-in mode")
             notes = transcribe_poly_simple(y, sr, bpm, grid_steps, stem_type, sensitivity, log)
+            engine = "built-in"
         except Exception as exc:  # basic-pitch installed but failed -> still produce a file
             log(f"  basic-pitch failed ({exc}); using built-in mode")
             notes = transcribe_poly_simple(y, sr, bpm, grid_steps, stem_type, sensitivity, log)
+            engine = "built-in"
         channel, program = 0, PROGRAMS[stem_type]
 
     if humanize_amount > 0:
@@ -73,7 +79,7 @@ def transcribe(path, stem_type="auto", bpm=None, grid=4, sensitivity=0.8,
         log(f"  humanized ({int(humanize_amount * 100)}%)")
 
     result = {"notes": notes, "bpm": bpm, "stem_type": stem_type, "channel": channel,
-              "program": program, "drum_map": drum_map, "path": path}
+              "program": program, "drum_map": drum_map, "path": path, "engine": engine}
     _cache[key] = result
     return result
 

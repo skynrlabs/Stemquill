@@ -19,6 +19,14 @@ def _prepare_environment():
         sys.stdout = open(os.devnull, "w")
     if sys.stderr is None:
         sys.stderr = open(os.devnull, "w")
+    # Optional add-ons the Windows installer can put next to the app (e.g. basic-pitch chord detection)
+    if getattr(sys, "frozen", False):
+        addons = os.path.join(os.path.dirname(sys.executable), "addons")
+        if os.path.isdir(addons):
+            for name in sorted(os.listdir(addons)):
+                path = os.path.join(addons, name)
+                if os.path.isdir(path) and path not in sys.path:
+                    sys.path.append(path)
     # librosa's speed-ups cache compiled code; point that somewhere writable
     os.environ.setdefault("NUMBA_CACHE_DIR", os.path.join(tempfile.gettempdir(), "stemquill-numba"))
 
