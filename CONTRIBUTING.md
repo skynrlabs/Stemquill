@@ -98,7 +98,8 @@ Every push to `main` builds and tests the Windows app; the installer appears und
 
 1. Bump `__version__` in `stemquill/__init__.py` and push.
 2. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.0.1`) and click **Publish release**.
-3. GitHub Actions builds the installer and attaches it to the release, usually within five minutes.
+3. GitHub Actions builds and tests the installer for that tag. Download it from the run's **Artifacts** on the Actions tab.
+4. Upload `Stemquill-Setup-x.y.z.exe` to the [itch.io page](https://skynrlabs.itch.io/stemquill). Downloads are only published on itch.io, not attached to GitHub releases.
 
 ---
 
