@@ -237,8 +237,8 @@ stemquill/
     └── theme.py         Colours, fonts and styles
 stemquill/assets/        App icon (SVG source, PNGs and Windows .ico)
 tests/                   Tests with synthetic stems (pytest), incl. window tests
-packaging/               Windows build: PyInstaller spec and Inno Setup installer
-.github/workflows/       Lint and tests on Linux; builds and tests the Windows installer
+packaging/               Windows build: PyInstaller spec, Inno Setup installer and build.ps1
+.github/workflows/       Lint and tests on Linux
 docs/                    README screenshot
 ```
 
@@ -262,7 +262,7 @@ convert("Drums.wav", "drums", bpm=bpm, humanize_amount=0.3)
 | Audio analysis | librosa, NumPy, SciPy |
 | MIDI | mido |
 | Chord detection (optional) | basic-pitch on ONNX Runtime |
-| Windows app | PyInstaller + Inno Setup, built by GitHub Actions |
+| Windows app | PyInstaller + Inno Setup |
 
 ---
 
