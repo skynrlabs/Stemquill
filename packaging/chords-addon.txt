@@ -11,4 +11,4 @@ six
 importlib_resources
 mir_eval
 decorator
-resampy<0.4.3
+resampy<0.4.4
