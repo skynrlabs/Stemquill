@@ -56,7 +56,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ### Windows (recommended)
 
-1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill). (pay what you want, $0 is fine)
+1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want, $0 is fine).
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
@@ -237,8 +237,8 @@ stemquill/
     └── theme.py         Colours, fonts and styles
 stemquill/assets/        App icon (SVG source, PNGs and Windows .ico)
 tests/                   Tests with synthetic stems (pytest), incl. window tests
-packaging/               Windows build: PyInstaller spec and Inno Setup installer
-.github/workflows/       Lint and tests on Linux; builds and tests the Windows installer
+packaging/               Windows build: PyInstaller spec, Inno Setup installer and build.ps1
+.github/workflows/       Lint and tests on Linux
 docs/                    README screenshot
 ```
 
@@ -262,7 +262,7 @@ convert("Drums.wav", "drums", bpm=bpm, humanize_amount=0.3)
 | Audio analysis | librosa, NumPy, SciPy |
 | MIDI | mido |
 | Chord detection (optional) | basic-pitch on ONNX Runtime |
-| Windows app | PyInstaller + Inno Setup, built by GitHub Actions |
+| Windows app | PyInstaller + Inno Setup |
 
 ---
 

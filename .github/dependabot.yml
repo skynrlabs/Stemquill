@@ -1,5 +1,5 @@
 # Weekly pull requests for library and GitHub Actions updates.
-# They target dev, so the tests and the Windows build check them before anything reaches main.
+# They target dev, so the tests check them before anything reaches main.
 version: 2
 updates:
   - package-ecosystem: pip

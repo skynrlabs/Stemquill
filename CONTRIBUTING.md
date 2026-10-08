@@ -47,7 +47,7 @@ Before opening an issue:
 1. Fork the repo and create your branch from `dev`, not `main`.
 2. Name your branch `feature/short-description` or `fix/short-description`.
 3. Keep PRs focused — one feature or fix per PR.
-4. Run the checks locally (see **Tests and lint** below). On GitHub, both workflows must pass: **Lint and test** (Linux) and **Build Windows app** (builds the installer and converts test stems).
+4. Run the checks locally (see **Tests and lint** below). On GitHub, **Lint and test** must pass. If you change anything in `packaging/`, run `.\packaging\build.ps1` on Windows and say so in the PR.
 5. Write a clear PR description — what changed and why. Before/after note counts on a test stem are great for detection changes.
 6. Link any related issue in the PR body (`Closes #123`).
 
@@ -94,11 +94,13 @@ pytest                  # all tests, about 15 seconds
 
 ## Releasing
 
-Every push to `main` builds and tests the Windows app; the installer appears under the run's **Artifacts** on the Actions tab. To publish a release:
+The Windows installer is built on a Windows PC, not on GitHub (the Actions tab is public, and downloads go through itch.io). You need Python 3.11 and [Inno Setup 6](https://jrsoftware.org/isdl.php).
 
-1. Bump `__version__` in `stemquill/__init__.py` and push.
-2. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.0.1`) and click **Publish release**.
-3. GitHub Actions builds the installer and attaches it to the release, usually within five minutes.
+1. Bump `__version__` in `stemquill/__init__.py`, and get the change into `main` through `dev`.
+2. On `main`, run `.\packaging\build.ps1` in PowerShell. It builds the app and the chord add-on, checks that both convert test stems, and writes `dist\installer\Stemquill-Setup-x.y.z.exe`.
+3. Install it and give it a quick try.
+4. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.3.0`), list what changed, and click **Publish release**. Don't attach the installer.
+5. Upload the installer to the [itch.io page](https://skynrlabs.itch.io/stemquill).
 
 ---
 
