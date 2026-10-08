@@ -68,6 +68,10 @@ ignore = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+filterwarnings = [
+    # librosa's pitch tracker warns about the lowest bass notes; expected and harmless here
+    "ignore:With fmin=:UserWarning",
+]
 markers = [
     "gui: opens the window (needs a display; run under xvfb on Linux)",
     "slow: takes more than a few seconds",
