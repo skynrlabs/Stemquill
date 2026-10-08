@@ -131,9 +131,6 @@ class StemquillApp:
         """Run fn on the window's thread (safe to call from a background thread)."""
         self.updates.put(fn)
 
-    def log(self, msg):
-        self.post(lambda: self.convert_page.write_log(msg))
-
     def say(self, msg, color="muted"):
         self.action.say(msg, color)
 

@@ -6,6 +6,7 @@ from tkinter import filedialog, ttk
 
 from ...config import STEM_TYPES
 from ...core import guess_type
+from ..activity import ActivityLog
 from ..theme import THEME as T
 from ..widgets import card, slider
 
@@ -188,19 +189,6 @@ class ConvertPage(ttk.Frame):
     def _build_log(self, F):
         c = card(self, 2, "Activity", grow=True)
         c.rowconfigure(1, weight=1)
-        self.logbox = tk.Text(c, height=4, bg=T["field"], fg=T["muted"], insertbackground=T["text"],
-                              relief="flat", font=F["mono"], highlightthickness=0, padx=10, pady=8, wrap="word")
-        self.logbox.grid(row=1, column=0, columnspan=3, sticky="nsew")
-        self.logbox.tag_configure("ok", foreground=T["ok"])
-        self.logbox.tag_configure("warn", foreground=T["warn"])
-        self.logbox.tag_configure("head", foreground=T["text"])
-
-    def write_log(self, msg):
-        tag = "ok" if msg.strip().startswith(("saved", "Done")) else \
-              "warn" if ("Error" in msg or "skipped" in msg or "failed" in msg or "Nothing" in msg) else \
-              "head" if "->" in msg else ""
-        self.logbox.insert("end", msg + "\n", tag)
-        self.logbox.see("end")
-
-    def clear_log(self):
-        self.logbox.delete("1.0", "end")
+        self.activity = ActivityLog(c, F)
+        self.activity.grid(row=1, column=0, columnspan=3, sticky="nsew")
+        ttk.Button(c.top, text="Clear", style="Small.TButton", command=self.activity.clear).pack(side="right")
