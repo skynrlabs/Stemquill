@@ -12,7 +12,6 @@
 
 <p>
   <a href="https://skynrlabs.itch.io/stemquill"><img src="https://img.shields.io/badge/Download_for_Windows-18c6cc?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
-  <a href="https://github.com/skynrlabs/Stemquill/releases/latest"><img src="https://img.shields.io/badge/GitHub_Releases-24292f?style=for-the-badge&logo=github&logoColor=white" alt="GitHub Releases"></a>
 </p>
 
 Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/stemquill) if it saves you time.
@@ -58,7 +57,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ### Windows (recommended)
 
-1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want, $0 is fine) or from the [latest GitHub release](https://github.com/skynrlabs/Stemquill/releases/latest). It's the same installer.
+1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill). (pay what you want, $0 is fine)
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
