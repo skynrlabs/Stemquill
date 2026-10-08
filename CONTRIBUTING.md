@@ -77,6 +77,16 @@ python -m stemquill
 
 ---
 
+## Releasing
+
+Every push to `main` builds and tests the Windows app; the installer appears under the run's **Artifacts** on the Actions tab. To publish a release:
+
+1. Bump `__version__` in `stemquill/__init__.py` and push.
+2. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.0.1`) and click **Publish release**.
+3. GitHub Actions builds the installer and attaches it to the release, usually within five minutes.
+
+---
+
 ## Questions
 
 Open a GitHub Discussion if you have a question that is not a bug or feature request.

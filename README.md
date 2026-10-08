@@ -3,13 +3,17 @@
 # 🪶 Stemquill
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
-![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+[![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://github.com/skynrlabs/Stemquill/releases/latest)
+[![Downloads](https://img.shields.io/github/downloads/skynrlabs/Stemquill/total?style=flat-square)](https://github.com/skynrlabs/Stemquill/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
-![MIDI](https://img.shields.io/badge/output-MIDI-18c6cc?style=flat-square)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
 
 > Turn audio stems into MIDI for any DAW.  
 > Drums, bass, vocals, keys and synths, ready to play through your own instruments.
+
+<p>
+  <a href="https://github.com/skynrlabs/Stemquill/releases/latest"><img src="https://img.shields.io/badge/Download_for_Windows-18c6cc?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+</p>
 
 ![Stemquill screenshot](docs/screenshot.png)
 
@@ -47,36 +51,6 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ---
 
-## ⚙️ How It Works
-
-1. Click **Add stems...** and pick your audio files (WAV, MP3, FLAC and more). The stem type is read from the file name ("Drums", "Bass", "Vocals", "Other").
-2. Click **Detect** to measure the tempo, or type the BPM you know.
-3. Click **Play** to preview the MIDI. Adjust sensitivity, drums or humanize and play again until it sounds right.
-4. Click **Convert to MIDI**. Each stem becomes `<name> - <type>.mid` next to the original.
-5. Set your DAW project to the same tempo and drag the `.mid` onto your instrument track at bar 1.
-
-| Stem type | What you get |
-|---|---|
-| `drums` | Drum hits on MIDI channel 10, mapped to your drum plugin |
-| `bass` | The bass line as single notes |
-| `vocal` | The lead vocal melody as single notes |
-| `melodic` | Guitar, keys, fiddle and chords (several notes at once) |
-| `synth` | Synths and pads (several notes at once) |
-
-### ⌨️ Keyboard shortcuts
-
-| Keys | Action |
-|---|---|
-| `Ctrl+O` | Add stems |
-| `Ctrl+T` | Detect tempo |
-| `Ctrl+P` | Preview |
-| `Esc` | Stop preview |
-| `Ctrl+Enter` | Convert to MIDI |
-| `Ctrl+1` to `Ctrl+4` | Convert, Drum Kit, Output, Help pages |
-| `F1` | Help |
-
----
-
 ## 📥 Install
 
 ### Windows (recommended)
@@ -102,7 +76,7 @@ Run `stemquill` with no arguments to open the window, or with file names to use 
 
 ### Better chord detection (optional)
 
-[basic-pitch](https://github.com/spotify/basic-pitch) improves chords on guitar, keys and synth stems. It needs Python 3.10 or 3.11:
+[basic-pitch](https://github.com/spotify/basic-pitch) improves chords on guitar, keys and synth stems. It isn't included in the Windows app; add it to a pipx install using Python 3.10 or 3.11:
 
 ```bash
 pipx install --python python3.11 "stemquill[chords] @ git+https://github.com/skynrlabs/Stemquill.git"
@@ -119,9 +93,47 @@ python -m stemquill
 
 ---
 
+## ⚙️ How It Works
+
+**Convert** page:
+
+1. Click **Add stems...** and pick your audio files (WAV, MP3, FLAC, AIFF, OGG or M4A). The stem type is read from the file name ("Drums", "Bass", "Vocals", "Other"), or set it under **Stem type**.
+2. Click **Detect** to measure the tempo from the selected stem, or type the BPM if you know it.
+3. Click **Play** to preview the MIDI with built-in sounds. Tick **Mix in the original stem** to check the timing against the real audio.
+4. Adjust **Sensitivity**, **Snap to grid** or **Humanize** and play again until it sounds right. **Reset to defaults** puts everything back.
+5. Click **Convert to MIDI**. Each stem becomes `<name> - <type>.mid`.
+
+**Drum Kit** page: tick which drums to write and pick the drum map that matches your plugin (see [Drum Maps](#-drum-maps)).
+
+**Output** page: choose where the `.mid` files are saved (next to each stem by default) and whether the folder opens automatically when converting finishes.
+
+Then set your DAW project to the same tempo and drag each `.mid` onto its instrument track at bar 1.
+
+| Stem type | What you get |
+|---|---|
+| `drums` | Drum hits on MIDI channel 10, mapped to your drum plugin |
+| `bass` | The bass line as single notes |
+| `vocal` | The lead vocal melody as single notes |
+| `melodic` | Guitar, keys, fiddle and chords (several notes at once) |
+| `synth` | Synths and pads (several notes at once) |
+
+### ⌨️ Keyboard shortcuts
+
+| Keys | Action |
+|---|---|
+| `Ctrl+O` | Add stems |
+| `Ctrl+T` | Detect tempo |
+| `Ctrl+P` | Preview |
+| `Esc` | Stop preview |
+| `Ctrl+Enter` | Convert to MIDI |
+| `Ctrl+1` to `Ctrl+4` | Convert, Drum Kit, Output, Help pages |
+| `F1` | Help |
+
+---
+
 ## 💻 Command Line
 
-Run with file names to skip the window. Use `stemquill` if you installed with pipx, or `python -m stemquill` from source. Leave out `--bpm` and the tempo is detected for you.
+For batch jobs and scripts. The command line comes with the pipx and source installs (the Windows app is window-only): use `stemquill` after a pipx install, or `python -m stemquill` from source. Leave out `--bpm` and the tempo is detected for you.
 
 ```bash
 stemquill "Drums.wav" --type drums --bpm 121 --grid 0 --drum-parts kick,snare,toms
@@ -173,6 +185,21 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 - Crash and Ride start unticked because cymbals can bring back metallic sounds. Turn them on if your stem has clear cymbals.
 - Side-stick, bell, china and left/right crash aren't detected, so add them by hand where you want them.
 - The preview uses simple placeholder sounds. Your real drum kit or synth will sound much better.
+
+---
+
+## 🩺 Troubleshooting
+
+| Problem | Fix |
+|---|---|
+| **"Windows protected your PC"** when installing | The app isn't code-signed yet. Click **More info → Run anyway**. |
+| MIDI drifts out of time in the DAW | The project tempo doesn't match. Click **Detect** and set your DAW to that exact BPM. If it's half or double what you expect, use the number that matches the song's feel. |
+| Too many junk notes | Lower **Sensitivity** (try 0.6), or untick drums you don't need on the **Drum Kit** page. |
+| Missing quiet notes | Raise **Sensitivity** (try 1.0). |
+| Drums land on the wrong sounds | Pick the drum map that matches your plugin on the **Drum Kit** page, or type your own notes (Custom). |
+| No sound when previewing | Check your output device and volume. If it can't play, the status bar shows where the preview file was saved. |
+
+Still stuck? [Open an issue](https://github.com/skynrlabs/Stemquill/issues) with your settings and, if you can share it, a short clip of the stem.
 
 ---
 
@@ -237,19 +264,9 @@ Stemquill runs entirely on your computer. Your audio is never uploaded anywhere.
 
 ---
 
-## 🚀 Releasing
-
-Every push to `main` builds and tests the Windows app; the installer appears under the run's **Artifacts** on the Actions tab. To publish a release:
-
-1. Bump `__version__` in `stemquill/__init__.py` and push.
-2. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.0.1`) and click **Publish release**.
-3. GitHub Actions builds the installer and attaches it to the release, usually within five minutes.
-
----
-
 ## 🤝 Contributing
 
-PRs and issues are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+PRs and issues are welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines, including how releases are published.
 
 The repo uses a two-branch model:
 
@@ -266,4 +283,4 @@ You are free to use, modify, and distribute this software, including in commerci
 
 ---
 
-[GitHub Sponsors](https://github.com/sponsors/skynrlabs)
+Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
