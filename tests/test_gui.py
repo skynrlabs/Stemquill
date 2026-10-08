@@ -183,3 +183,15 @@ def test_double_click_saved_file_opens_its_folder(app, monkeypatch):
     x, y, _, _ = feed.tree.bbox(row)
     feed._on_double_click(SimpleNamespace(x=x + 5, y=y + 5))  # Tk can't synthesise a double-click
     assert opened == ["/music/out"]
+
+
+def test_empty_message_is_not_a_table_row(app):
+    feed = app.convert_page.activity
+    assert feed.tree.get_children() == ()
+    assert feed.empty_note.winfo_ismapped()
+    feed.action("Detect tempo")
+    app.root.update()
+    assert not feed.empty_note.winfo_ismapped()
+    feed.clear()
+    app.root.update()
+    assert feed.empty_note.winfo_ismapped()
