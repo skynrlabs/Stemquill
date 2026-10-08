@@ -18,6 +18,7 @@ def card(parent, row, title, hint=None, grow=False):
     ttk.Label(top, text=title, style="Head.TLabel").pack(side="left")
     if hint:
         ttk.Label(top, text=hint, style="Muted.TLabel").pack(side="left", padx=(10, 0))
+    c.top = top  # the title row, so a page can add a small button on the right
     return c
 
 

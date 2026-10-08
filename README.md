@@ -42,7 +42,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 - 🎛️ **Sensitivity control**: slider or typed value to catch quiet notes or cut junk notes
 - 📐 **Snap to grid**: keep the original feel or lock notes to 1/8, 1/16 or triplets
 - 📦 **Batch convert**: drop in a whole set of stems and convert them in one go
-- 🧭 **Clean navigation**: sidebar pages, a full menu bar and keyboard shortcuts
+- 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
 - 💻 **GUI and command line**: point and click, or script it
 
 ---
@@ -197,7 +197,7 @@ stemquill/
     ├── pages/           Convert, Drum Kit, Output and Help pages
     ├── sidebar.py       Left-hand navigation
     ├── action_bar.py    Play, Stop, Convert and status bar
-    ├── menus.py         Menu bar and keyboard shortcuts
+    ├── shortcuts.py     Keyboard shortcuts
     ├── dialogs.py       About dialog
     ├── widgets.py       Shared building blocks
     └── theme.py         Colours, fonts and styles

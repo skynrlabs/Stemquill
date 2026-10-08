@@ -44,6 +44,7 @@ def apply_styles(root, F):
                  borderwidth=0, padding=(12, 6))
     st.map("TButton", background=[("active", "#434a53"), ("disabled", T["card"])],
            foreground=[("disabled", T["muted"])])
+    st.configure("Small.TButton", font=F["small"], padding=(10, 3))
     st.configure("Accent.TButton", background=T["accent"], foreground=T["accent_text"], font=F["big"],
                  padding=(18, 10))
     st.map("Accent.TButton", background=[("active", T["accent_hover"]), ("disabled", T["line"])],

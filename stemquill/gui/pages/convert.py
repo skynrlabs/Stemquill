@@ -17,8 +17,9 @@ TEMPO_HINT = "click Detect to measure it from the selected stem"
 
 
 class ConvertPage(ttk.Frame):
-    def __init__(self, parent, fonts, on_stems_changed):
+    def __init__(self, parent, fonts, on_stems_changed, on_reset):
         super().__init__(parent)
+        self.on_reset = on_reset
         self.columnconfigure(0, weight=1)
         self.on_stems_changed = on_stems_changed
         self.files = []
@@ -87,6 +88,8 @@ class ConvertPage(ttk.Frame):
     # ---- settings
     def _build_settings(self):
         c = card(self, 1, "Settings", "match the tempo to your DAW project")
+        ttk.Button(c.top, text="Reset to defaults", style="Small.TButton",
+                   command=lambda: self.on_reset()).pack(side="right")
 
         def row_label(r, text, hint=None):
             ttk.Label(c, text=text, style="Card.TLabel").grid(row=r, column=0, sticky="w", pady=4, padx=(0, 16))

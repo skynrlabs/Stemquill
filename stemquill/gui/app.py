@@ -11,8 +11,8 @@ from ..config import ASSETS_DIR, load_settings, save_settings
 from .action_bar import ActionBar
 from .dialogs import show_about
 from .journeys import ConvertJourney, PreviewJourney, TempoJourney
-from .menus import bind_shortcuts, build_menu_bar
 from .pages import PAGES, ConvertPage, DrumKitPage, HelpPage, OutputPage
+from .shortcuts import bind_shortcuts
 from .sidebar import Sidebar
 from .theme import THEME, apply_styles, make_fonts
 
@@ -34,7 +34,6 @@ class StemquillApp:
         self.tempo = TempoJourney(self)
 
         self._build_layout()
-        build_menu_bar(self)
         bind_shortcuts(self)
         self._wire_buttons()
         root.protocol("WM_DELETE_WINDOW", self.quit)
@@ -63,7 +62,8 @@ class StemquillApp:
             images["app"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon.png"))
             images["small"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-32.png"))
             images["about"] = tk.PhotoImage(file=os.path.join(ASSETS_DIR, "icon-64.png"))
-            self.root.iconphoto(True, images["app"])
+            if not IS_WINDOWS:  # Windows uses the .ico set above, which looks sharper in the title bar
+                self.root.iconphoto(True, images["app"])
         except tk.TclError:
             pass
         return images
@@ -92,7 +92,7 @@ class StemquillApp:
         box.grid(row=1, column=0, sticky="nsew")
         box.columnconfigure(0, weight=1)
         box.rowconfigure(0, weight=1)
-        self.convert_page = ConvertPage(box, self.fonts, self._on_stems_changed)
+        self.convert_page = ConvertPage(box, self.fonts, self._on_stems_changed, self.reset_settings)
         self.drum_page = DrumKitPage(box)
         self.output_page = OutputPage(box)
         self.help_page = HelpPage(box, self.fonts, self.about)
