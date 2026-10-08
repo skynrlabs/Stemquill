@@ -270,7 +270,7 @@ Stemquill runs entirely on your computer. Your audio is never uploaded anywhere.
 
 ## 💚 Support Stemquill
 
-Stemquill is free and open source, made by one person. If it saves you time, you can support it on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It helps pay for code signing (so Windows stops warning about the installer) and keeps new features coming. Starring the repo and sharing it with other producers helps too.
+Stemquill is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/stemquill), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It helps pay for code signing (so Windows stops warning about the installer) and keeps new features coming. Starring the repo and sharing it with other producers helps too.
 
 ---
 
