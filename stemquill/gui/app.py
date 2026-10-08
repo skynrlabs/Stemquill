@@ -1,5 +1,6 @@
 """The main window: sidebar, page area and action bar, plus the shared plumbing the journeys use."""
 
+import contextlib
 import os
 import queue
 import subprocess
@@ -51,10 +52,8 @@ class StemquillApp:
         root.geometry("1000x740")
         ico = os.path.join(ASSETS_DIR, "stemquill.ico")
         if IS_WINDOWS and os.path.exists(ico):
-            try:
+            with contextlib.suppress(tk.TclError):
                 root.iconbitmap(default=ico)
-            except tk.TclError:
-                pass
 
     def _load_images(self):
         images = {}
@@ -72,8 +71,9 @@ class StemquillApp:
         root = self.root
         root.columnconfigure(1, weight=1)
         root.rowconfigure(0, weight=1)
-        self.sidebar = Sidebar(root, [(k, label) for k, label, _, _ in PAGES], self.show_page, self.fonts,
-                               self.images.get("small"))
+        self.sidebar = Sidebar(
+            root, [(k, label) for k, label, _, _ in PAGES], self.show_page, self.fonts, self.images.get("small")
+        )
         self.sidebar.grid(row=0, column=0, sticky="ns")
 
         main = ttk.Frame(root, padding=(22, 16, 22, 12))
@@ -96,8 +96,12 @@ class StemquillApp:
         self.drum_page = DrumKitPage(box)
         self.output_page = OutputPage(box)
         self.help_page = HelpPage(box, self.fonts, self.about)
-        self.pages = {"convert": self.convert_page, "drums": self.drum_page,
-                      "output": self.output_page, "help": self.help_page}
+        self.pages = {
+            "convert": self.convert_page,
+            "drums": self.drum_page,
+            "output": self.output_page,
+            "help": self.help_page,
+        }
         for page in self.pages.values():
             page.grid(row=0, column=0, sticky="nsew")
 
@@ -200,6 +204,7 @@ def run_gui():
     if IS_WINDOWS:
         try:  # show Stemquill's own icon on the taskbar instead of Python's
             import ctypes
+
             ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("SkynrLabs.Stemquill")
         except Exception:
             pass

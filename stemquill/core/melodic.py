@@ -6,12 +6,14 @@ import scipy.ndimage
 
 from ..config import HOP, PITCH_RANGES
 from .midi import clean_overlaps, snap
+from .onsets import refine_onset
 
 
 def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
     lo, hi = PITCH_RANGES[stem_type]
-    f0, voiced, prob = librosa.pyin(y, fmin=librosa.note_to_hz(lo), fmax=librosa.note_to_hz(hi),
-                                    sr=sr, frame_length=2048, hop_length=HOP)
+    f0, voiced, prob = librosa.pyin(
+        y, fmin=librosa.note_to_hz(lo), fmax=librosa.note_to_hz(hi), sr=sr, frame_length=2048, hop_length=HOP
+    )
     rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=HOP)[0]
     n = min(len(f0), len(rms))
     f0, voiced, prob, rms = f0[:n], voiced[:n], prob[:n], rms[:n]
@@ -35,10 +37,10 @@ def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
         j = i
         while j + 1 < n and pitch[j + 1] == pitch[i] and not ((j + 1) in onsets and j + 1 - i > 6):
             j += 1
-        start = librosa.frames_to_time(i, sr=sr, hop_length=HOP)
+        start = refine_onset(y, sr, librosa.frames_to_time(i, sr=sr, hop_length=HOP), before=0.05, after=0.015)
         end = librosa.frames_to_time(j + 1, sr=sr, hop_length=HOP)
         if end - start >= min_len:
-            vel = int(np.clip(40 + 87 * np.sqrt(rms[i:j + 1].max() / peak_rms), 1, 127))
+            vel = int(np.clip(40 + 87 * np.sqrt(rms[i : j + 1].max() / peak_rms), 1, 127))
             s, e = snap(start, bpm, grid), snap(end, bpm, grid)
             if e <= s:
                 e = s + (60.0 / bpm / (grid or 4))
@@ -50,13 +52,16 @@ def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
 
 def transcribe_poly_basic_pitch(path, bpm, grid, stem_type, sensitivity, log):
     from basic_pitch.inference import predict  # optional, higher quality
+
     lo, hi = PITCH_RANGES[stem_type]
-    _, _, events = predict(path,
-                           onset_threshold=float(np.clip(0.5 * (1.6 - sensitivity), 0.2, 0.8)),
-                           frame_threshold=0.3,
-                           minimum_note_length=80,
-                           minimum_frequency=librosa.note_to_hz(lo),
-                           maximum_frequency=librosa.note_to_hz(hi))
+    _, _, events = predict(
+        path,
+        onset_threshold=float(np.clip(0.5 * (1.6 - sensitivity), 0.2, 0.8)),
+        frame_threshold=0.3,
+        minimum_note_length=80,
+        minimum_frequency=librosa.note_to_hz(lo),
+        maximum_frequency=librosa.note_to_hz(hi),
+    )
     notes = []
     for start, end, pitch, amp, *_ in events:
         s, e = snap(start, bpm, grid), snap(end, bpm, grid)
@@ -72,11 +77,10 @@ def transcribe_poly_simple(y, sr, bpm, grid, stem_type, sensitivity, log):
     lo, hi = PITCH_RANGES[stem_type]
     lo_m, hi_m = int(librosa.note_to_midi(lo)), int(librosa.note_to_midi(hi))
     n_bins = hi_m - lo_m + 1
-    C = np.abs(librosa.cqt(y, sr=sr, hop_length=512, fmin=librosa.midi_to_hz(lo_m),
-                           n_bins=n_bins, bins_per_octave=12))
+    C = np.abs(librosa.cqt(y, sr=sr, hop_length=512, fmin=librosa.midi_to_hz(lo_m), n_bins=n_bins, bins_per_octave=12))
     D = librosa.amplitude_to_db(C, ref=np.max)
     thresh = -30 - 10 * sensitivity  # dB below the loudest moment
-    active = D > thresh
+    active = thresh < D
 
     # keep local peaks across pitch, and drop likely overtones of a louder lower note
     peaks = np.zeros_like(active)
@@ -87,7 +91,7 @@ def transcribe_poly_simple(y, sr, bpm, grid, stem_type, sensitivity, log):
         lower[k:] = D[:-k]
         lower_active = np.zeros_like(active)
         lower_active[k:] = active[:-k]
-        active &= ~(lower_active & (D < lower + ratio))
+        active &= ~(lower_active & (lower + ratio > D))
     active = scipy.ndimage.binary_closing(active, structure=np.ones((1, 3)))
 
     hop_t = 512 / sr
@@ -95,7 +99,7 @@ def transcribe_poly_simple(y, sr, bpm, grid, stem_type, sensitivity, log):
     for b in range(n_bins):
         row = active[b]
         idx = np.flatnonzero(np.diff(np.concatenate(([0], row.astype(int), [0]))))
-        for s_i, e_i in zip(idx[::2], idx[1::2]):
+        for s_i, e_i in zip(idx[::2], idx[1::2], strict=True):
             start, end = s_i * hop_t, e_i * hop_t
             if end - start < 0.1:
                 continue

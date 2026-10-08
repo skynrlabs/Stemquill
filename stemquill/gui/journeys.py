@@ -29,15 +29,15 @@ class EngineNotes:
 
 
 def run_transcribe(path, c, notes):
-    return transcribe(path, c["stem_type"], c["bpm"], c["grid"], c["sensitivity"], c["parts"], notes,
-                      c["drum_map"], c["humanize"])
+    return transcribe(
+        path, c["stem_type"], c["bpm"], c["grid"], c["sensitivity"], c["parts"], notes, c["drum_map"], c["humanize"]
+    )
 
 
 def settings_line(c):
     snap = "no snap" if not c["grid"] else f"snap {c['grid_label']}"
     human = f"humanize {int(c['humanize'] * 100)}%" if c["humanize"] else "no humanize"
-    return (f"{c['bpm']:g} BPM · {snap} · sensitivity {c['sensitivity']:.2f} · {human} · "
-            f"{c['map_key']} drum map")
+    return f"{c['bpm']:g} BPM · {snap} · sensitivity {c['sensitivity']:.2f} · {human} · {c['map_key']} drum map"
 
 
 def plural(n, word):
@@ -83,7 +83,9 @@ class ConvertJourney:
                 out = save_result(result, out_dir, notes)
                 ok += 1
                 self.last_out_dir = os.path.dirname(out)
-                line = f"{result['stem_type']} · {plural(len(result['notes']), 'note')} · saved as {os.path.basename(out)}"
+                line = (
+                    f"{result['stem_type']} · {plural(len(result['notes']), 'note')} · saved as {os.path.basename(out)}"
+                )
                 extra = describe(result)
                 for w in notes.warnings():
                     extra += f"  ({w})"
@@ -93,8 +95,10 @@ class ConvertJourney:
                 app.post(lambda n=name, e=err: feed.stem_problem(n, e))
         if ok:
             where = short_path(self.last_out_dir)
-            summary = (f"Done: {ok} of {plural(len(files), 'stem')} saved to {where}. "
-                       "Drag the .mid files onto your tracks at bar 1.")
+            summary = (
+                f"Done: {ok} of {plural(len(files), 'stem')} saved to {where}. "
+                "Drag the .mid files onto your tracks at bar 1."
+            )
         else:
             summary = "Nothing was converted."
         app.post(lambda: feed.summary(summary, good=ok == len(files)))
@@ -139,8 +143,14 @@ class PreviewJourney:
         try:
             result = run_transcribe(f, c, EngineNotes())
             if not result:
-                app.post(lambda: (app.set_busy(False), app.say("That stem is silent", "warn"),
-                                  feed.action(f"Preview {name}"), feed.stem_problem(name, "silent")))
+                app.post(
+                    lambda: (
+                        app.set_busy(False),
+                        app.say("That stem is silent", "warn"),
+                        feed.action(f"Preview {name}"),
+                        feed.stem_problem(name, "silent"),
+                    )
+                )
                 return
             render_preview(result, PREVIEW_WAV, include_original)
             n = len(result["notes"])

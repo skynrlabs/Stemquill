@@ -12,8 +12,17 @@ from tkinter import ttk
 from ..config import DRUM_NOTES, note_name
 from .theme import THEME as T
 
-DRUM_NAMES = {"kick": "Kick", "snare": "Snare", "hihat": "Hi-hat", "openhat": "Open hat",
-              "tom_hi": "High tom", "tom_mid": "Mid tom", "tom_low": "Low tom", "crash": "Crash", "ride": "Ride"}
+DRUM_NAMES = {
+    "kick": "Kick",
+    "snare": "Snare",
+    "hihat": "Hi-hat",
+    "openhat": "Open hat",
+    "tom_hi": "High tom",
+    "tom_mid": "Mid tom",
+    "tom_low": "Low tom",
+    "crash": "Crash",
+    "ride": "Ride",
+}
 
 
 def describe(result):
@@ -46,9 +55,21 @@ class ActivityLog:
         self.frame = tk.Frame(parent, bg=T["field"])
         self.frame.columnconfigure(0, weight=1)
         self.frame.rowconfigure(0, weight=1)
-        self.text = tk.Text(self.frame, height=4, bg=T["field"], fg=T["text"], relief="flat", font=F["body"],
-                            highlightthickness=0, padx=12, pady=10, wrap="word", cursor="arrow",
-                            spacing1=1, spacing3=1)
+        self.text = tk.Text(
+            self.frame,
+            height=4,
+            bg=T["field"],
+            fg=T["text"],
+            relief="flat",
+            font=F["body"],
+            highlightthickness=0,
+            padx=12,
+            pady=10,
+            wrap="word",
+            cursor="arrow",
+            spacing1=1,
+            spacing3=1,
+        )
         scroll = ttk.Scrollbar(self.frame, orient="vertical", command=self.text.yview)
         self.text.configure(yscrollcommand=scroll.set)
         self.text.grid(row=0, column=0, sticky="nsew")

@@ -1,7 +1,7 @@
 """Write a short synthetic test stem for the build smoke tests.
 
-    python make_test_stem.py out.wav          drum loop (kick, snare, hats)
-    python make_test_stem.py out.wav chords   a few sustained chords
+python make_test_stem.py out.wav          drum loop (kick, snare, hats)
+python make_test_stem.py out.wav chords   a few sustained chords
 """
 
 import sys
@@ -17,7 +17,7 @@ rng = np.random.default_rng(0)
 
 def hit(t, sound):
     i = int(t * sr)
-    y[i:i + sound.size] += sound[:max(0, y.size - i)]
+    y[i : i + sound.size] += sound[: max(0, y.size - i)]
 
 
 tk = np.arange(int(0.3 * sr)) / sr

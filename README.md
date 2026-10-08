@@ -2,6 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 [![Release](https://img.shields.io/github/v/release/skynrlabs/Stemquill?style=flat-square&color=18c6cc)](https://github.com/skynrlabs/Stemquill/releases/latest)
+[![Tests](https://img.shields.io/github/actions/workflow/status/skynrlabs/Stemquill/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/skynrlabs/Stemquill/actions/workflows/test.yml)
 [![Downloads](https://img.shields.io/github/downloads/skynrlabs/Stemquill/total?style=flat-square)](https://github.com/skynrlabs/Stemquill/releases)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -228,8 +229,9 @@ stemquill/
     ├── widgets.py       Shared building blocks
     └── theme.py         Colours, fonts and styles
 stemquill/assets/        App icon (SVG source, PNGs and Windows .ico)
+tests/                   Tests with synthetic stems (pytest), incl. window tests
 packaging/               Windows build: PyInstaller spec and Inno Setup installer
-.github/workflows/       Builds and tests the Windows installer on every push
+.github/workflows/       Lint and tests on Linux; builds and tests the Windows installer
 docs/                    README screenshot
 ```
 
