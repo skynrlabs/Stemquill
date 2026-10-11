@@ -451,4 +451,4 @@ def test_support_link_opens_the_sponsor_page(app, monkeypatch):
     monkeypatch.setattr(webbrowser, "open", opened.append)
     app.sidebar.support.event_generate("<Button-1>")
     app.root.update()
-    assert opened == [SUPPORT_URL]
+    assert opened == [SUPPORT_URL] == ["https://github.com/sponsors/skynrlabs"]
