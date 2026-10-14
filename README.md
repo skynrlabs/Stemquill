@@ -295,6 +295,12 @@ Stemquill is open-source software licensed under the **MIT License**. Copyright 
 
 You are free to use, modify, and distribute this software, including in commercial projects, as long as the copyright notice is kept. See [LICENSE](LICENSE) for full terms.
 
+### Third-party libraries
+
+Stemquill is built on [librosa](https://librosa.org) (ISC), [NumPy](https://numpy.org) and [SciPy](https://scipy.org) (BSD), [soundfile](https://github.com/bastibe/python-soundfile) (BSD, with libsndfile under the LGPL), [mido](https://github.com/mido/mido) and [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) (MIT), and the libraries they use. The optional chord add-on uses [basic-pitch](https://github.com/spotify/basic-pitch) (Apache 2.0) and [ONNX Runtime](https://onnxruntime.ai) (MIT).
+
+The Windows app installs every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Open-source licenses**. To write the file yourself: `python -m stemquill.licenses --out THIRD_PARTY_LICENSES.txt`.
+
 ---
 
 Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/stemquill) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)

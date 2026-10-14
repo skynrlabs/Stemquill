@@ -50,6 +50,11 @@ Remove-Item Env:\STEMQUILL_LOG
 Remove-Item -Recurse -Force dist\Stemquill\addons
 Check ($p.ExitCode -eq 0 -and (Select-String -Path "$tmp\addon.log" -Pattern "\(basic-pitch\)" -Quiet)) "The chord add-on wasn't used"
 
+Step "Writing the open-source licenses"
+# Every bundled library's license, the add-on's too, next to Stemquill.exe (the installer copies it; About shows it)
+python -m stemquill.licenses --out dist\Stemquill\THIRD_PARTY_LICENSES.txt --addon dist\addons\chords
+Check ($LASTEXITCODE -eq 0 -and (Select-String -Path dist\Stemquill\THIRD_PARTY_LICENSES.txt -Pattern "basic-pitch" -Quiet)) "Couldn't write the licenses file"
+
 Step "Building the installer"
 $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
 Check (Test-Path $iscc) "Inno Setup 6 isn't installed. Get it from https://jrsoftware.org/isdl.php"
