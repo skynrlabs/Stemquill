@@ -41,3 +41,19 @@ def test_offered_time_signatures_are_valid():
     for label, sig in config.TIME_SIGNATURES.items():
         assert config.parse_time_signature(label) == sig
     assert config.DEFAULT_TIME_SIGNATURE == "4/4"
+
+
+def test_cache_dir_is_private_not_the_shared_temp_folder():
+    import tempfile
+
+    assert not config.cache_dir().startswith(tempfile.gettempdir())
+
+
+def test_numba_cache_goes_to_the_private_cache(monkeypatch):
+    from stemquill import __main__ as entry
+
+    monkeypatch.delenv("NUMBA_CACHE_DIR", raising=False)
+    entry._prepare_environment()
+    import os
+
+    assert os.environ["NUMBA_CACHE_DIR"].startswith(config.cache_dir())

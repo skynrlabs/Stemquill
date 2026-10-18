@@ -5,6 +5,7 @@ skipped automatically when no display is available.
 """
 
 import os
+import tempfile
 import time
 from types import SimpleNamespace
 
@@ -27,6 +28,7 @@ def _display_available():
 if not _display_available():
     pytest.skip("no display available", allow_module_level=True)
 
+from stemquill.gui import app as app_module  # noqa: E402
 from stemquill.gui import journeys  # noqa: E402
 from stemquill.gui.app import StemquillApp  # noqa: E402
 from stemquill.gui.pages import PAGES  # noqa: E402
@@ -248,6 +250,28 @@ def test_time_signature_goes_into_the_midi_and_marks_saved_stems_changed(app, mo
     p.time_sig_var.set("6/8")  # back to what was saved
     app.root.update()
     assert p.stems[0].status.startswith("saved")
+
+
+def test_preview_goes_to_a_private_folder(monkeypatch):
+    import stat
+
+    monkeypatch.setattr(journeys, "PREVIEW_WAV", None)
+    wav = journeys.preview_wav()
+    assert journeys.preview_wav() == wav  # one folder per run
+    folder = os.path.dirname(wav)
+    assert os.path.isdir(folder) and folder != tempfile.gettempdir()
+    if os.name == "posix":
+        assert stat.S_IMODE(os.stat(folder).st_mode) == 0o700  # nobody else can plant a file there
+
+
+def test_open_path_only_opens_folders(app, tmp_path, monkeypatch):
+    opened = []
+    monkeypatch.setattr(app_module.subprocess, "Popen", lambda args: opened.append(args))
+    not_a_folder = tmp_path / "Bass - bass.mid"
+    not_a_folder.write_bytes(b"MThd")
+    app.open_path(str(not_a_folder))
+    assert opened == []
+    assert app.status_card.kind == "warn"
 
 
 def test_convert_without_stems_says_what_to_do(app):
