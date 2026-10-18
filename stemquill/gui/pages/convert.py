@@ -4,13 +4,14 @@ import os
 import tkinter as tk
 from tkinter import filedialog, ttk
 
+from ...config import DEFAULT_TIME_SIGNATURE, TIME_SIGNATURES
 from ..model import Stem
 from ..stem_settings import StemSettingsCard
 from ..stems_table import StemsTable
 from ..widgets import card
 
-GRID_CHOICES = {"Off (keep original timing)": 0, "1/8 note": 2, "1/8 triplet": 3, "1/16 note": 4, "1/32 note": 8}
-DEFAULT_GRID = "Off (keep original timing)"
+GRID_CHOICES = {"Off (no snapping)": 0, "1/8 note": 2, "1/8 triplet": 3, "1/16 note": 4, "1/32 note": 8}
+DEFAULT_GRID = "Off (no snapping)"
 TEMPO_HINT = "Detect measures it from the selected stem"
 AUDIO_EXTENSIONS = (".wav", ".mp3", ".flac", ".aif", ".aiff", ".ogg", ".m4a")
 CHANGED = "changed · convert again"
@@ -42,6 +43,7 @@ class ConvertPage(ttk.Frame):
         self.selected = None
         self.bpm_var = tk.StringVar(value="120")
         self.grid_var = tk.StringVar(value=DEFAULT_GRID)
+        self.time_sig_var = tk.StringVar(value=DEFAULT_TIME_SIGNATURE)
         self.tempo_hint = tk.StringVar(value=TEMPO_HINT)
         # False until the tempo is detected or typed: converting at the untouched default gets a warning
         self.tempo_set = False
@@ -60,7 +62,8 @@ class ConvertPage(ttk.Frame):
         self.card.grid(row=2, column=0, sticky="nsew", pady=(0, 12))
         self.rowconfigure(3, weight=1)
         # anything that changes what a saved file would contain marks it as out of date
-        for var in (self.bpm_var, self.grid_var, settings_page.map_var, *settings_page.note_vars.values()):
+        song_vars = (self.bpm_var, self.grid_var, self.time_sig_var, settings_page.map_var)
+        for var in (*song_vars, *settings_page.note_vars.values()):
             var.trace_add("write", lambda *_: self.refresh_staleness())
 
     # ---- song: one tempo and grid for every stem
@@ -80,6 +83,15 @@ class ConvertPage(ttk.Frame):
             side="left"
         )
         ttk.Label(snap, text="Off is safest for AI-generated stems", style="Muted.TLabel").pack(
+            side="left", padx=(12, 0)
+        )
+        ttk.Label(c, text="Time signature", style="Card.TLabel").grid(row=3, column=0, sticky="w", padx=(0, 16), pady=4)
+        meter = ttk.Frame(c, style="Card.TFrame")
+        meter.grid(row=3, column=1, columnspan=2, sticky="w")
+        ttk.Combobox(
+            meter, textvariable=self.time_sig_var, values=list(TIME_SIGNATURES), state="readonly", width=6
+        ).pack(side="left")
+        ttk.Label(meter, text="Sets the bar lines in your DAW; the notes don't move", style="Muted.TLabel").pack(
             side="left", padx=(12, 0)
         )
 
@@ -200,6 +212,7 @@ class ConvertPage(ttk.Frame):
             tuple(stem.parts) if drums else (),
             self.bpm_var.get(),
             self.grid_var.get(),
+            self.time_sig_var.get(),
             tuple(v.get() for v in sp.note_vars.values()) if drums else (),
         )
 
@@ -234,7 +247,13 @@ class ConvertPage(ttk.Frame):
                 raise ValueError
         except ValueError:
             return None, "Enter a tempo between 40 and 240 BPM"
-        return {"bpm": bpm, "grid": GRID_CHOICES[self.grid_var.get()], "grid_label": self.grid_var.get()}, None
+        return {
+            "bpm": bpm,
+            "grid": GRID_CHOICES[self.grid_var.get()],
+            "grid_label": self.grid_var.get(),
+            "time_signature": TIME_SIGNATURES[self.time_sig_var.get()],
+            "time_sig_label": self.time_sig_var.get(),
+        }, None
 
     def set_tempo(self, bpm, source):
         self.bpm_var.set(f"{bpm:g}")
@@ -250,6 +269,7 @@ class ConvertPage(ttk.Frame):
         self.bpm_var.set("120")
         self.tempo_set = False
         self.grid_var.set(DEFAULT_GRID)
+        self.time_sig_var.set(DEFAULT_TIME_SIGNATURE)
         self.tempo_hint.set(TEMPO_HINT)
         for stem in self.stems:
             stem.reset()

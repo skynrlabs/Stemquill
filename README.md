@@ -45,6 +45,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 - 🗺️ **Drum maps**: General MIDI (MT Power Drumkit, EZdrummer, Addictive Drums, Superior Drummer), pads in order (FL Studio FPC, Ableton Drum Rack, MPC) or your own custom notes
 - 🎛️ **Per-stem settings**: sensitivity, humanize and drums for each stem, with Apply to all
 - 📐 **Snap to grid**: keep the original feel or lock notes to 1/8, 1/16 or triplets
+- 🎼 **Time signature**: 4/4, 3/4, 6/8, 7/8 and more, so the bar lines land in the right place in your DAW
 - 📦 **Drag and drop**: drop stems or a whole folder onto the window and convert them in one go
 - ✅ **Always know where you stand**: each stem shows when it's saved, and says *changed · convert again* if you tweak it afterwards
 - 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
@@ -99,7 +100,7 @@ python -m stemquill
 Everything happens on the **Convert** page, top to bottom:
 
 1. **Drop your stems** (or a whole folder of them) onto the window, or click **Add stems...** (WAV, MP3, FLAC, AIFF, OGG or M4A). Each stem gets its own row. Its type is read from the file name ("Drums", "Bass", "Vocals", "Other"); change it in the row if needed.
-2. **Song:** click **Detect** to measure the tempo from the selected stem, or type the BPM. Tempo and **Snap to grid** are shared by every stem, because it's one song.
+2. **Song:** click **Detect** to measure the tempo from the selected stem, or type the BPM. Tempo, **Snap to grid** and **Time signature** are shared by every stem, because it's one song. Get the tempo right: it decides which beat each note lands on.
 3. **Click a stem** to see its own settings underneath: **Sensitivity**, **Humanize** and, for drum stems, which drums to write and the drum map. **Apply to all stems** copies them to the rest.
 4. Click **Play** on a stem's row to hear it with built-in sounds; the button turns into **Stop** while it plays. Keep **Mix in the original stem** ticked to check the timing against the real audio.
 5. Click **Convert … to MIDI** (it says how many stems). Each row shows when its file is saved as `<name> - <type>.mid`. Change a setting afterwards and the row says **changed · convert again**, so you never drag an out-of-date file into your DAW.
@@ -151,6 +152,7 @@ stemquill "Bass.wav" "Other.wav" --bpm 121 --grid 0
 | `--grid` | Snap steps per beat: `4` = 1/16, `2` = 1/8, `3` = triplets, `0` = off |
 | `--sensitivity` | `0.1` (fewer notes) to `1.5` (more notes), default `0.8` |
 | `--humanize` | `0` (exact) to `100` (loose) |
+| `--time-sig` | Time signature for the bar lines, e.g. `3/4`, `6/8`, `7/8` (default `4/4`) |
 | `--drum-parts` | Any of `kick,snare,hihat,openhat,toms,crash,ride` |
 | `--drum-map` | `gm` (General MIDI) or `pads` (one pad per drum from note 36) |
 | `--map` | Custom notes, e.g. `kick=36,snare=40` |

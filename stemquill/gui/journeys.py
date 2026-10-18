@@ -46,7 +46,7 @@ def run_transcribe(stem, c, notes):
 
 def song_line(c):
     snap = "no snap" if not c["grid"] else f"snap {c['grid_label']}"
-    return f"{c['bpm']:g} BPM · {snap} · {c['map_key']} drum map"
+    return f"{c['bpm']:g} BPM · {c['time_sig_label']} · {snap} · {c['map_key']} drum map"
 
 
 def stem_line(stem):
@@ -117,7 +117,7 @@ class ConvertJourney:
                         )
                     )
                     continue
-                out = save_result(result, out_dir, notes)
+                out = save_result(result, out_dir, notes, c["time_signature"])
                 ok += 1
                 self.last_out_dir = os.path.dirname(out)
                 count = plural(len(result["notes"]), "note")
