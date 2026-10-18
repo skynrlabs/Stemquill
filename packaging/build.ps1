@@ -67,8 +67,15 @@ python -m stemquill.licenses --out dist\Stemquill\THIRD_PARTY_LICENSES.txt --add
 Check ($LASTEXITCODE -eq 0 -and (Select-String -Path dist\Stemquill\THIRD_PARTY_LICENSES.txt -Pattern "basic-pitch" -Quiet)) "Couldn't write the licenses file"
 
 Step "Building the installer"
-$iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-Check (Test-Path $iscc) "Inno Setup 6 isn't installed. Get it from https://jrsoftware.org/isdl.php"
+# Inno Setup installs to Program Files, or to your user folder when installed without admin rights
+$iscc = @(
+    "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+    "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+    (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
+) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+Check ($iscc) "Inno Setup 6 isn't installed (or isn't where expected). Get it from https://jrsoftware.org/isdl.php"
+Write-Host "Using $iscc"
 & $iscc "/DAppVersion=$version" packaging\installer.iss
 Check ($LASTEXITCODE -eq 0) "Inno Setup failed"
 
