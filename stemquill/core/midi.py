@@ -17,14 +17,15 @@ def to_ticks(t, bpm):
     return max(0, int(round(t * bpm / 60.0 * TPB)))
 
 
-def write_midi(notes, out_path, bpm, track_name, channel, program=None):
-    """notes: list of (start_sec, end_sec, midi_note, velocity)."""
+def write_midi(notes, out_path, bpm, track_name, channel, program=None, time_signature=(4, 4)):
+    """notes: list of (start_sec, end_sec, midi_note, velocity). time_signature only places the bar lines."""
     mid = mido.MidiFile(ticks_per_beat=TPB)
     track = mido.MidiTrack()
     mid.tracks.append(track)
     track.append(mido.MetaMessage("track_name", name=track_name, time=0))
     track.append(mido.MetaMessage("set_tempo", tempo=mido.bpm2tempo(bpm), time=0))
-    track.append(mido.MetaMessage("time_signature", numerator=4, denominator=4, time=0))
+    num, den = time_signature
+    track.append(mido.MetaMessage("time_signature", numerator=num, denominator=den, time=0))
     if program is not None:
         track.append(mido.Message("program_change", channel=channel, program=program, time=0))
 

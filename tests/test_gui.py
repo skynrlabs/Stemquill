@@ -212,6 +212,44 @@ def test_detect_preview_and_convert(app, monkeypatch, stems):
     assert not app.status_card.progress.winfo_ismapped()
 
 
+def test_converting_at_the_default_tempo_warns(app, monkeypatch, stems):
+    """The MIDI's beat grid comes from the Tempo box, so an untouched 120 BPM gets a warning."""
+    add_stems(app, monkeypatch, [stems["bass"][0]])
+    app.converter.start()
+    wait_until(app, lambda: not app.busy)
+    assert app.status_card.status.get() == "Done: 1 of 1 converted"
+    assert app.status_card.kind == "warn"
+    assert "Tempo is still the default 120 BPM" in app.status_card.detail.get()
+
+    page(app).bpm_var.set("100")  # typed (or detected): no warning
+    app.converter.start()
+    wait_until(app, lambda: not app.busy)
+    assert app.status_card.kind == "ok"
+    assert "Tempo is still" not in app.status_card.detail.get()
+
+
+def test_time_signature_goes_into_the_midi_and_marks_saved_stems_changed(app, monkeypatch, stems):
+    import mido
+
+    add_stems(app, monkeypatch, [stems["bass"][0]])
+    p = page(app)
+    p.bpm_var.set("120")
+    p.time_sig_var.set("6/8")
+    app.converter.start()
+    wait_until(app, lambda: not app.busy)
+    out = os.path.join(app.settings_page.out_dir, "Bass - bass.mid")
+    sig = next(m for m in mido.MidiFile(out).tracks[0] if m.type == "time_signature")
+    assert (sig.numerator, sig.denominator) == (6, 8)
+    assert "6/8" in activity(app)
+
+    p.time_sig_var.set("3/4")
+    app.root.update()
+    assert p.stems[0].status == "changed · convert again"
+    p.time_sig_var.set("6/8")  # back to what was saved
+    app.root.update()
+    assert p.stems[0].status.startswith("saved")
+
+
 def test_convert_without_stems_says_what_to_do(app):
     app.converter.start()
     app.root.update()

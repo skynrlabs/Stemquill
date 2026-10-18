@@ -110,13 +110,21 @@ def transcribe(
     return result
 
 
-def save_result(result, out_dir=None, log=log_default):
+def save_result(result, out_dir=None, log=log_default, time_signature=(4, 4)):
     path, stem_type = result["path"], result["stem_type"]
     out_dir = out_dir or os.path.dirname(os.path.abspath(path))
     os.makedirs(out_dir, exist_ok=True)
     base = os.path.splitext(os.path.basename(path))[0]
     out_path = os.path.join(out_dir, f"{base} - {stem_type}.mid")
-    write_midi(result["notes"], out_path, result["bpm"], f"{base} ({stem_type})", result["channel"], result["program"])
+    write_midi(
+        result["notes"],
+        out_path,
+        result["bpm"],
+        f"{base} ({stem_type})",
+        result["channel"],
+        result["program"],
+        time_signature,
+    )
     log(f"  saved: {out_path}")
     return out_path
 
@@ -132,6 +140,7 @@ def convert(
     log=log_default,
     drum_map=None,
     humanize_amount=0.0,
+    time_signature=(4, 4),
 ):
     result = transcribe(path, stem_type, bpm, grid, sensitivity, drum_parts, log, drum_map, humanize_amount)
-    return save_result(result, out_dir, log) if result else None
+    return save_result(result, out_dir, log, time_signature) if result else None

@@ -46,7 +46,7 @@ def run_transcribe(stem, c, notes):
 
 def song_line(c):
     snap = "no snap" if not c["grid"] else f"snap {c['grid_label']}"
-    return f"{c['bpm']:g} BPM · {snap} · {c['map_key']} drum map"
+    return f"{c['bpm']:g} BPM · {c['time_sig_label']} · {snap} · {c['map_key']} drum map"
 
 
 def stem_line(stem):
@@ -117,7 +117,7 @@ class ConvertJourney:
                         )
                     )
                     continue
-                out = save_result(result, out_dir, notes)
+                out = save_result(result, out_dir, notes, c["time_signature"])
                 ok += 1
                 self.last_out_dir = os.path.dirname(out)
                 count = plural(len(result["notes"]), "note")
@@ -154,7 +154,13 @@ class ConvertJourney:
                 detail = f"{skipped} skipped (see the Stems list) · " + detail
         else:
             detail = "Check the Stems list for what went wrong"
-        app.say(f"Done: {ok} of {total} converted", "ok" if ok == total else "warn", detail)
+        kind = "ok" if ok == total else "warn"
+        if ok and not app.convert_page.tempo_set:
+            # the MIDI's beat grid comes from the Tempo box; at the untouched default it's often wrong
+            kind = "warn"
+            bpm = app.convert_page.bpm_var.get()
+            detail = f"Tempo is still the default {bpm} BPM. Wrong? Click Detect or type it, then convert again"
+        app.say(f"Done: {ok} of {total} converted", kind, detail)
         if self.last_out_dir:
             app.action.open_btn.state(["!disabled"])
             if app.settings_page.open_when_done.get() and ok:

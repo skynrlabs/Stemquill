@@ -73,3 +73,31 @@ def test_save_result_names_and_folders(stems, run, tmp_path):
     out = save_result(result, str(tmp_path / "new folder"), lambda m: None)
     assert out.endswith("Drums - drums.mid")
     assert (tmp_path / "new folder" / "Drums - drums.mid").exists()
+
+
+def time_signature(path):
+    sigs = [m for m in mido.MidiFile(path).tracks[0] if m.type == "time_signature"]
+    assert len(sigs) == 1
+    return sigs[0].numerator, sigs[0].denominator
+
+
+def test_time_signature_defaults_to_4_4(tmp_path):
+    path = tmp_path / "x.mid"
+    write_midi([(0.0, 0.5, 60, 100)], str(path), 120, "x", channel=0)
+    assert time_signature(path) == (4, 4)
+
+
+@pytest.mark.parametrize("sig", [(3, 4), (6, 8), (7, 8), (12, 8)])
+def test_time_signature_is_written_and_notes_dont_move(tmp_path, sig):
+    notes = [(0.0, 0.5, 60, 100), (1.5, 2.0, 62, 90)]
+    plain, other = tmp_path / "a.mid", tmp_path / "b.mid"
+    write_midi(notes, str(plain), 100, "x", channel=0)
+    write_midi(notes, str(other), 100, "x", channel=0, time_signature=sig)
+    assert time_signature(other) == sig
+    assert read_notes(other)[1] == read_notes(plain)[1]  # only the bar lines change
+
+
+def test_save_result_passes_the_time_signature(stems, run, tmp_path):
+    result = run(stems["bass"][0], "bass")
+    out = save_result(result, str(tmp_path), lambda m: None, time_signature=(3, 4))
+    assert time_signature(out) == (3, 4)

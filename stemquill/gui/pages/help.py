@@ -17,7 +17,8 @@ HELP_TEXT = [
     (
         "p",
         "2.  Song: click Detect to measure the tempo from the selected stem, or type the BPM. Set your DAW "
-        "project to the same tempo. Tempo and Snap to grid are shared by every stem.",
+        "project to the same tempo; a wrong tempo puts the notes on the wrong beats. Tempo, Snap to grid and "
+        "Time signature are shared by every stem.",
     ),
     (
         "p",
@@ -38,8 +39,13 @@ HELP_TEXT = [
     ("p", "Sensitivity: slide right to catch quieter notes, left to cut junk notes. 0.80 is a good start."),
     (
         "p",
-        "Snap to grid: Off keeps the original timing and is safest for AI-generated stems. "
-        "1/16 note locks everything to the grid.",
+        "Snap to grid: Off leaves each note exactly where it was played and is safest for AI-generated "
+        "stems. 1/16 note locks everything to the grid. It doesn't set the tempo; that's the Tempo box.",
+    ),
+    (
+        "p",
+        "Time signature: where the bar lines fall when you open the MIDI (4/4, 3/4, 6/8...). The notes don't "
+        "move. If the song changes time signature partway through, set those bars in your DAW.",
     ),
     (
         "p",

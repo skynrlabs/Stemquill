@@ -9,18 +9,46 @@ from .midi import clean_overlaps, snap
 from .onsets import refine_onset
 
 
+def pitch_frame_length(fmin, sr):
+    """Analysis window long enough to hold a bit more than two cycles of the lowest note.
+
+    pYIN can't lock onto a pitch whose cycle doesn't fit twice in the window: with 2048 samples
+    at 44.1 kHz, a bass's open low E (41 Hz) and low F/G were missed entirely. Vocals keep 2048.
+    """
+    frame = 2048
+    while frame < 2.2 * sr / fmin:
+        frame *= 2
+    return frame
+
+
+def mono_thresholds(sensitivity):
+    """What sensitivity (0.1 .. 1.5, default 0.8) changes for single-line stems.
+
+    Higher finds more notes: quieter ones, ones the pitch tracker is less sure of, and shorter
+    ones. At the default 0.8 these are the values Stemquill has always used.
+    """
+    k = 1.6 - sensitivity  # 0.8 at the default
+    loud = 0.03 * k  # fraction of the loudest moment a note must reach
+    confidence = float(np.clip(0.05 + 0.25 * (0.8 - sensitivity), 0.01, 0.4))
+    min_len = float(np.clip(0.07 * k / 0.8, 0.03, 0.15))  # seconds
+    return loud, confidence, min_len
+
+
 def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
     lo, hi = PITCH_RANGES[stem_type]
+    fmin = librosa.note_to_hz(lo)
+    frame = pitch_frame_length(fmin, sr)
     f0, voiced, prob = librosa.pyin(
-        y, fmin=librosa.note_to_hz(lo), fmax=librosa.note_to_hz(hi), sr=sr, frame_length=2048, hop_length=HOP
+        y, fmin=fmin, fmax=librosa.note_to_hz(hi), sr=sr, frame_length=frame, hop_length=HOP
     )
     rms = librosa.feature.rms(y=y, frame_length=2048, hop_length=HOP)[0]
     n = min(len(f0), len(rms))
     f0, voiced, prob, rms = f0[:n], voiced[:n], prob[:n], rms[:n]
 
+    loud_frac, confidence, min_len = mono_thresholds(sensitivity)
     peak_rms = rms.max() if rms.max() > 0 else 1.0
-    loud = rms > peak_rms * 0.03 * (1.6 - sensitivity)
-    pitch = np.where(voiced & loud & (prob > 0.05), np.round(librosa.hz_to_midi(f0)), -1)
+    loud = rms > peak_rms * loud_frac
+    pitch = np.where(voiced & loud & (prob > confidence), np.round(librosa.hz_to_midi(f0)), -1)
     pitch = np.nan_to_num(pitch, nan=-1).astype(int)
     pitch = scipy.ndimage.median_filter(pitch, size=5)  # smooth out flickers
 
@@ -28,14 +56,20 @@ def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=HOP)
     onsets = set(librosa.onset.onset_detect(onset_envelope=onset_env, sr=sr, hop_length=HOP).tolist())
 
+    def new_attack(k):
+        """A real re-attack gets louder; a 'new onset' found in a fading note is ignored."""
+        if k not in onsets:
+            return False
+        before = rms[max(0, k - 4) : k].min(initial=np.inf)
+        return rms[k : k + 4].max(initial=0.0) > before * 1.25
+
     notes, i = [], 0
-    min_len = 0.07
     while i < n:
         if pitch[i] < 0:
             i += 1
             continue
         j = i
-        while j + 1 < n and pitch[j + 1] == pitch[i] and not ((j + 1) in onsets and j + 1 - i > 6):
+        while j + 1 < n and pitch[j + 1] == pitch[i] and not (j + 1 - i > 6 and new_attack(j + 1)):
             j += 1
         start = refine_onset(y, sr, librosa.frames_to_time(i, sr=sr, hop_length=HOP), before=0.05, after=0.015)
         end = librosa.frames_to_time(j + 1, sr=sr, hop_length=HOP)

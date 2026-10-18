@@ -39,3 +39,18 @@ def test_log_file(stems, tmp_path):
     text = log.read_text()
     assert "kick: 8 hits" in text
     assert "saved:" in text
+
+
+def test_time_signature_option(stems, tmp_path):
+    import mido
+
+    r = cli(stems["bass"][0], "--bpm", "100", "--time-sig", "7/8", "--out", str(tmp_path))
+    assert r.returncode == 0, r.stderr
+    sig = next(m for m in mido.MidiFile(tmp_path / "Bass - bass.mid").tracks[0] if m.type == "time_signature")
+    assert (sig.numerator, sig.denominator) == (7, 8)
+
+
+def test_bad_time_signature_is_rejected(stems, tmp_path):
+    r = cli(stems["bass"][0], "--time-sig", "7/9", "--out", str(tmp_path))
+    assert r.returncode == 2
+    assert "bad --time-sig" in r.stderr
