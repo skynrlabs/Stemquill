@@ -43,6 +43,9 @@ class ConvertPage(ttk.Frame):
         self.bpm_var = tk.StringVar(value="120")
         self.grid_var = tk.StringVar(value=DEFAULT_GRID)
         self.tempo_hint = tk.StringVar(value=TEMPO_HINT)
+        # False until the tempo is detected or typed: converting at the untouched default gets a warning
+        self.tempo_set = False
+        self.bpm_var.trace_add("write", lambda *_: setattr(self, "tempo_set", True))
         self._build_song()
         self._build_stems(fonts)
         self.card = StemSettingsCard(
@@ -245,6 +248,7 @@ class ConvertPage(ttk.Frame):
 
     def reset(self):
         self.bpm_var.set("120")
+        self.tempo_set = False
         self.grid_var.set(DEFAULT_GRID)
         self.tempo_hint.set(TEMPO_HINT)
         for stem in self.stems:
