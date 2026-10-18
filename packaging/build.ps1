@@ -1,6 +1,7 @@
 # Builds the Windows installer on your own PC: dist\installer\Stemquill-Setup-x.y.z.exe
 #
-# Needs Python 3.11 and Inno Setup 6 (https://jrsoftware.org/isdl.php).
+# Needs Python 3.11 or 3.12, Inno Setup 6 (https://jrsoftware.org/isdl.php) and the Microsoft
+# Visual C++ Redistributable x64 (https://aka.ms/vs/17/release/vc_redist.x64.exe).
 # Run from the repo root in PowerShell:   .\packaging\build.ps1
 # Then upload the installer to https://skynrlabs.itch.io/stemquill
 
@@ -9,6 +10,13 @@ Set-Location (Split-Path $PSScriptRoot)
 
 function Step($msg) { Write-Host "`n== $msg" -ForegroundColor Cyan }
 function Check($ok, $msg) { if (-not $ok) { Write-Error $msg } }
+
+Step "Checking this PC has what the build needs"
+# Some audio libraries (soxr, used by librosa) need the Visual C++ runtime. Python doesn't ship
+# MSVCP140.dll, and PyInstaller can only bundle it into the app if this PC has it.
+$vcDll = Join-Path $env:SystemRoot "System32\msvcp140.dll"
+Check (Test-Path $vcDll) ("The Microsoft Visual C++ Redistributable (x64) isn't installed. " +
+    "Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe, reopen PowerShell, then build again.")
 
 Step "Installing Stemquill and PyInstaller"
 python -m pip install --upgrade pip
@@ -20,6 +28,9 @@ Step "Building the app ($version)"
 Remove-Item -Recurse -Force dist, build -ErrorAction SilentlyContinue
 pyinstaller --noconfirm packaging\stemquill.spec
 Check ($LASTEXITCODE -eq 0) "PyInstaller failed"
+# The app must carry its own copy, so it runs on PCs without the Visual C++ Redistributable
+$bundled = Get-ChildItem -Recurse dist\Stemquill -Filter msvcp140.dll -ErrorAction SilentlyContinue
+Check ($bundled) "MSVCP140.dll wasn't bundled into the app, so it would crash on PCs without the Visual C++ runtime"
 
 Step "Smoke test: convert a drum loop"
 $tmp = Join-Path $env:TEMP "stemquill-build-test"
