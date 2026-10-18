@@ -1,0 +1,14 @@
+Stemquill is free, open-source software (MIT license) made by Skynr Labs.
+
+It is built on other open-source libraries, each under its own license, including:
+
+  - librosa (ISC), NumPy and SciPy (BSD), soundfile and libsndfile (BSD / LGPL),
+    soxr (LGPL), mido (MIT), tkinterdnd2 (MIT) and Python (PSF)
+
+The optional "Better chord detection" add-on also installs:
+
+  - basic-pitch by Spotify (Apache License 2.0), including its trained model
+  - ONNX Runtime by Microsoft (MIT) and the libraries it needs
+
+The full text of every license is installed with Stemquill in THIRD_PARTY_LICENSES.txt,
+and you can read it any time in the app under Help > About > Open-source licenses.

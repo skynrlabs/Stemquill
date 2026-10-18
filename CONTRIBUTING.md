@@ -94,7 +94,7 @@ pytest                  # all tests, about 15 seconds
 
 ## Releasing
 
-The Windows installer is built on a Windows PC, not on GitHub (the Actions tab is public, and downloads go through itch.io). You need Python 3.11 and [Inno Setup 6](https://jrsoftware.org/isdl.php).
+The Windows installer is built on a Windows PC, not on GitHub (the Actions tab is public, and downloads go through itch.io). You need Python 3.11 or 3.12, [Inno Setup 6](https://jrsoftware.org/isdl.php) and the [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe), which one of the audio libraries needs.
 
 1. Bump `__version__` in `stemquill/__init__.py`, and get the change into `main` through `dev`.
 2. On `main`, run `.\packaging\build.ps1` in PowerShell. It builds the app and the chord add-on, checks that both convert test stems, and writes `dist\installer\Stemquill-Setup-x.y.z.exe`.
