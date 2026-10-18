@@ -3,7 +3,6 @@
 import importlib.util
 import os
 import sys
-import tempfile
 
 
 def _check_libraries():
@@ -27,8 +26,11 @@ def _prepare_environment():
                 path = os.path.join(addons, name)
                 if os.path.isdir(path) and path not in sys.path:
                     sys.path.append(path)
-    # librosa's speed-ups cache compiled code; point that somewhere writable
-    os.environ.setdefault("NUMBA_CACHE_DIR", os.path.join(tempfile.gettempdir(), "stemquill-numba"))
+    # librosa's speed-ups cache compiled code; point that somewhere writable and private. The cache is
+    # loaded as code, so it must not live in a shared temp folder another user could write to.
+    from .config import cache_dir
+
+    os.environ.setdefault("NUMBA_CACHE_DIR", os.path.join(cache_dir(), "numba"))
 
 
 def main():

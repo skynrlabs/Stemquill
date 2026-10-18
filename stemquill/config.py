@@ -81,6 +81,16 @@ def _settings_dir():
 SETTINGS_PATH = os.path.join(_settings_dir(), "settings.json")
 
 
+def cache_dir():
+    """Your own cache folder (not the shared temp folder, which other users can write to on Linux)."""
+    if sys.platform.startswith("win"):
+        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+        return os.path.join(base, "Stemquill", "cache")
+    if sys.platform == "darwin":
+        return os.path.expanduser("~/Library/Caches/Stemquill")
+    return os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "stemquill")
+
+
 def load_settings():
     try:
         with open(SETTINGS_PATH, encoding="utf-8") as fh:
