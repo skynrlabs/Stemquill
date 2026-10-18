@@ -5,7 +5,9 @@ app.post(), because Tk widgets may only be touched from the main thread. Results
 the Activity feed as short, readable entries (see activity.py).
 """
 
+import atexit
 import os
+import shutil
 import tempfile
 import threading
 import wave
@@ -13,7 +15,21 @@ import wave
 from ..core import Player, detect_tempo, render_preview, save_result, transcribe
 from .activity import describe, short_path
 
-PREVIEW_WAV = os.path.join(tempfile.gettempdir(), "stemquill_preview.wav")
+PREVIEW_WAV = None  # made on the first preview, see preview_wav()
+
+
+def preview_wav():
+    """Where the preview is written: a private folder made for this run and removed on exit.
+
+    A fixed name in the shared temp folder could be pre-created as a link by another user on the
+    same computer (Linux), making the preview overwrite one of your files.
+    """
+    global PREVIEW_WAV
+    if PREVIEW_WAV is None:
+        folder = tempfile.mkdtemp(prefix="stemquill-")  # only you can read or write it
+        atexit.register(shutil.rmtree, folder, True)
+        PREVIEW_WAV = os.path.join(folder, "preview.wav")
+    return PREVIEW_WAV
 
 
 class EngineNotes:
@@ -46,7 +62,7 @@ def run_transcribe(stem, c, notes):
 
 def song_line(c):
     snap = "no snap" if not c["grid"] else f"snap {c['grid_label']}"
-    return f"{c['bpm']:g} BPM · {snap} · {c['map_key']} drum map"
+    return f"{c['bpm']:g} BPM · {c['time_sig_label']} · {snap} · {c['map_key']} drum map"
 
 
 def stem_line(stem):
@@ -117,7 +133,7 @@ class ConvertJourney:
                         )
                     )
                     continue
-                out = save_result(result, out_dir, notes)
+                out = save_result(result, out_dir, notes, c["time_signature"])
                 ok += 1
                 self.last_out_dir = os.path.dirname(out)
                 count = plural(len(result["notes"]), "note")
@@ -154,7 +170,13 @@ class ConvertJourney:
                 detail = f"{skipped} skipped (see the Stems list) · " + detail
         else:
             detail = "Check the Stems list for what went wrong"
-        app.say(f"Done: {ok} of {total} converted", "ok" if ok == total else "warn", detail)
+        kind = "ok" if ok == total else "warn"
+        if ok and not app.convert_page.tempo_set:
+            # the MIDI's beat grid comes from the Tempo box; at the untouched default it's often wrong
+            kind = "warn"
+            bpm = app.convert_page.bpm_var.get()
+            detail = f"Tempo is still the default {bpm} BPM. Wrong? Click Detect or type it, then convert again"
+        app.say(f"Done: {ok} of {total} converted", kind, detail)
         if self.last_out_dir:
             app.action.open_btn.state(["!disabled"])
             if app.settings_page.open_when_done.get() and ok:
@@ -200,25 +222,26 @@ class PreviewJourney:
                     )
                 )
                 return
-            render_preview(result, PREVIEW_WAV, include_original)
+            wav = preview_wav()
+            render_preview(result, wav, include_original)
             n = len(result["notes"])
             found = f"{result['stem_type']} · {plural(n, 'note')}"
             details = describe(result) + f" · {stem_line(stem)}"
             app.post(lambda: (feed.action(f"Preview {name}", song_line(c)), feed.stem(name, found, details)))
-            with wave.open(PREVIEW_WAV, "rb") as w:
+            with wave.open(wav, "rb") as w:
                 seconds = w.getnframes() / w.getframerate()
-            app.post(lambda: self._play(stem, n, seconds))
+            app.post(lambda: self._play(stem, n, seconds, wav))
         except Exception as exc:
             msg = f"Preview failed: {exc}"
             app.post(lambda: (app.set_busy(False), app.say(msg, "warn")))
 
-    def _play(self, stem, n, seconds):
+    def _play(self, stem, n, seconds, wav):
         app = self.app
         app.set_busy(False)
         try:
-            self.player.play(PREVIEW_WAV)
+            self.player.play(wav)
         except Exception as exc:
-            app.say("Couldn't play the preview", "warn", f"{exc}. The preview was saved to {PREVIEW_WAV}")
+            app.say("Couldn't play the preview", "warn", f"{exc}. The preview was saved to {wav}")
             return
         app.say(
             f"Playing {stem.name} · {n} notes",

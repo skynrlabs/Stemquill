@@ -81,6 +81,16 @@ def _settings_dir():
 SETTINGS_PATH = os.path.join(_settings_dir(), "settings.json")
 
 
+def cache_dir():
+    """Your own cache folder (not the shared temp folder, which other users can write to on Linux)."""
+    if sys.platform.startswith("win"):
+        base = os.environ.get("LOCALAPPDATA") or os.path.expanduser("~")
+        return os.path.join(base, "Stemquill", "cache")
+    if sys.platform == "darwin":
+        return os.path.expanduser("~/Library/Caches/Stemquill")
+    return os.path.join(os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache"), "stemquill")
+
+
 def load_settings():
     try:
         with open(SETTINGS_PATH, encoding="utf-8") as fh:
@@ -112,6 +122,29 @@ DEFAULT_DRUM_PARTS = ("kick", "snare", "hihat", "openhat", "toms")  # cymbals of
 
 # General MIDI program numbers so the file opens with a sensible sound
 PROGRAMS = {"bass": 33, "vocal": 52, "melodic": 25, "synth": 89}
+
+# Time signatures offered for the MIDI file (numerator, denominator). They only set where the bar
+# lines fall in a DAW or notation program; note timing comes from the tempo.
+TIME_SIGNATURES = {
+    "4/4": (4, 4),
+    "3/4": (3, 4),
+    "2/4": (2, 4),
+    "5/4": (5, 4),
+    "6/8": (6, 8),
+    "7/8": (7, 8),
+    "12/8": (12, 8),
+}
+DEFAULT_TIME_SIGNATURE = "4/4"
+
+
+def parse_time_signature(text):
+    """'7/8' -> (7, 8). Raises ValueError for anything that isn't a sensible time signature."""
+    num, _, den = str(text).strip().partition("/")
+    num, den = int(num), int(den)
+    if not 1 <= num <= 32 or den not in (1, 2, 4, 8, 16, 32):
+        raise ValueError(text)
+    return num, den
+
 
 PITCH_RANGES = {  # (low note, high note) for each stem type
     "bass": ("E1", "G3"),

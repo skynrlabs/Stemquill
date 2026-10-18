@@ -4,7 +4,7 @@ import argparse
 import os
 
 from . import __version__
-from .config import DEFAULT_DRUM_PARTS, DRUM_MAPS, DRUM_NOTES, STEM_TYPES
+from .config import DEFAULT_DRUM_PARTS, DRUM_MAPS, DRUM_NOTES, STEM_TYPES, parse_time_signature
 from .core import convert
 
 
@@ -31,6 +31,7 @@ def main():
     )
     ap.add_argument("--map", help="custom notes, e.g. kick=36,snare=40,hihat=42 (overrides --drum-map)")
     ap.add_argument("--humanize", type=int, default=0, help="0 (exact) to 100 (loose) timing and velocity feel")
+    ap.add_argument("--time-sig", default="4/4", help="MIDI time signature, e.g. 3/4 or 6/8 (bar lines only)")
     ap.add_argument("--out", help="folder for the .mid files")
     a = ap.parse_args()
     drum_map = dict(DRUM_MAPS["General MIDI" if a.drum_map == "gm" else "Pads in order"])
@@ -41,6 +42,10 @@ def main():
             if name not in DRUM_NOTES or not num.strip().isdigit() or not 0 <= int(num) <= 127:
                 ap.error(f"bad --map entry '{pair}'. Use names like {', '.join(DRUM_NOTES)} with notes 0-127")
             drum_map[name] = int(num)
+    try:
+        time_signature = parse_time_signature(a.time_sig)
+    except ValueError:
+        ap.error(f"bad --time-sig '{a.time_sig}'. Use something like 4/4, 3/4, 6/8 or 7/8")
     log_file = os.environ.get("STEMQUILL_LOG")  # optional: also write the log to a file (used by the build tests)
 
     def log(msg):
@@ -61,4 +66,5 @@ def main():
             log=log,
             drum_map=drum_map,
             humanize_amount=max(0, min(100, a.humanize)) / 100,
+            time_signature=time_signature,
         )
