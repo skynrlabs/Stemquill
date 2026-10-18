@@ -21,6 +21,8 @@ DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 LicenseFile=..\LICENSE
+; Shown after the license: the open-source libraries inside, and the chord add-on's basic-pitch (Apache 2.0)
+InfoBeforeFile=third-party-notice.txt
 OutputDir=..\dist\installer
 OutputBaseFilename=Stemquill-Setup-{#AppVersion}
 SetupIconFile=..\stemquill\assets\stemquill.ico

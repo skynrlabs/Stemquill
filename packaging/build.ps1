@@ -1,6 +1,7 @@
 # Builds the Windows installer on your own PC: dist\installer\Stemquill-Setup-x.y.z.exe
 #
-# Needs Python 3.11 and Inno Setup 6 (https://jrsoftware.org/isdl.php).
+# Needs Python 3.11 or 3.12, Inno Setup 6 (https://jrsoftware.org/isdl.php) and the Microsoft
+# Visual C++ Redistributable x64 (https://aka.ms/vs/17/release/vc_redist.x64.exe).
 # Run from the repo root in PowerShell:   .\packaging\build.ps1
 # Then upload the installer to https://skynrlabs.itch.io/stemquill
 
@@ -9,6 +10,13 @@ Set-Location (Split-Path $PSScriptRoot)
 
 function Step($msg) { Write-Host "`n== $msg" -ForegroundColor Cyan }
 function Check($ok, $msg) { if (-not $ok) { Write-Error $msg } }
+
+Step "Checking this PC has what the build needs"
+# Some audio libraries (soxr, used by librosa) need the Visual C++ runtime. Python doesn't ship
+# MSVCP140.dll, and PyInstaller can only bundle it into the app if this PC has it.
+$vcDll = Join-Path $env:SystemRoot "System32\msvcp140.dll"
+Check (Test-Path $vcDll) ("The Microsoft Visual C++ Redistributable (x64) isn't installed. " +
+    "Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe, reopen PowerShell, then build again.")
 
 Step "Installing Stemquill and PyInstaller"
 python -m pip install --upgrade pip
@@ -20,6 +28,9 @@ Step "Building the app ($version)"
 Remove-Item -Recurse -Force dist, build -ErrorAction SilentlyContinue
 pyinstaller --noconfirm packaging\stemquill.spec
 Check ($LASTEXITCODE -eq 0) "PyInstaller failed"
+# The app must carry its own copy, so it runs on PCs without the Visual C++ Redistributable
+$bundled = Get-ChildItem -Recurse dist\Stemquill -Filter msvcp140.dll -ErrorAction SilentlyContinue
+Check ($bundled) "MSVCP140.dll wasn't bundled into the app, so it would crash on PCs without the Visual C++ runtime"
 
 Step "Smoke test: convert a drum loop"
 $tmp = Join-Path $env:TEMP "stemquill-build-test"
@@ -56,8 +67,15 @@ python -m stemquill.licenses --out dist\Stemquill\THIRD_PARTY_LICENSES.txt --add
 Check ($LASTEXITCODE -eq 0 -and (Select-String -Path dist\Stemquill\THIRD_PARTY_LICENSES.txt -Pattern "basic-pitch" -Quiet)) "Couldn't write the licenses file"
 
 Step "Building the installer"
-$iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-Check (Test-Path $iscc) "Inno Setup 6 isn't installed. Get it from https://jrsoftware.org/isdl.php"
+# Inno Setup installs to Program Files, or to your user folder when installed without admin rights
+$iscc = @(
+    "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+    "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+    (Get-Command ISCC.exe -ErrorAction SilentlyContinue).Source
+) | Where-Object { $_ -and (Test-Path $_) } | Select-Object -First 1
+Check ($iscc) "Inno Setup 6 isn't installed (or isn't where expected). Get it from https://jrsoftware.org/isdl.php"
+Write-Host "Using $iscc"
 & $iscc "/DAppVersion=$version" packaging\installer.iss
 Check ($LASTEXITCODE -eq 0) "Inno Setup failed"
 
