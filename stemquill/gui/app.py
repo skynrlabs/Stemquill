@@ -17,6 +17,7 @@ from .shortcuts import bind_shortcuts
 from .sidebar import Sidebar
 from .status_card import StatusCard
 from .theme import THEME, apply_styles, make_fonts
+from .widgets import ScrollArea
 
 IS_WINDOWS = sys.platform.startswith("win")
 
@@ -127,8 +128,10 @@ class StemquillApp:
         box.rowconfigure(0, weight=1)
         self.settings_page = SettingsPage(box, on_reset=self.reset_settings)
         self.history_page = HistoryPage(box, self.fonts)
+        # Convert scrolls when it's taller than the window (large display scaling, small screens)
+        self.convert_area = ScrollArea(box)
         self.convert_page = ConvertPage(
-            box,
+            self.convert_area.inner,
             self.fonts,
             self.settings_page,
             on_change=self._on_stems_changed,
@@ -137,8 +140,9 @@ class StemquillApp:
             on_open_settings=lambda: self.show_page("settings"),
         )
         self.help_page = HelpPage(box, self.fonts, self.about)
+        self.convert_page.grid(row=0, column=0, sticky="nsew")
         self.pages = {
-            "convert": self.convert_page,
+            "convert": self.convert_area,
             "history": self.history_page,
             "settings": self.settings_page,
             "help": self.help_page,
@@ -148,6 +152,7 @@ class StemquillApp:
 
         self.status_card = StatusCard(main, self.fonts)
         self.status_card.grid(row=2, column=0, sticky="ew", pady=(4, 10))
+        self.status_card.clear()  # hidden until there's something to say
         self.action = ActionBar(main)
         self.action.grid(row=3, column=0, sticky="ew")
 

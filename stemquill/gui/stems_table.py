@@ -75,7 +75,7 @@ class StemsTable(ttk.Frame):
         for i, stem in enumerate(stems):
             self.rows.append(self._make_row(i, stem))
         n = len(stems)
-        visible = min(max(n, 2), VISIBLE_ROWS)
+        visible = min(n, VISIBLE_ROWS) if n else 2  # the empty message needs two rows; stems need theirs
         self.canvas.configure(height=ROW_HEIGHT * visible)
         if n > VISIBLE_ROWS:
             self.scroll.grid(row=1, column=1, sticky="ns")
@@ -159,6 +159,7 @@ class StemsTable(ttk.Frame):
             return
         step = -1 if (getattr(event, "num", 0) == 4 or getattr(event, "delta", 0) > 0) else 1
         self.canvas.yview_scroll(step, "units")
+        return "break"  # the list scrolled, so the page around it shouldn't
 
     def _scroll_into_view(self, index):
         n = len(self.rows)
