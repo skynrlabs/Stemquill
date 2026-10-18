@@ -274,6 +274,33 @@ def test_open_path_only_opens_folders(app, tmp_path, monkeypatch):
     assert app.status_card.kind == "warn"
 
 
+def test_status_card_appears_with_the_first_message(app):
+    assert not app.status_card.shown
+    app.say("Settings reset to defaults", "ok")
+    app.root.update()
+    assert app.status_card.shown and app.status_card.winfo_ismapped()
+    app.status_card.clear()
+    app.root.update()
+    assert not app.status_card.winfo_ismapped()
+
+
+def test_drum_settings_can_always_be_reached(app, monkeypatch, stems):
+    """On a small or heavily scaled screen the Convert page scrolls instead of hiding settings."""
+    app.root.geometry("900x620")
+    app.say("Converting...", "busy")  # the status card takes room too
+    add_stems(app, monkeypatch, [stems["beat"][0]])
+    for _ in range(5):
+        app.root.update()
+    area = app.convert_area
+    card = app.convert_page.card
+    bottom = card.winfo_y() + card.winfo_height()
+    if bottom > area.canvas.winfo_height():
+        assert area.needs_scroll() and area.bar.winfo_ismapped()
+        area.canvas.yview_moveto(1.0)
+        app.root.update()
+        assert area.canvas.canvasy(area.canvas.winfo_height()) >= bottom - 2  # the bottom is visible
+
+
 def test_convert_without_stems_says_what_to_do(app):
     app.converter.start()
     app.root.update()
@@ -386,7 +413,8 @@ def test_empty_message_is_not_a_table_row(app):
 
 def test_status_card_colours_and_progress(app):
     card = app.status_card
-    assert card.status.get() == "Ready"
+    assert not card.shown  # nothing to report when the app opens, so it's out of the way
+    assert not card.winfo_ismapped()
     card.start_progress(4)
     card.say("Converting 4 stems...", "busy")
     app.root.update()

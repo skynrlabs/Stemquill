@@ -1,7 +1,8 @@
 """The status card above the Convert button: what's happening, in large type, with a colour to match.
 
 Teal while working (with a progress bar), green when done, amber when something needs attention.
-A second, smaller line adds detail such as where the files were saved.
+A second, smaller line adds detail such as where the files were saved. With nothing to report
+(when the app opens) the card is hidden, which leaves more room for the stem settings.
 """
 
 import tkinter as tk
@@ -19,8 +20,8 @@ class StatusCard(tk.Frame):
         self.columnconfigure(1, weight=1)
         self.edge = tk.Frame(self, bg=T["line"], width=5)
         self.edge.grid(row=0, column=0, rowspan=2, sticky="ns")
-        self.status = tk.StringVar(value="Ready")
-        self.detail = tk.StringVar(value="Drop your stems onto the window, set the tempo, then Convert")
+        self.status = tk.StringVar(value="")
+        self.detail = tk.StringVar(value="")
         self.kind = "muted"
         self.msg_lbl = tk.Label(
             self, textvariable=self.status, bg=T["card"], fg=T["text"], font=fonts["status"], anchor="w"
@@ -33,7 +34,9 @@ class StatusCard(tk.Frame):
         self.progress = ttk.Progressbar(self, mode="determinate", style="Horizontal.TProgressbar", length=260)
 
     def say(self, msg, kind="muted", detail=""):
-        """Show a message. kind: muted (plain), busy, ok or warn."""
+        """Show a message (and the card, if it was hidden). kind: muted (plain), busy, ok or warn."""
+        if not self.shown:
+            self.grid()  # back where it was placed before clear()
         self.kind = kind
         self.status.set(msg)
         self.detail.set(detail)
@@ -41,6 +44,18 @@ class StatusCard(tk.Frame):
         self.edge.configure(bg=T[EDGE.get(kind, "line")])
         if kind != "busy":
             self.stop_progress()
+
+    def clear(self):
+        """Nothing to report: hide the card until the next message."""
+        self.status.set("")
+        self.detail.set("")
+        self.kind = "muted"
+        self.stop_progress()
+        self.grid_remove()
+
+    @property
+    def shown(self):
+        return self.winfo_manager() == "grid"
 
     # ---- progress (only visible while converting)
     def start_progress(self, maximum):
