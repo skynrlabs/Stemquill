@@ -285,20 +285,35 @@ def test_status_card_appears_with_the_first_message(app):
 
 
 def test_drum_settings_can_always_be_reached(app, monkeypatch, stems):
-    """On a small or heavily scaled screen the Convert page scrolls instead of hiding settings."""
-    app.root.geometry("900x620")
-    app.say("Converting...", "busy")  # the status card takes room too
-    add_stems(app, monkeypatch, [stems["beat"][0]])
+    """On a small or heavily scaled screen the Convert page scrolls instead of hiding settings.
+
+    Stems are added after the window is open (as a user does), so the page grows afterwards.
+    """
+    app.root.minsize(1, 1)
+    app.root.geometry("1200x460")
+    for _ in range(5):
+        app.root.update()
+    add_stems(app, monkeypatch, [stems["beat"][0], stems["bass"][0]])
+    page(app).select(0)  # the drum stem: the tallest settings
     for _ in range(5):
         app.root.update()
     area = app.convert_area
-    card = app.convert_page.card
-    bottom = card.winfo_y() + card.winfo_height()
-    if bottom > area.canvas.winfo_height():
-        assert area.needs_scroll() and area.bar.winfo_ismapped()
-        area.canvas.yview_moveto(1.0)
+    assert area.needs_scroll() and area.bar.winfo_ismapped()
+    assert area.inner.winfo_height() >= area.inner.winfo_reqheight()  # nothing clipped off the bottom
+
+    # the wheel scrolls the page even with the pointer over a control on it
+    button = page(app).detect_btn
+    x, y = button.winfo_rootx() + 5, button.winfo_rooty() + 5
+    button.event_generate("<MouseWheel>", delta=-120, x=5, y=5, rootx=x, rooty=y)
+    for _ in range(3):
         app.root.update()
-        assert area.canvas.canvasy(area.canvas.winfo_height()) >= bottom - 2  # the bottom is visible
+    assert area.canvas.yview()[0] > 0
+
+    area.canvas.yview_moveto(1.0)
+    app.root.update()
+    card = page(app).card
+    bottom = card.winfo_y() + card.winfo_height()
+    assert area.canvas.canvasy(area.canvas.winfo_height()) >= bottom - 2  # the drum map can be reached
 
 
 def test_convert_without_stems_says_what_to_do(app):
