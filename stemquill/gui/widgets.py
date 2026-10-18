@@ -47,8 +47,9 @@ def slider(parent, var, lo, hi, step, command=None):
 class ScrollArea(ttk.Frame):
     """A page that scrolls when it's taller than the window, so nothing is ever hidden.
 
-    Put the content in .inner. When there's room it fills the area as usual (so rows set to
-    grow still grow); when there isn't, a scrollbar appears and the mouse wheel scrolls it.
+    Put the content in .inner. The content keeps its natural height (so it can grow as stems are
+    added); when that's taller than the area, a scrollbar appears and the mouse wheel scrolls it
+    from anywhere over the page.
     """
 
     def __init__(self, parent):
@@ -61,12 +62,12 @@ class ScrollArea(ttk.Frame):
         self.canvas.configure(yscrollcommand=self.bar.set)
         self.inner = ttk.Frame(self.canvas)
         self.inner.columnconfigure(0, weight=1)
-        self.inner.rowconfigure(0, weight=1)
         self._win = self.canvas.create_window((0, 0), window=self.inner, anchor="nw")
+        # the canvas changes size with the window; the inner frame changes size with its content
         self.canvas.bind("<Configure>", lambda e: self._fit())
-        self.inner.bind("<Configure>", lambda e: self.after_idle(self._fit))
-        self.bind("<Enter>", lambda e: self._wheel_on(True))
-        self.bind("<Leave>", lambda e: self._wheel_on(False))
+        self.inner.bind("<Configure>", lambda e: self._fit())
+        for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
+            self.bind_all(seq, self._wheel, add="+")
 
     def needs_scroll(self):
         return self.inner.winfo_reqheight() > self.canvas.winfo_height() + 1
@@ -75,8 +76,8 @@ class ScrollArea(ttk.Frame):
         width, height = self.canvas.winfo_width(), self.canvas.winfo_height()
         if width <= 1:
             return
+        self.canvas.itemconfigure(self._win, width=width)  # height stays the content's own
         need = self.inner.winfo_reqheight()
-        self.canvas.itemconfigure(self._win, width=width, height=max(height, need))
         self.canvas.configure(scrollregion=(0, 0, width, max(height, need)))
         if need > height + 1:
             self.bar.grid(row=0, column=1, sticky="ns")
@@ -84,15 +85,20 @@ class ScrollArea(ttk.Frame):
             self.bar.grid_remove()
             self.canvas.yview_moveto(0)
 
-    def _wheel_on(self, on):
-        for seq in ("<MouseWheel>", "<Button-4>", "<Button-5>"):
-            if on:
-                self.bind_all(seq, self._wheel, add="+")
-            else:
-                self.unbind_all(seq)
+    def _under_pointer(self, event):
+        """True when the wheel turned over this area (or anything inside it) and it's showing."""
+        try:
+            w = self.winfo_containing(event.x_root, event.y_root)
+        except (KeyError, tk.TclError):  # e.g. over a combobox's drop-down list
+            return False
+        while w is not None:
+            if w is self:
+                return self.winfo_viewable()
+            w = w.master
+        return False
 
     def _wheel(self, event):
-        if not self.needs_scroll():
+        if not self.needs_scroll() or not self._under_pointer(event):
             return
         step = -1 if (getattr(event, "num", 0) == 4 or getattr(event, "delta", 0) > 0) else 1
         self.canvas.yview_scroll(step, "units")
