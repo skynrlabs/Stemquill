@@ -42,6 +42,10 @@ Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{
 Name: "chords"; Description: "Better chord detection for guitar, keys and synth stems (basic-pitch, adds about 45 MB)"; GroupDescription: "Optional features:"
 
 [InstallDelete]
+; Clear the previous version's app files first: a newer build's libraries mixed with an older build's
+; leftovers can stop the app from starting. Settings live in %APPDATA% and aren't touched.
+Type: filesandordirs; Name: "{app}\_internal"
+Type: files; Name: "{app}\Stemquill.exe"
 ; Start the add-on fresh on every install; it's copied back below if the box is ticked.
 Type: filesandordirs; Name: "{app}\addons\chords"
 

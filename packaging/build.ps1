@@ -97,8 +97,17 @@ $env:STEMQUILL_LOG = "$tmp\addon.log"
 $p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" -Wait -PassThru `
      -ArgumentList "`"$tmp\test-chords.wav`" --type melodic --bpm 120 --out `"$tmp\out`""
 Remove-Item Env:\STEMQUILL_LOG
-Remove-Item -Recurse -Force dist\Stemquill\addons
 Check ($p.ExitCode -eq 0 -and (Select-String -Path "$tmp\addon.log" -Pattern "\(basic-pitch\)" -Quiet)) "The chord add-on wasn't used"
+
+Step "Smoke test: open the window with the add-on installed"
+Remove-Item $flag -ErrorAction SilentlyContinue
+$env:STEMQUILL_CHECK_WINDOW = $flag
+$p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" -PassThru
+Remove-Item Env:\STEMQUILL_CHECK_WINDOW
+if (-not $p.WaitForExit(120000)) { $p.Kill() }
+Remove-Item -Recurse -Force dist\Stemquill\addons
+if (-not (Test-Path $flag) -and (Test-Path $crashLog)) { Get-Content $crashLog -Tail 60 }
+Check (Test-Path $flag) "With the chord add-on installed, the built app couldn't open its window (see above)"
 
 Step "Writing the open-source licenses"
 # Every bundled library's license, the add-on's too, next to Stemquill.exe (the installer copies it; About shows it)

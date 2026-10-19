@@ -532,7 +532,7 @@ def test_audio_files_expands_folders(tmp_path):
 def test_drop_files_and_folders(app, stems, tmp_path):
     import shutil
 
-    assert app.dnd_enabled, "tkinterdnd2 should be installed with Stemquill"
+    wait_until(app, lambda: app.dnd_enabled)  # turned on just after the window opens
     folder = tmp_path / "My Stems"  # a space in the name, like real folders
     folder.mkdir()
     shutil.copy(stems["bass"][0], folder / "Bass.wav")
@@ -589,3 +589,69 @@ def test_window_check_for_the_build(monkeypatch, tmp_path):
     monkeypatch.setenv("STEMQUILL_CHECK_WINDOW", str(flag))
     app_module.run_gui()  # returns once the window has opened and closed itself
     assert flag.read_text(encoding="utf-8") == "window ok"
+
+
+def test_splash_shows_then_hands_over_to_the_window(monkeypatch, tmp_path):
+    """The splash appears before the audio libraries load, then the real window replaces it."""
+    from stemquill import splash
+    from stemquill.gui import app as app_module
+
+    root = splash.show()
+    assert root.splash.winfo_viewable() and root.state() == "withdrawn"
+    flag = tmp_path / "window-ok.txt"
+    monkeypatch.setenv("STEMQUILL_CHECK_WINDOW", str(flag))
+    seen = {}
+    real_close = splash.close
+
+    def close(r):
+        real_close(r)
+        seen["main window shown"] = r.state() == "normal" and r.splash is None
+
+    monkeypatch.setattr(splash, "close", close)
+    app_module.run_gui(root)
+    assert seen == {"main window shown": True}
+    assert flag.read_text(encoding="utf-8") == "window ok"
+
+
+def test_drag_and_drop_waits_for_the_window(app):
+    """Turning on drag and drop can hang on some PCs, so the window is built and shown without it."""
+    assert not app.dnd_enabled
+    wait_until(app, lambda: app.dnd_enabled)
+
+
+def test_a_drag_and_drop_hang_is_remembered(monkeypatch, tmp_path):
+    """If turning on drag and drop hangs, the next start skips it (and says so) instead of hanging again."""
+    import time as _time
+
+    from stemquill.gui import app as app_module
+
+    monkeypatch.setattr(app_module, "DND_WATCH", 0.2)
+    monkeypatch.setattr(StemquillApp, "_enable_drag_and_drop", lambda self: _time.sleep(0.5) or True)
+    monkeypatch.setattr(app_module, "clear_dnd_hang", lambda: None)  # the "next start" must still see the mark
+    root = tk.Tk()
+    try:
+        a = StemquillApp(root)
+        wait_until(a, lambda: a.dnd_enabled)
+        assert app_module.dnd_hung_recently()
+
+        b = StemquillApp(tk.Toplevel(root))  # the next start
+        calls = []
+        monkeypatch.setattr(StemquillApp, "_enable_drag_and_drop", lambda self: calls.append(1) or True)
+        wait_until(b, lambda: b.status_card.status.get() == "Drag and drop is off for now")
+        assert calls == [] and not b.dnd_enabled
+    finally:
+        root.destroy()
+
+
+def test_an_old_drag_and_drop_hang_is_retried_and_cleared(app):
+    """A week after a hang, drag and drop is tried again; once it works the mark is removed."""
+    from stemquill.gui import app as app_module
+
+    app_module.mark_dnd_hang()
+    old = time.time() - 8 * 86400
+    os.utime(app_module._dnd_mark_path(), (old, old))
+    assert not app_module.dnd_hung_recently()
+    app.dnd_enabled = False
+    app._start_drag_and_drop()
+    assert app.dnd_enabled
+    assert not os.path.exists(app_module._dnd_mark_path())

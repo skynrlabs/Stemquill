@@ -1,0 +1,51 @@
+name: Build Windows installer
+
+# Runs only when started by hand: Actions → Build Windows installer → Run workflow.
+# It runs packaging/build.ps1, the same build and smoke tests as on a PC, then keeps the installer
+# as a download on the run page for one day. The Actions tab is public, so the installer is
+# published on itch.io, not here; delete the run once you've downloaded it.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          if (-not (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) { choco install innosetup --no-progress -y }
+
+      - name: Build and smoke test (packaging/build.ps1)
+        shell: pwsh
+        run: .\packaging\build.ps1
+
+      - name: Read version
+        id: ver
+        shell: pwsh
+        run: '"version=$(python -c "import stemquill; print(stemquill.__version__)")" >> $env:GITHUB_OUTPUT'
+
+      - name: Report size
+        shell: pwsh
+        run: |
+          Get-ChildItem dist\installer | ForEach-Object {
+            "::notice title=$($_.Name)::$([math]::Round($_.Length / 1MB, 1)) MB"
+          }
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Stemquill-Setup-${{ steps.ver.outputs.version }}
+          path: dist/installer/*.exe
+          retention-days: 1
+          if-no-files-found: error
