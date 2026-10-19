@@ -260,15 +260,13 @@ class StemquillApp:
         self.root.destroy()
 
 
-def run_gui():
-    if IS_WINDOWS:
-        try:  # show Stemquill's own icon on the taskbar instead of Python's
-            import ctypes
+def run_gui(root=None):
+    """Open the window. `root` is the hidden main window made with the splash (stemquill.splash)."""
+    from .. import splash
 
-            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("SkynrLabs.Stemquill")
-        except Exception:
-            pass
-    root = tk.Tk()
+    if root is None:
+        splash.set_app_id()
+        root = tk.Tk()
 
     def report(exc, value, tb):
         """An error in a button or callback: log it (there's no console) and keep the window open."""
@@ -280,6 +278,7 @@ def run_gui():
 
     root.report_callback_exception = report
     StemquillApp(root)
+    splash.close(root)
     from ..__main__ import window_opened
 
     root.after_idle(window_opened)

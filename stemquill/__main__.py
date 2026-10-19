@@ -111,9 +111,16 @@ def main():
 
             cli_main()
         else:
+            root = None
+            try:  # show "Starting Stemquill..." straight away: the audio libraries take a while to load
+                from . import splash
+
+                root = splash.show()
+            except Exception:
+                pass  # no splash, but still start
             from .gui import run_gui
 
-            run_gui()
+            run_gui(root)
     except (SystemExit, KeyboardInterrupt):
         raise
     except BaseException:
