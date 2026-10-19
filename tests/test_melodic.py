@@ -180,3 +180,50 @@ def test_fx_stems_carry_a_note(tmp_path):
     y = np.concatenate([np.zeros(synth.SR // 4), synth.tone(60, 1.0)])
     transcribe(synth.write(tmp_path / "FX.wav", y), "auto", 120.0, 0, 0.8, [], lines.append)
     assert any("sound effects" in m for m in lines)
+
+
+def slid(start, end, before=0.4, glide=0.15, after=0.65, amp=0.5):
+    """A held bass note that slides smoothly to another and stays there."""
+    import numpy as np
+
+    t = np.arange(int((before + glide + after) * synth.SR)) / synth.SR
+    progress = np.clip((t - before) / glide, 0, 1)
+    f = 440.0 * 2 ** ((start + (end - start) * progress - 69) / 12)
+    phase = 2 * np.pi * np.cumsum(f) / synth.SR
+    env = np.minimum(1, t / 0.02) * np.minimum(1, (t[-1] - t) / 0.08)
+    return amp * env * sum(a * np.sin(k * phase) for k, a in ((1, 1.0), (2, 0.5), (3, 0.25)))
+
+
+@pytest.mark.parametrize("start, end", [(33, 40), (40, 33), (36, 43)])
+def test_bass_slide_is_two_notes(tmp_path, run, start, end):
+    """A slide passes through every note on the way; those used to come out as short extra notes."""
+    import numpy as np
+
+    lead_in = 0.25
+    y = np.concatenate([np.zeros(int(lead_in * synth.SR)), slid(start, end)])
+    result = run(synth.write(tmp_path / "Bass.wav", y), "bass")
+    notes = sorted(result["notes"])
+    assert [n for _, _, n, _ in notes] == [start, end]
+    # the slid-from note carries on through the slide; the note it lands on starts on arrival
+    assert notes[1][0] == pytest.approx(lead_in + 0.4 + 0.15, abs=0.04)
+
+
+def test_quick_note_change_is_not_a_slide(stems, run):
+    """Ordinary notes still start right on time (a jump between notes isn't mistaken for a slide)."""
+    path, truth = stems["bass"]
+    check_line(run(path, "bass"), truth)
+
+
+def test_restrummed_chord_is_split(tmp_path):
+    """Strummed again while still ringing, a chord never goes quiet; each strum is still a chord."""
+    import numpy as np
+
+    strums = [(i * 0.5, 0.5, [60, 64, 67]) for i in range(4)]  # eighth notes, ringing into the next
+    y, _ = synth.note_sequence(strums, decay=3.0)
+    y = np.asarray(y)
+    path = synth.write(tmp_path / "Guitar.wav", y)
+    audio, sr = librosa.load(path, sr=44100, mono=True)
+    notes = transcribe_poly_simple(audio, sr, 120, None, "melodic", 0.8, lambda m: None)
+    for pitch in (60, 64, 67):
+        starts = sorted(s for s, _, n, _ in notes if n == pitch)
+        assert starts == pytest.approx([0.0, 0.25, 0.5, 0.75], abs=ONSET_TOLERANCE), pitch
