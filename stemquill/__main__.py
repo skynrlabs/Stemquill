@@ -77,7 +77,9 @@ def _show_startup_error(log_path):
         pass
 
 
-STARTUP_WATCH = 45  # seconds the installed app may take to open its window before it's logged as a hang
+# Seconds the installed app may take to open its window before it is logged as a hang. First starts
+# are slow (Windows scans every new file), so this is generous.
+STARTUP_WATCH = 120
 
 
 def window_opened():
