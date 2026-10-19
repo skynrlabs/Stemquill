@@ -18,25 +18,39 @@ $vcDll = Join-Path $env:SystemRoot "System32\msvcp140.dll"
 Check (Test-Path $vcDll) ("The Microsoft Visual C++ Redistributable (x64) isn't installed. " +
     "Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe, reopen PowerShell, then build again.")
 
-# Everything below runs through this one Python ("python -m pip", "python -m PyInstaller"): a bare
-# "pip" or "pyinstaller" can belong to a different Python, or sit in a folder that isn't on PATH.
-$py = (Get-Command python -ErrorAction SilentlyContinue).Source
-Check ($py) "Python isn't on PATH. Install Python 3.12 from https://www.python.org/downloads/ and tick 'Add python.exe to PATH'"
-$pyVersion = & python -c "import sys; print('%d.%d' % sys.version_info[:2])"
-Write-Host "Using Python $pyVersion at $py"
-Check ($pyVersion -in @("3.11", "3.12")) ("Stemquill builds with Python 3.11 or 3.12, but 'python' is $pyVersion. " +
-    "Install 3.12 from https://www.python.org/downloads/ or run the build from a 3.12 virtual environment.")
+# Find a real Python 3.12 or 3.11 and run everything through it ("& $py -m pip", "& $py -m PyInstaller"):
+# a bare "pip" or "pyinstaller" can belong to another Python or sit outside PATH, and "python" can be
+# Windows' Microsoft Store shortcut (WindowsApps\python.exe), which isn't Python at all.
+function Find-Python {
+    # Windows PowerShell turns a program's error output into a stop when it's redirected, so relax that here
+    $ErrorActionPreference = "Continue"
+    foreach ($try in @("py -3.12", "py -3.11", "python")) {
+        $words = @($try -split " ")
+        $cmd = $words[0]
+        if (-not (Get-Command $cmd -ErrorAction SilentlyContinue)) { continue }
+        $argList = @($words | Select-Object -Skip 1) + @("-c", "import sys; print(sys.executable)")
+        $exe = & $cmd @argList 2>$null | Select-Object -Last 1
+        if ($LASTEXITCODE -ne 0 -or -not $exe -or $exe -like "*\WindowsApps\*" -or -not (Test-Path $exe)) { continue }
+        $ver = & $exe -c "import sys; print('%d.%d' % sys.version_info[:2])" 2>$null
+        if ($ver -in @("3.11", "3.12")) { return $exe }
+    }
+    return $null
+}
+$py = Find-Python
+Check ($py) ("Couldn't find Python 3.12 or 3.11. Install Python 3.12 from https://www.python.org/downloads/ " +
+    "(tick 'Add python.exe to PATH'), reopen PowerShell, then build again.")
+Write-Host "Using $(& $py --version) at $py"
 
 Step "Installing Stemquill and PyInstaller"
-python -m pip install --upgrade pip
-python -m pip install . pyinstaller
+& $py -m pip install --upgrade pip
+& $py -m pip install . pyinstaller
 Check ($LASTEXITCODE -eq 0) "pip install failed"
-$version = python -c "import stemquill; print(stemquill.__version__)"
+$version = & $py -c "import stemquill; print(stemquill.__version__)"
 Check ($LASTEXITCODE -eq 0 -and $version) "Stemquill installed, but Python can't load it (see the error above)"
 
 Step "Building the app ($version)"
 Remove-Item -Recurse -Force dist, build -ErrorAction SilentlyContinue
-python -m PyInstaller --noconfirm packaging\stemquill.spec
+& $py -m PyInstaller --noconfirm packaging\stemquill.spec
 Check ($LASTEXITCODE -eq 0) "PyInstaller failed"
 # The app must carry its own copy, so it runs on PCs without the Visual C++ Redistributable
 $bundled = Get-ChildItem -Recurse dist\Stemquill -Filter msvcp140.dll -ErrorAction SilentlyContinue
@@ -46,13 +60,13 @@ Step "Smoke test: convert a drum loop"
 $tmp = Join-Path $env:TEMP "stemquill-build-test"
 Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
 New-Item -ItemType Directory $tmp | Out-Null
-python packaging\make_test_stem.py "$tmp\test-drums.wav"
+& $py packaging\make_test_stem.py "$tmp\test-drums.wav"
 $p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" -Wait -PassThru `
      -ArgumentList "`"$tmp\test-drums.wav`" --type drums --bpm 120 --out `"$tmp\out`""
 Check ($p.ExitCode -eq 0 -and (Test-Path "$tmp\out\test-drums - drums.mid")) "The built app couldn't convert a drum loop"
 
 Step "Building the chord-detection add-on"
-python -m pip install --no-deps --target dist\addons\chords -r packaging\chords-addon.txt
+& $py -m pip install --no-deps --target dist\addons\chords -r packaging\chords-addon.txt
 Check ($LASTEXITCODE -eq 0) "Add-on install failed"
 # trim parts basic-pitch never uses
 Remove-Item -Recurse -Force dist\addons\chords\bin -ErrorAction SilentlyContinue
@@ -62,7 +76,7 @@ Remove-Item -Recurse -Force dist\addons\chords\basic_pitch\saved_models\icassp_2
 Remove-Item -Force dist\addons\chords\basic_pitch\saved_models\icassp_2022\*.tflite -ErrorAction SilentlyContinue
 
 Step "Smoke test: chords with the add-on"
-python packaging\make_test_stem.py "$tmp\test-chords.wav" chords
+& $py packaging\make_test_stem.py "$tmp\test-chords.wav" chords
 Copy-Item -Recurse dist\addons dist\Stemquill\addons
 $env:STEMQUILL_LOG = "$tmp\addon.log"
 $p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" -Wait -PassThru `
@@ -73,7 +87,7 @@ Check ($p.ExitCode -eq 0 -and (Select-String -Path "$tmp\addon.log" -Pattern "\(
 
 Step "Writing the open-source licenses"
 # Every bundled library's license, the add-on's too, next to Stemquill.exe (the installer copies it; About shows it)
-python -m stemquill.licenses --out dist\Stemquill\THIRD_PARTY_LICENSES.txt --addon dist\addons\chords
+& $py -m stemquill.licenses --out dist\Stemquill\THIRD_PARTY_LICENSES.txt --addon dist\addons\chords
 Check ($LASTEXITCODE -eq 0 -and (Select-String -Path dist\Stemquill\THIRD_PARTY_LICENSES.txt -Pattern "basic-pitch" -Quiet)) "Couldn't write the licenses file"
 
 Step "Building the installer"
