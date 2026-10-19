@@ -280,6 +280,9 @@ def run_gui():
 
     root.report_callback_exception = report
     StemquillApp(root)
+    from ..__main__ import window_opened
+
+    root.after_idle(window_opened)
     check = os.environ.get("STEMQUILL_CHECK_WINDOW")  # the build's smoke test: open, report, close
     if check:
 

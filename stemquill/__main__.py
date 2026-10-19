@@ -77,6 +77,16 @@ def _show_startup_error(log_path):
         pass
 
 
+STARTUP_WATCH = 45  # seconds the installed app may take to open its window before it's logged as a hang
+
+
+def window_opened():
+    """Called once the window is on screen: the startup hang watch is no longer needed."""
+    import faulthandler
+
+    faulthandler.cancel_dump_traceback_later()
+
+
 def main():
     gui = len(sys.argv) <= 1
     try:
@@ -87,7 +97,12 @@ def main():
             import faulthandler
 
             with contextlib.suppress(Exception):
-                faulthandler.enable(file=_open_crash_log())
+                log = _open_crash_log()
+                faulthandler.enable(file=log)
+                if gui:
+                    # If the window hasn't opened after a while, write down what every thread is
+                    # doing: a hang leaves no error behind otherwise. Cancelled once the window is up.
+                    faulthandler.dump_traceback_later(STARTUP_WATCH, file=log)
         _check_libraries()
         if not gui:
             from .cli import main as cli_main
