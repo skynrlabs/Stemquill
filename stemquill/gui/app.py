@@ -5,6 +5,8 @@ import os
 import queue
 import subprocess
 import sys
+import threading
+import time
 import tkinter as tk
 from tkinter import ttk
 
@@ -20,6 +22,35 @@ from .theme import THEME, apply_styles, make_fonts
 from .widgets import ScrollArea
 
 IS_WINDOWS = sys.platform.startswith("win")
+DND_WATCH = 10  # seconds turning on drag and drop may take before it counts as hung
+DND_SKIP_DAYS = 7  # after a hang, start without drag and drop for this long
+
+
+def _dnd_mark_path():
+    from .. import config
+
+    return os.path.join(os.path.dirname(config.SETTINGS_PATH), "dnd-hang.txt")
+
+
+def mark_dnd_hang():
+    """Called from a timer thread while the window is stuck turning on drag and drop."""
+    with contextlib.suppress(OSError):
+        os.makedirs(os.path.dirname(_dnd_mark_path()), exist_ok=True)
+        with open(_dnd_mark_path(), "w", encoding="utf-8") as fh:
+            fh.write(time.strftime("%Y-%m-%d %H:%M:%S"))
+
+
+def clear_dnd_hang():
+    with contextlib.suppress(OSError):
+        os.remove(_dnd_mark_path())
+
+
+def dnd_hung_recently():
+    try:
+        age = time.time() - os.path.getmtime(_dnd_mark_path())
+    except OSError:
+        return False
+    return age < DND_SKIP_DAYS * 86400
 
 
 class StemquillApp:
@@ -37,7 +68,10 @@ class StemquillApp:
         self.tempo = TempoJourney(self)
 
         self._build_layout()
-        self.dnd_enabled = self._enable_drag_and_drop()
+        # Drag and drop is turned on once the window is up: on some PCs Windows' drag-and-drop
+        # registration hangs, and it must never keep the window from appearing.
+        self.dnd_enabled = False
+        root.after(300, self._start_drag_and_drop)
         bind_shortcuts(self)
         self._wire_buttons()
         root.protocol("WM_DELETE_WINDOW", self.quit)
@@ -69,6 +103,24 @@ class StemquillApp:
         except tk.TclError:
             pass
         return images
+
+    def _start_drag_and_drop(self):
+        """Turn on drag and drop, unless it hung recently; note it if it hangs now."""
+        if dnd_hung_recently():
+            self.say(
+                "Drag and drop is off for now",
+                "muted",
+                "It stopped Stemquill from opening last time. Use Add stems... to add files",
+            )
+            return
+        watch = threading.Timer(DND_WATCH, mark_dnd_hang)  # fires only if the registration below hangs
+        watch.daemon = True
+        watch.start()
+        try:
+            self.dnd_enabled = self._enable_drag_and_drop()
+        finally:
+            watch.cancel()
+        clear_dnd_hang()  # it finished, so a mark left by a slow (not hung) start doesn't count
 
     def _enable_drag_and_drop(self):
         """Let people drop stems (or a folder of stems) from Explorer/Finder onto the window."""
