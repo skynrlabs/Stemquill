@@ -589,3 +589,25 @@ def test_window_check_for_the_build(monkeypatch, tmp_path):
     monkeypatch.setenv("STEMQUILL_CHECK_WINDOW", str(flag))
     app_module.run_gui()  # returns once the window has opened and closed itself
     assert flag.read_text(encoding="utf-8") == "window ok"
+
+
+def test_splash_shows_then_hands_over_to_the_window(monkeypatch, tmp_path):
+    """The splash appears before the audio libraries load, then the real window replaces it."""
+    from stemquill import splash
+    from stemquill.gui import app as app_module
+
+    root = splash.show()
+    assert root.splash.winfo_viewable() and root.state() == "withdrawn"
+    flag = tmp_path / "window-ok.txt"
+    monkeypatch.setenv("STEMQUILL_CHECK_WINDOW", str(flag))
+    seen = {}
+    real_close = splash.close
+
+    def close(r):
+        real_close(r)
+        seen["main window shown"] = r.state() == "normal" and r.splash is None
+
+    monkeypatch.setattr(splash, "close", close)
+    app_module.run_gui(root)
+    assert seen == {"main window shown": True}
+    assert flag.read_text(encoding="utf-8") == "window ok"
