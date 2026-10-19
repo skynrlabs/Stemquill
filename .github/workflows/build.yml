@@ -7,6 +7,8 @@ name: Build Windows installer
 
 on:
   workflow_dispatch:
+  push:
+    branches: [fix/dnd-startup-hang]  # TEMP: test build before merging
 
 permissions:
   contents: read
