@@ -34,6 +34,51 @@ def mono_thresholds(sensitivity):
     return loud, confidence, min_len
 
 
+def tuning_offset(midi):
+    """How far (in semitones, -0.5 .. 0.5) the whole stem sits from standard tuning.
+
+    Singers, AI vocals and detuned instruments are often a steady 20-40 cents sharp or flat. Left
+    alone, every held note sits between two pitches and rounding flips between them.
+    """
+    frac = midi[np.isfinite(midi)] % 1.0
+    if frac.size < 20:
+        return 0.0
+    angle = np.angle(np.mean(np.exp(2j * np.pi * frac)))  # circular mean: 0.9 and 0.1 average to 0.0
+    return float(angle / (2 * np.pi))
+
+
+HYSTERESIS = 0.75  # semitones the pitch must move from the held note before a new note can start
+HOLD = 0.05  # seconds it must stay there, so vibrato and scoops don't start new notes
+
+
+def stable_pitch(midi, sr):
+    """Turn a wobbling pitch track into steady notes: a new note starts only when the pitch moves
+    clearly away from the current one and stays there (it then starts where the move began)."""
+    hold = max(1, int(round(HOLD * sr / HOP)))
+    out = np.full(midi.shape, -1, dtype=int)
+    cur, pending, since = None, None, 0
+    for i, m in enumerate(midi):
+        if not np.isfinite(m):
+            cur, pending = None, None
+            continue
+        if cur is None:
+            cur = int(round(m))
+            out[i] = cur
+            continue
+        if abs(m - cur) <= HYSTERESIS:
+            out[i], pending = cur, None
+            continue
+        cand = int(round(m))
+        if cand != pending:
+            pending, since = cand, i
+        if i - since + 1 >= hold:
+            cur, pending = cand, None
+            out[since : i + 1] = cand
+        else:
+            out[i] = cur
+    return out
+
+
 def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
     lo, hi = PITCH_RANGES[stem_type]
     fmin = librosa.note_to_hz(lo)
@@ -48,9 +93,12 @@ def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
     loud_frac, confidence, min_len = mono_thresholds(sensitivity)
     peak_rms = rms.max() if rms.max() > 0 else 1.0
     loud = rms > peak_rms * loud_frac
-    pitch = np.where(voiced & loud & (prob > confidence), np.round(librosa.hz_to_midi(f0)), -1)
-    pitch = np.nan_to_num(pitch, nan=-1).astype(int)
-    pitch = scipy.ndimage.median_filter(pitch, size=5)  # smooth out flickers
+    midi = np.where(voiced & loud & (prob > confidence), librosa.hz_to_midi(f0), np.nan)
+    offset = tuning_offset(midi)
+    if abs(offset) >= 0.1:
+        log(f"  tuning: {offset * 100:+.0f} cents from standard pitch, corrected")
+    pitch = stable_pitch(midi - offset, sr)
+    pitch = scipy.ndimage.median_filter(pitch, size=5)  # smooth out single-frame dropouts
 
     # new attacks split repeated notes of the same pitch (e.g. G G G on the bass)
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=HOP)

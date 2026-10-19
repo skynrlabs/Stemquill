@@ -89,3 +89,26 @@ def test_silent_stem_is_skipped(stems, run):
 def test_drum_stems_use_channel_10(stems, run):
     result = run(stems["beat"][0], "drums")
     assert result["channel"] == 9  # MIDI channels count from 0, so 9 is "channel 10"
+
+
+@pytest.mark.parametrize("sensitivity", [0.8, 1.5])
+def test_hats_only_stem_has_only_hats(tmp_path, run, sensitivity):
+    """A stem of nothing but hats used to come back with kicks, snares and toms on many of them:
+    each band was scaled to its own loudest moment, so the hats' faint spill into the low band
+    looked like a full-strength kick."""
+    from . import synth
+
+    y, truth = synth.drum_loop([(i / 4, "hihat") for i in range(16)])
+    result = run(synth.write(tmp_path / "Hats.wav", y), "drums", sensitivity=sensitivity)
+    got = Counter(NOTE_TO_PART[n] for _, _, n, _ in result["notes"])
+    assert got == {"hihat": 16}
+    for s, _ in truth:
+        assert parts_at(result, s) == ["hihat"]
+
+
+def test_ride_only_stem_has_no_snares(tmp_path, run):
+    from . import synth
+
+    y, _ = synth.drum_loop([(i, "ride") for i in range(8)])
+    result = run(synth.write(tmp_path / "Ride.wav", y), "drums")
+    assert {NOTE_TO_PART[n] for _, _, n, _ in result["notes"]} == {"ride"}

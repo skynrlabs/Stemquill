@@ -31,6 +31,10 @@ def ring_ratio(env, f, after):
     return float(np.clip(later / peak, 0.0, 1.5))
 
 
+SPILL = 0.003  # a band that gains less than this share of a hit's biggest jump only caught spill
+SNARE_BODY = 0.25  # a snare puts at least this much energy in its band, compared with the hat band
+
+
 def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
     """Find every hit, then decide which drum it is from how much each frequency band
     jumped, how long the hit rings, and (for toms) its pitch."""
@@ -48,12 +52,23 @@ def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
     env = {k: band_energy(E, freqs, *v) for k, v in bands.items()}
     ref = {k: (np.percentile(v, 99.5) or 1.0) for k, v in env.items()}  # "loud" level per band
 
-    def rise(band, f):
-        """How big a jump this hit makes in a band, compared with the loudest hits (about 0..1)."""
-        e = env[band]
-        before = e[max(0, f - 4) : f].min() if f > 0 else 0.0
-        jump = e[f : f + 4].max() - before
-        return float(np.sqrt(max(0.0, jump) / ref[band]))
+    def jumps(f):
+        """How much energy each band gained at this hit."""
+        out = {}
+        for band, e in env.items():
+            before = e[max(0, f - 4) : f].min() if f > 0 else 0.0
+            out[band] = max(0.0, float(e[f : f + 4].max() - before))
+        return out
+
+    def rises(f):
+        """How big a jump this hit makes in each band, compared with that band's loudest hits
+        (about 0..1). A band that only caught a sliver of the hit's energy (spill from a hi-hat
+        into the kick's band, say) counts as no jump: otherwise a hats-only stem, whose low band
+        holds nothing but spill, would read every hat as a kick or snare as well."""
+        j = jumps(f)
+        top = max(j.values()) or 1.0
+        r = {b: (float(np.sqrt(v / ref[b])) if v >= SPILL * top else 0.0) for b, v in j.items()}
+        return r, j
 
     # timing: spectral flux across all bands
     flux = np.maximum.reduce([band_flux(S, freqs, *bands[k]) for k in ("low", "lowmid", "mid", "high")])
@@ -64,20 +79,27 @@ def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
     k = 1.6 - sensitivity
     thr, snare_thr, tom_thr = 0.25 * k, 0.35 * k, 0.3 * k
     fps = sr / HOP
-    f150, f450 = int(0.15 * fps), int(0.45 * fps)
+    f150_full, f450_full = int(0.15 * fps), int(0.45 * fps)
     tom_bins = (freqs >= 60) & (freqs < 400)
 
     length = 60.0 / bpm / 4  # sixteenth note
     notes, counts = [], {p: 0 for p in DRUM_NOTES}
-    for f in frames:
-        lo, lm, m, up, h = (rise(b, f) for b in ("low", "lowmid", "mid", "upper", "high"))
+    following = list(frames[1:]) + [None]
+    for f, nxt in zip(frames, following, strict=True):
+        # How long a hit rings is read before the next hit starts, so a fast run of closed hats
+        # doesn't look like one long ringing cymbal.
+        gap = (nxt - f - 4) if nxt is not None else f450_full  # ring_ratio reads 3 frames from here
+        f150, f450 = max(3, min(f150_full, gap)), max(3, min(f450_full, gap))
+        r, j = rises(f)
+        lo, lm, m, up, h = (r[b] for b in ("low", "lowmid", "mid", "upper", "high"))
         mid_ring = ring_ratio(env["mid"], f, f150)
         high_ring = ring_ratio(env["high"], f, f150)
         high_long = ring_ratio(env["high"], f, f450)
         found = []
 
         # Snare: strong mid crack that dies away fast (rides and crashes keep ringing).
-        is_snare = m > snare_thr and mid_ring < 0.35
+        # A hi-hat's fizz reaches down into the snare's band too, but it is mostly far higher.
+        is_snare = m > snare_thr and mid_ring < 0.2 and j["mid"] >= SNARE_BODY * j["high"]
         # Crash: big, bright and still ringing half a second later.
         is_crash = h > thr * 1.5 and high_long > 0.35
 
@@ -98,7 +120,7 @@ def transcribe_drums(y, sr, bpm, grid, sensitivity, parts, log, note_map=None):
         elif not is_snare and (h > thr or up > thr):
             if high_ring > 0.3 or ring_ratio(env["upper"], f, f150) > 0.3:
                 # rides "ping" lower than hats; hats are mostly very high fizz
-                found.append(("ride" if up > h * 1.1 else "openhat", max(h, up)))
+                found.append(("ride" if j["upper"] > j["high"] * 0.5 else "openhat", max(h, up)))
             elif h > thr:
                 found.append(("hihat", h))
 
