@@ -579,3 +579,13 @@ def test_about_opens_the_open_source_licenses(app):
     app.root.update()
     assert not win.winfo_exists() and about.grab_current() is about  # back to the About box
     about.destroy()
+
+
+def test_window_check_for_the_build(monkeypatch, tmp_path):
+    """build.ps1 opens the packaged app with STEMQUILL_CHECK_WINDOW: it must open, report and close."""
+    from stemquill.gui import app as app_module
+
+    flag = tmp_path / "window-ok.txt"
+    monkeypatch.setenv("STEMQUILL_CHECK_WINDOW", str(flag))
+    app_module.run_gui()  # returns once the window has opened and closed itself
+    assert flag.read_text(encoding="utf-8") == "window ok"

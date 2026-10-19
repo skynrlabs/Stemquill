@@ -33,17 +33,79 @@ def _prepare_environment():
     os.environ.setdefault("NUMBA_CACHE_DIR", os.path.join(cache_dir(), "numba"))
 
 
+def crash_log_path():
+    """Where a crash is written: next to settings.json (%APPDATA%\\Stemquill\\crash.log on Windows)."""
+    from .config import SETTINGS_PATH
+
+    return os.path.join(os.path.dirname(SETTINGS_PATH), "crash.log")
+
+
+def _open_crash_log():
+    path = crash_log_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    return open(path, "a", encoding="utf-8")  # noqa: SIM115 - the caller closes it, or it stays open for faulthandler
+
+
+def write_crash(text):
+    """Add an error report to the crash log; returns its path (or None if even that failed)."""
+    import platform
+    import time
+
+    from . import __version__
+
+    try:
+        with _open_crash_log() as fh:
+            fh.write(f"\n==== {time.strftime('%Y-%m-%d %H:%M:%S')} · Stemquill {__version__} · ")
+            fh.write(f"Python {platform.python_version()} · {platform.platform()}\n{text}\n")
+        return crash_log_path()
+    except Exception:
+        return None
+
+
+def _show_startup_error(log_path):
+    """A windowed app has no console, so say it on screen too."""
+    try:
+        import tkinter as tk
+        from tkinter import messagebox
+
+        root = tk.Tk()
+        root.withdraw()
+        where = f"The details were saved to:\n{log_path}" if log_path else "The details couldn't be saved."
+        messagebox.showerror("Stemquill couldn't start", f"Something went wrong while starting Stemquill.\n\n{where}")
+        root.destroy()
+    except Exception:
+        pass
+
+
 def main():
-    _prepare_environment()
-    _check_libraries()
-    if len(sys.argv) > 1:
-        from .cli import main as cli_main
+    gui = len(sys.argv) <= 1
+    try:
+        _prepare_environment()
+        if getattr(sys, "frozen", False):
+            # a crash inside a compiled library (no Python error at all) still leaves a trace
+            import contextlib
+            import faulthandler
 
-        cli_main()
-    else:
-        from .gui import run_gui
+            with contextlib.suppress(Exception):
+                faulthandler.enable(file=_open_crash_log())
+        _check_libraries()
+        if not gui:
+            from .cli import main as cli_main
 
-        run_gui()
+            cli_main()
+        else:
+            from .gui import run_gui
+
+            run_gui()
+    except (SystemExit, KeyboardInterrupt):
+        raise
+    except BaseException:
+        import traceback
+
+        log_path = write_crash(traceback.format_exc())
+        if gui:
+            _show_startup_error(log_path)
+        raise
 
 
 if __name__ == "__main__":
