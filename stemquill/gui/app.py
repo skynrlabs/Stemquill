@@ -269,5 +269,15 @@ def run_gui():
         except Exception:
             pass
     root = tk.Tk()
+
+    def report(exc, value, tb):
+        """An error in a button or callback: log it (there's no console) and keep the window open."""
+        import traceback
+
+        from ..__main__ import write_crash
+
+        write_crash("".join(traceback.format_exception(exc, value, tb)))
+
+    root.report_callback_exception = report
     StemquillApp(root)
     root.mainloop()

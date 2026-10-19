@@ -57,3 +57,23 @@ def test_numba_cache_goes_to_the_private_cache(monkeypatch):
     import os
 
     assert os.environ["NUMBA_CACHE_DIR"].startswith(config.cache_dir())
+
+
+def test_a_startup_crash_is_logged(monkeypatch, tmp_path):
+    """The installed app has no console: a crash while starting must leave a log behind."""
+    import pytest
+
+    import stemquill.config as config
+    from stemquill import __main__ as entry
+
+    monkeypatch.setattr(config, "SETTINGS_PATH", str(tmp_path / "Stemquill" / "settings.json"))
+    monkeypatch.setattr(entry.sys, "argv", ["stemquill", "x.wav"])  # command line: no error window
+
+    def broken():
+        raise RuntimeError("missing DLL")
+
+    monkeypatch.setattr(entry, "_check_libraries", broken)
+    with pytest.raises(RuntimeError):
+        entry.main()
+    log = (tmp_path / "Stemquill" / "crash.log").read_text(encoding="utf-8")
+    assert "missing DLL" in log and "Stemquill" in log and "Traceback" in log
