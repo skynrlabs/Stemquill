@@ -18,15 +18,25 @@ $vcDll = Join-Path $env:SystemRoot "System32\msvcp140.dll"
 Check (Test-Path $vcDll) ("The Microsoft Visual C++ Redistributable (x64) isn't installed. " +
     "Install it from https://aka.ms/vs/17/release/vc_redist.x64.exe, reopen PowerShell, then build again.")
 
+# Everything below runs through this one Python ("python -m pip", "python -m PyInstaller"): a bare
+# "pip" or "pyinstaller" can belong to a different Python, or sit in a folder that isn't on PATH.
+$py = (Get-Command python -ErrorAction SilentlyContinue).Source
+Check ($py) "Python isn't on PATH. Install Python 3.12 from https://www.python.org/downloads/ and tick 'Add python.exe to PATH'"
+$pyVersion = & python -c "import sys; print('%d.%d' % sys.version_info[:2])"
+Write-Host "Using Python $pyVersion at $py"
+Check ($pyVersion -in @("3.11", "3.12")) ("Stemquill builds with Python 3.11 or 3.12, but 'python' is $pyVersion. " +
+    "Install 3.12 from https://www.python.org/downloads/ or run the build from a 3.12 virtual environment.")
+
 Step "Installing Stemquill and PyInstaller"
 python -m pip install --upgrade pip
-pip install . pyinstaller
+python -m pip install . pyinstaller
 Check ($LASTEXITCODE -eq 0) "pip install failed"
 $version = python -c "import stemquill; print(stemquill.__version__)"
+Check ($LASTEXITCODE -eq 0 -and $version) "Stemquill installed, but Python can't load it (see the error above)"
 
 Step "Building the app ($version)"
 Remove-Item -Recurse -Force dist, build -ErrorAction SilentlyContinue
-pyinstaller --noconfirm packaging\stemquill.spec
+python -m PyInstaller --noconfirm packaging\stemquill.spec
 Check ($LASTEXITCODE -eq 0) "PyInstaller failed"
 # The app must carry its own copy, so it runs on PCs without the Visual C++ Redistributable
 $bundled = Get-ChildItem -Recurse dist\Stemquill -Filter msvcp140.dll -ErrorAction SilentlyContinue
@@ -42,7 +52,7 @@ $p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" -Wait -PassThru `
 Check ($p.ExitCode -eq 0 -and (Test-Path "$tmp\out\test-drums - drums.mid")) "The built app couldn't convert a drum loop"
 
 Step "Building the chord-detection add-on"
-pip install --no-deps --target dist\addons\chords -r packaging\chords-addon.txt
+python -m pip install --no-deps --target dist\addons\chords -r packaging\chords-addon.txt
 Check ($LASTEXITCODE -eq 0) "Add-on install failed"
 # trim parts basic-pitch never uses
 Remove-Item -Recurse -Force dist\addons\chords\bin -ErrorAction SilentlyContinue
