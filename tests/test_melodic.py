@@ -100,3 +100,130 @@ def test_pitched_stems_get_a_sensible_instrument(stems, run):
 def test_chord_engine_is_reported(stems, run):
     assert run(stems["chords"][0], "melodic")["engine"] in ("basic-pitch", "built-in")
     assert run(stems["bass"][0], "bass")["engine"] is None
+
+
+def sung(midi, seconds, cents_off=-40, vibrato=0.35):
+    """A held note sung a little flat with a 5.5 Hz vibrato, like most real (and AI) vocals."""
+    import numpy as np
+
+    t = np.arange(int(seconds * synth.SR)) / synth.SR
+    f = 440.0 * 2 ** ((midi + cents_off / 100 - 69) / 12) * 2 ** (vibrato / 12 * np.sin(2 * np.pi * 5.5 * t))
+    phase = 2 * np.pi * np.cumsum(f) / synth.SR
+    env = np.minimum(1, t / 0.04) * np.minimum(1, (t[-1] - t) / 0.08)
+    return 0.3 * env * sum(a * np.sin(k * phase) for k, a in ((1, 1.0), (2, 0.5), (3, 0.3), (4, 0.2)))
+
+
+def test_flat_vocal_with_vibrato_is_one_note_per_note(tmp_path, run):
+    """Sung 40 cents flat with vibrato, each held note used to break into a dozen flickering ones."""
+    import numpy as np
+
+    line = [62, 64, 65, 67]
+    gap = np.zeros(synth.SR // 10)
+    y = np.concatenate([np.zeros(synth.SR // 2)] + [np.concatenate([sung(m, 1.2), gap]) for m in line])
+    result = run(synth.write(tmp_path / "Vocals.wav", y), "vocal")
+    assert [n for _, _, n, _ in sorted(result["notes"])] == line
+
+
+def test_sharp_vocal_is_read_at_the_right_pitch(tmp_path, run):
+    import numpy as np
+
+    line = [60, 62, 64]
+    y = np.concatenate(
+        [np.zeros(synth.SR // 2)] + [np.concatenate([sung(m, 1.0, cents_off=35), np.zeros(4410)]) for m in line]
+    )
+    result = run(synth.write(tmp_path / "Lead Vocals.wav", y), "vocal")
+    assert [n for _, _, n, _ in sorted(result["notes"])] == line
+
+
+SUNO_STEMS = {  # Suno's stem names -> (stem type, General MIDI program; None for drums)
+    "Vocals.wav": ("vocal", PROGRAMS["vocal"]),
+    "Backing Vocals.wav": ("melodic", 52),  # harmonies are chords, so not the one-line vocal mode
+    "Drums.wav": ("drums", None),
+    "Percussion.wav": ("drums", None),
+    "Bass.wav": ("bass", PROGRAMS["bass"]),
+    "Guitar.wav": ("melodic", 25),
+    "Keyboard.wav": ("melodic", 0),
+    "Strings.wav": ("melodic", 48),
+    "Brass.wav": ("melodic", 61),
+    "Woodwinds.wav": ("melodic", 73),
+    "Synth.wav": ("synth", PROGRAMS["synth"]),
+    "FX.wav": ("synth", PROGRAMS["synth"]),
+    "My Song (Organ).wav": ("melodic", 16),
+    "Other.wav": ("melodic", PROGRAMS["melodic"]),
+}
+
+
+@pytest.mark.parametrize("name", SUNO_STEMS)
+def test_stem_names_pick_type_and_instrument(name):
+    from stemquill.core.pipeline import guess_type, instrument_for
+
+    stem_type, program = SUNO_STEMS[name]
+    assert guess_type(name) == stem_type
+    if program is not None:
+        assert instrument_for(name, stem_type) == program
+
+
+def test_a_type_changed_by_hand_gets_that_types_sound():
+    from stemquill.core.pipeline import instrument_for
+
+    assert instrument_for("Strings.wav", "synth") == PROGRAMS["synth"]  # not strings any more
+
+
+def test_fx_stems_carry_a_note(tmp_path):
+    import numpy as np
+
+    from stemquill.core import transcribe
+    from stemquill.core.pipeline import is_fx
+
+    assert is_fx("Song - FX.wav") and not is_fx("Effexor.wav") and not is_fx("Guitar.wav")
+    lines = []
+    y = np.concatenate([np.zeros(synth.SR // 4), synth.tone(60, 1.0)])
+    transcribe(synth.write(tmp_path / "FX.wav", y), "auto", 120.0, 0, 0.8, [], lines.append)
+    assert any("sound effects" in m for m in lines)
+
+
+def slid(start, end, before=0.4, glide=0.15, after=0.65, amp=0.5):
+    """A held bass note that slides smoothly to another and stays there."""
+    import numpy as np
+
+    t = np.arange(int((before + glide + after) * synth.SR)) / synth.SR
+    progress = np.clip((t - before) / glide, 0, 1)
+    f = 440.0 * 2 ** ((start + (end - start) * progress - 69) / 12)
+    phase = 2 * np.pi * np.cumsum(f) / synth.SR
+    env = np.minimum(1, t / 0.02) * np.minimum(1, (t[-1] - t) / 0.08)
+    return amp * env * sum(a * np.sin(k * phase) for k, a in ((1, 1.0), (2, 0.5), (3, 0.25)))
+
+
+@pytest.mark.parametrize("start, end", [(33, 40), (40, 33), (36, 43)])
+def test_bass_slide_is_two_notes(tmp_path, run, start, end):
+    """A slide passes through every note on the way; those used to come out as short extra notes."""
+    import numpy as np
+
+    lead_in = 0.25
+    y = np.concatenate([np.zeros(int(lead_in * synth.SR)), slid(start, end)])
+    result = run(synth.write(tmp_path / "Bass.wav", y), "bass")
+    notes = sorted(result["notes"])
+    assert [n for _, _, n, _ in notes] == [start, end]
+    # the slid-from note carries on through the slide; the note it lands on starts on arrival
+    assert notes[1][0] == pytest.approx(lead_in + 0.4 + 0.15, abs=0.04)
+
+
+def test_quick_note_change_is_not_a_slide(stems, run):
+    """Ordinary notes still start right on time (a jump between notes isn't mistaken for a slide)."""
+    path, truth = stems["bass"]
+    check_line(run(path, "bass"), truth)
+
+
+def test_restrummed_chord_is_split(tmp_path):
+    """Strummed again while still ringing, a chord never goes quiet; each strum is still a chord."""
+    import numpy as np
+
+    strums = [(i * 0.5, 0.5, [60, 64, 67]) for i in range(4)]  # eighth notes, ringing into the next
+    y, _ = synth.note_sequence(strums, decay=3.0)
+    y = np.asarray(y)
+    path = synth.write(tmp_path / "Guitar.wav", y)
+    audio, sr = librosa.load(path, sr=44100, mono=True)
+    notes = transcribe_poly_simple(audio, sr, 120, None, "melodic", 0.8, lambda m: None)
+    for pitch in (60, 64, 67):
+        starts = sorted(s for s, _, n, _ in notes if n == pitch)
+        assert starts == pytest.approx([0.0, 0.25, 0.5, 0.75], abs=ONSET_TOLERANCE), pitch

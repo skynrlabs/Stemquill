@@ -42,7 +42,7 @@ class EngineNotes:
         self.lines.append(msg.strip())
 
     def warnings(self):
-        return [m for m in self.lines if "failed" in m]
+        return [m.removeprefix("note: ") for m in self.lines if "failed" in m or m.startswith("note: ")]
 
 
 def run_transcribe(stem, c, notes):

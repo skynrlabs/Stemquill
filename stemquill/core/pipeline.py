@@ -1,6 +1,7 @@
 """The conversion journey for one stem: load, transcribe, humanize, save."""
 
 import os
+import re
 
 import librosa
 import numpy as np
@@ -12,18 +13,53 @@ from .melodic import transcribe_mono, transcribe_poly_basic_pitch, transcribe_po
 from .midi import write_midi
 from .tempo import detect_tempo
 
+# What a stem's file name says it is, checked in order: (words, stem type, General MIDI program).
+# The names cover Suno's stems (Vocals, Backing Vocals, Drums, Bass, Guitar, Keyboard, Percussion,
+# Strings, Synth, FX, Brass, Woodwinds) and the usual names from other splitters and DAWs.
+NAME_HINTS = [
+    (("backing", "harmony", "harmonies", "choir", "bgv"), "melodic", 52),  # stacked harmonies: chords, not one line
+    (("drum", "perc"), "drums", None),
+    (("bass",), "bass", PROGRAMS["bass"]),
+    (("vocal", "vox", "voice"), "vocal", PROGRAMS["vocal"]),
+    (("synth", "pad"), "synth", PROGRAMS["synth"]),
+    (("string", "violin", "viola", "cello", "orchestra"), "melodic", 48),
+    (("brass", "trumpet", "trombone", "horn"), "melodic", 61),
+    (("sax",), "melodic", 65),
+    (("woodwind", "flute", "clarinet", "oboe"), "melodic", 73),
+    (("organ",), "melodic", 16),
+    (("piano", "key"), "melodic", 0),  # Keyboard, Keys
+    (("guitar",), "melodic", PROGRAMS["melodic"]),
+]
+FX_WORDS = {"fx", "sfx", "effects", "riser", "risers"}  # whole words only: "fx" is inside other words
+
+
+def _hint(path):
+    name = os.path.basename(path).lower()
+    for words, stem_type, program in NAME_HINTS:
+        if any(w in name for w in words):
+            return stem_type, program
+    return None, None
+
+
+def is_fx(path):
+    """Sound-effect stems (Suno's FX: risers, sweeps, impacts) rarely make useful MIDI."""
+    return bool(FX_WORDS & set(re.split(r"[^a-z]+", os.path.basename(path).lower())))
+
 
 def guess_type(path):
-    name = os.path.basename(path).lower()
-    if "drum" in name or "perc" in name:
-        return "drums"
-    if "bass" in name:
-        return "bass"
-    if "vocal" in name or "vox" in name or "voice" in name:
-        return "vocal"
-    if "synth" in name or "pad" in name or "key" in name:
-        return "synth"
-    return "melodic"
+    stem_type, _ = _hint(path)
+    if stem_type:
+        return stem_type
+    return "synth" if is_fx(path) else "melodic"
+
+
+def instrument_for(path, stem_type):
+    """The General MIDI sound for a pitched stem: from its name when that names an instrument
+    (Strings get strings, Keyboard gets piano), otherwise the stem type's usual sound."""
+    hint_type, program = _hint(path)
+    if hint_type == stem_type and program is not None:
+        return program
+    return PROGRAMS[stem_type]
 
 
 _cache = {}
@@ -60,6 +96,8 @@ def transcribe(
         return _cache[key]
 
     log(f"\n{os.path.basename(path)}  ->  {stem_type}")
+    if is_fx(path) and stem_type != "drums":
+        log("  note: sound effects rarely make useful MIDI")
     y, sr = librosa.load(path, sr=SR, mono=True)
     if y.size == 0 or np.max(np.abs(y)) < 1e-4:
         log("  stem is silent, skipped")
@@ -76,7 +114,7 @@ def transcribe(
         channel, program = 9, None
     elif stem_type in ("bass", "vocal"):
         notes = transcribe_mono(y, sr, bpm, grid_steps, stem_type, sensitivity, log)
-        channel, program = 0, PROGRAMS[stem_type]
+        channel, program = 0, instrument_for(path, stem_type)
     else:
         try:
             notes = transcribe_poly_basic_pitch(path, bpm, grid_steps, stem_type, sensitivity, log)
@@ -90,7 +128,7 @@ def transcribe(
             log(f"  basic-pitch failed ({exc}); using built-in mode")
             notes = transcribe_poly_simple(y, sr, bpm, grid_steps, stem_type, sensitivity, log)
             engine = "built-in"
-        channel, program = 0, PROGRAMS[stem_type]
+        channel, program = 0, instrument_for(path, stem_type)
 
     if humanize_amount > 0:
         notes = humanize(notes, bpm, humanize_amount, stem_type == "drums")
