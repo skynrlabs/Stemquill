@@ -34,6 +34,98 @@ def mono_thresholds(sensitivity):
     return loud, confidence, min_len
 
 
+def tuning_offset(midi):
+    """How far (in semitones, -0.5 .. 0.5) the whole stem sits from standard tuning.
+
+    Singers, AI vocals and detuned instruments are often a steady 20-40 cents sharp or flat. Left
+    alone, every held note sits between two pitches and rounding flips between them.
+    """
+    frac = midi[np.isfinite(midi)] % 1.0
+    if frac.size < 20:
+        return 0.0
+    angle = np.angle(np.mean(np.exp(2j * np.pi * frac)))  # circular mean: 0.9 and 0.1 average to 0.0
+    return float(angle / (2 * np.pi))
+
+
+HYSTERESIS = 0.75  # semitones the pitch must move from the held note before a new note can start
+HOLD = 0.05  # seconds it must stay there, so vibrato and scoops don't start new notes
+
+
+GLIDE_RATE = 8.0  # semitones a second: faster than this, held steadily, is a slide
+GLIDE_SPAN = 1.5  # semitones a slide must cover (vibrato swings fast too, but not this far)
+
+
+GLIDE_GAP = 3  # frames (about 17 ms) of lost pitch a slide can carry on through
+
+
+def bridge_gaps(midi, longest):
+    """Fill gaps of up to `longest` frames in a pitch track by joining the pitches either side."""
+    out = midi.copy()
+    known = np.flatnonzero(np.isfinite(midi))
+    for a, b in zip(known[:-1], known[1:], strict=True):
+        if 1 < b - a <= longest + 1:
+            out[a + 1 : b] = np.linspace(midi[a], midi[b], b - a + 1)[1:-1]
+    return out
+
+
+def glides(midi, sr):
+    """Frames where the pitch slides smoothly from one note to another (a bass slide, a vocal
+    glide), so the notes it passes on the way aren't written as short notes of their own."""
+    hold = max(1, int(round(HOLD * sr / HOP)))
+    midi = bridge_gaps(midi, GLIDE_GAP)  # the tracker often loses a frame or two mid-slide
+    slope = np.full(midi.shape, np.nan)
+    slope[2:-2] = (midi[4:] - midi[:-4]) / 4  # semitones a frame, over 5 frames
+    rate = GLIDE_RATE * HOP / sr
+    sign = np.where(np.abs(slope) > rate, np.sign(slope), 0)  # NaN compares False: 0
+    out = np.zeros(midi.shape, dtype=bool)
+    i = 0
+    while i < len(sign):
+        if sign[i] == 0:
+            i += 1
+            continue
+        j = i
+        while j + 1 < len(sign) and sign[j + 1] == sign[i]:
+            j += 1
+        lo, hi = max(0, i - 2), min(len(midi) - 1, j + 2)
+        if j - i + 1 >= hold and abs(midi[hi] - midi[lo]) >= GLIDE_SPAN:
+            out[i : j + 1] = True
+        i = j + 1
+    return out
+
+
+def stable_pitch(midi, sr):
+    """Turn a wobbling pitch track into steady notes: a new note starts only when the pitch moves
+    clearly away from the current one and stays there (it then starts where the move began).
+    Through a slide the note slid from carries on; the note it lands on starts on arrival."""
+    hold = max(1, int(round(HOLD * sr / HOP)))
+    sliding = glides(midi, sr)
+    out = np.full(midi.shape, -1, dtype=int)
+    cur, pending, since = None, None, 0
+    for i, m in enumerate(midi):
+        if sliding[i] and cur is not None:
+            out[i], pending = cur, None  # mid-slide, even where the tracker lost the pitch
+            continue
+        if not np.isfinite(m):
+            cur, pending = None, None
+            continue
+        if cur is None:
+            cur = int(round(m))
+            out[i] = cur
+            continue
+        if abs(m - cur) <= HYSTERESIS:
+            out[i], pending = cur, None
+            continue
+        cand = int(round(m))
+        if cand != pending:
+            pending, since = cand, i
+        if i - since + 1 >= hold:
+            cur, pending = cand, None
+            out[since : i + 1] = cand
+        else:
+            out[i] = cur
+    return out
+
+
 def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
     lo, hi = PITCH_RANGES[stem_type]
     fmin = librosa.note_to_hz(lo)
@@ -48,9 +140,12 @@ def transcribe_mono(y, sr, bpm, grid, stem_type, sensitivity, log):
     loud_frac, confidence, min_len = mono_thresholds(sensitivity)
     peak_rms = rms.max() if rms.max() > 0 else 1.0
     loud = rms > peak_rms * loud_frac
-    pitch = np.where(voiced & loud & (prob > confidence), np.round(librosa.hz_to_midi(f0)), -1)
-    pitch = np.nan_to_num(pitch, nan=-1).astype(int)
-    pitch = scipy.ndimage.median_filter(pitch, size=5)  # smooth out flickers
+    midi = np.where(voiced & loud & (prob > confidence), librosa.hz_to_midi(f0), np.nan)
+    offset = tuning_offset(midi)
+    if abs(offset) >= 0.1:
+        log(f"  tuning: {offset * 100:+.0f} cents from standard pitch, corrected")
+    pitch = stable_pitch(midi - offset, sr)
+    pitch = scipy.ndimage.median_filter(pitch, size=5)  # smooth out single-frame dropouts
 
     # new attacks split repeated notes of the same pitch (e.g. G G G on the bass)
     onset_env = librosa.onset.onset_strength(y=y, sr=sr, hop_length=HOP)
@@ -106,6 +201,10 @@ def transcribe_poly_basic_pitch(path, bpm, grid, stem_type, sensitivity, log):
     return clean_overlaps(notes)
 
 
+REATTACK_DB = 6.0  # a pitch that jumps this much louder within a few frames was played again
+REATTACK_LOOKBACK = 4  # frames (about 46 ms) to look back for the quiet point before the jump
+
+
 def transcribe_poly_simple(y, sr, bpm, grid, stem_type, sensitivity, log):
     """Lightweight fallback when basic-pitch isn't installed: CQT peaks + harmonic cleanup."""
     lo, hi = PITCH_RANGES[stem_type]
@@ -129,11 +228,27 @@ def transcribe_poly_simple(y, sr, bpm, grid, stem_type, sensitivity, log):
     active = scipy.ndimage.binary_closing(active, structure=np.ones((1, 3)))
 
     hop_t = 512 / sr
+    min_frames = int(0.1 / hop_t)
+    # A chord strummed again while it still rings never goes quiet, so its notes would merge into
+    # one; a sharp rise in a pitch's level (a new attack) starts a new note.
+    quietest = D.copy()  # quietest level over the last few frames, for each pitch
+    for back in range(1, REATTACK_LOOKBACK):
+        quietest[:, back:] = np.minimum(quietest[:, back:], D[:, :-back])
+    reattack = np.zeros_like(active)
+    reattack[:, 1:] = (D[:, 1:] - quietest[:, :-1]) > REATTACK_DB
     notes = []
     for b in range(n_bins):
         row = active[b]
         idx = np.flatnonzero(np.diff(np.concatenate(([0], row.astype(int), [0]))))
+        runs = []
         for s_i, e_i in zip(idx[::2], idx[1::2], strict=True):
+            start_i = s_i
+            for k in np.flatnonzero(reattack[b, s_i + min_frames : e_i]) + s_i + min_frames:
+                if k - start_i >= min_frames:
+                    runs.append((start_i, k))
+                    start_i = k
+            runs.append((start_i, e_i))
+        for s_i, e_i in runs:
             start, end = s_i * hop_t, e_i * hop_t
             if end - start < 0.1:
                 continue
