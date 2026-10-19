@@ -65,6 +65,21 @@ $p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" -Wait -PassThru `
      -ArgumentList "`"$tmp\test-drums.wav`" --type drums --bpm 120 --out `"$tmp\out`""
 Check ($p.ExitCode -eq 0 -and (Test-Path "$tmp\out\test-drums - drums.mid")) "The built app couldn't convert a drum loop"
 
+Step "Smoke test: open the window"
+# The tests above only use the command line, which doesn't need the window toolkit (Tcl/Tk); a build
+# missing it would pass them and then never open from the Start menu.
+$flag = "$tmp\window-ok.txt"
+$crashLog = Join-Path $env:APPDATA "Stemquill\crash.log"
+$env:STEMQUILL_CHECK_WINDOW = $flag
+$p = Start-Process -FilePath "dist\Stemquill\Stemquill.exe" -PassThru
+Remove-Item Env:\STEMQUILL_CHECK_WINDOW
+if (-not $p.WaitForExit(120000)) { $p.Kill() }
+if (-not (Test-Path $flag) -and (Test-Path $crashLog)) {
+    Write-Host "`nLast crash report from $crashLog`n" -ForegroundColor Yellow
+    Get-Content $crashLog -Tail 40
+}
+Check (Test-Path $flag) "The built app couldn't open its window (see the crash report above, if any)"
+
 Step "Building the chord-detection add-on"
 & $py -m pip install --no-deps --target dist\addons\chords -r packaging\chords-addon.txt
 Check ($LASTEXITCODE -eq 0) "Add-on install failed"
