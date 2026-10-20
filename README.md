@@ -23,6 +23,8 @@ Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/stemq
 
 Stemquill is a free desktop tool that listens to an audio stem and writes out what it hears as a MIDI file. Drop in a drum stem and you get kick, snare, hats, toms and cymbals on the right notes for your drum plugin. Drop in a bass or vocal stem and you get the melody line. Guitar, keys and synth stems come out as chords.
 
+It's made with AI stems in mind: drop in a whole folder of Suno stems and each one gets the right type and a matching instrument sound, and slightly off-pitch AI vocals still come out as the notes that were sung.
+
 Drag the `.mid` file into Waveform, FL Studio, Ableton, Reaper, Logic, Cubase or any other DAW, put your own instrument on it, and the part is yours to play, edit and rework.
 
 ---
@@ -39,6 +41,8 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 - 🥁 **Full drum kit detection**: kick, snare, closed and open hi-hat, high/mid/low toms, crash and ride
 - 🎸 **Melodic stems**: bass and vocal lines as single notes, guitar, keys and synths as chords
+- 🎤 **Natural vocals and bass**: corrects a voice that sits a little sharp or flat, holds notes through vibrato, and keeps slides as two notes instead of a run of short ones
+- 🏷️ **Knows your stems**: Suno's stem names (Vocals, Backing Vocals, Drums, Percussion, Bass, Guitar, Keyboard, Strings, Brass, Woodwinds, Synth, FX) pick the right type and a matching instrument sound in your DAW
 - ⏱️ **Tempo detection**: measures the real BPM from a stem so your MIDI lines up with your DAW grid
 - ▶️ **Preview before saving**: play any stem from its row with built-in sounds, with the original stem mixed in to check the timing
 - 🎚️ **Humanize**: small timing and velocity changes so parts feel played, not programmed
@@ -99,7 +103,7 @@ python -m stemquill
 
 Everything happens on the **Convert** page, top to bottom:
 
-1. **Drop your stems** (or a whole folder of them) onto the window, or click **Add stems...** (WAV, MP3, FLAC, AIFF, OGG or M4A). Each stem gets its own row. Its type is read from the file name ("Drums", "Bass", "Vocals", "Other"); change it in the row if needed.
+1. **Drop your stems** (or a whole folder of them) onto the window, or click **Add stems...** (WAV, MP3, FLAC, AIFF, OGG or M4A). Each stem gets its own row. Its type is read from the file name (see [Stem names](#-stem-names)); change it in the row if needed.
 2. **Song:** click **Detect** to measure the tempo from the selected stem, or type the BPM. Tempo, **Snap to grid** and **Time signature** are shared by every stem, because it's one song. Get the tempo right: it decides which beat each note lands on.
 3. **Click a stem** to see its own settings underneath: **Sensitivity**, **Humanize** and, for drum stems, which drums to write and the drum map. **Apply to all stems** copies them to the rest.
 4. Click **Play** on a stem's row to hear it with built-in sounds; the button turns into **Stop** while it plays. Keep **Mix in the original stem** ticked to check the timing against the real audio.
@@ -118,6 +122,28 @@ Then set your DAW project to the same tempo and drag each `.mid` onto its instru
 | `vocal` | The lead vocal melody as single notes |
 | `melodic` | Guitar, keys, fiddle and chords (several notes at once) |
 | `synth` | Synths and pads (several notes at once) |
+
+### 🏷️ Stem names
+
+Stemquill reads the stem's file name to pick its type and the instrument sound your DAW plays it with. The names cover Suno's stems and the usual names from other splitters:
+
+| File name contains | Type | Sound in your DAW |
+|---|---|---|
+| Drums, Percussion | `drums` | Your drum plugin (channel 10) |
+| Bass | `bass` | Fingered bass |
+| Vocals, Vox, Voice | `vocal` | Choir |
+| Backing Vocals, Harmony, Choir | `melodic` (harmonies are chords) | Choir |
+| Synth, Pad | `synth` | Pad |
+| Keyboard, Keys, Piano | `melodic` | Piano |
+| Organ | `melodic` | Organ |
+| Strings, Violin, Cello | `melodic` | Strings |
+| Brass, Trumpet, Horn | `melodic` | Brass |
+| Woodwinds, Flute, Clarinet | `melodic` | Flute |
+| Sax | `melodic` | Sax |
+| Guitar, or anything else | `melodic` | Guitar |
+| FX | `synth` (with a note that sound effects rarely make useful MIDI) | Pad |
+
+Change a stem's type by hand and it gets that type's usual sound.
 
 ### ⌨️ Keyboard shortcuts
 
@@ -196,6 +222,9 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 | Problem | Fix |
 |---|---|
 | **"Windows protected your PC"** when installing | The app isn't code-signed yet. Click **More info → Run anyway**. |
+| The first start is slow | Normal after installing: Windows checks every new file first, and the "Starting Stemquill..." window shows it's on its way. Later starts are much quicker. |
+| Stemquill won't open | End any **Stemquill.exe** in Task Manager and try again. If a message says it couldn't start, send the crash report from `%APPDATA%\Stemquill\crash.log` in [an issue](https://github.com/skynrlabs/Stemquill/issues). |
+| "Drag and drop is off for now" | On some PCs Windows gets stuck turning on drag and drop, so Stemquill started without it. Use **Add stems...**; it tries again after a week, and restarting your PC usually clears it sooner. |
 | MIDI drifts out of time in the DAW | The project tempo doesn't match. Click **Detect** and set your DAW to that exact BPM. If it's half or double what you expect, use the number that matches the song's feel. |
 | Too many junk notes | Click the stem and lower its **Sensitivity** (try 0.6); for drums, untick the drums you don't need. |
 | Missing quiet notes | Click the stem and raise its **Sensitivity** (try 1.0). |
@@ -211,7 +240,8 @@ Still stuck? [Open an issue](https://github.com/skynrlabs/Stemquill/issues) with
 
 ```
 stemquill/
-├── __main__.py          Entry point: `python -m stemquill`
+├── __main__.py          Entry point: `python -m stemquill`, plus the crash log
+├── splash.py            The "Starting Stemquill..." window
 ├── cli.py               Command-line options
 ├── config.py            Drum notes and maps, stem types, saved settings
 ├── core/                The audio engine (no GUI code, usable from scripts)
@@ -240,7 +270,7 @@ stemquill/
 stemquill/assets/        App icon (SVG source, PNGs and Windows .ico)
 tests/                   Tests with synthetic stems (pytest), incl. window tests
 packaging/               Windows build: PyInstaller spec, Inno Setup installer and build.ps1
-.github/workflows/       Lint and tests on Linux
+.github/workflows/       Lint and tests on Linux; the Windows installer build (started by hand)
 docs/                    README screenshot
 ```
 
@@ -270,7 +300,7 @@ convert("Drums.wav", "drums", bpm=bpm, humanize_amount=0.3)
 
 ## 🔐 Privacy
 
-Stemquill runs entirely on your computer. Your audio is never uploaded anywhere. The only file it writes besides your MIDI is a small `settings.json` that remembers your drum map, stored in `%APPDATA%\Stemquill` on Windows, `~/Library/Application Support/Stemquill` on macOS or `~/.config/stemquill` on Linux.
+Stemquill runs entirely on your computer. Your audio is never uploaded anywhere. Besides your MIDI files, it only writes a small `settings.json` with your settings (and a `crash.log` if something goes wrong) in `%APPDATA%\Stemquill` on Windows, `~/Library/Application Support/Stemquill` on macOS or `~/.config/stemquill` on Linux, plus a cache of the audio library's compiled code in your own cache folder. Nothing is sent anywhere, crash reports included: you choose whether to share one.
 
 ---
 
