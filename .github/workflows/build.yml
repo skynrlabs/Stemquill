@@ -1,9 +1,10 @@
-name: Build Windows installer
+name: Build Windows installer and Store package
 
-# Runs only when started by hand: Actions → Build Windows installer → Run workflow.
-# It runs packaging/build.ps1, the same build and smoke tests as on a PC, then keeps the installer
-# as a download on the run page for one day. The Actions tab is public, so the installer is
-# published on itch.io, not here; delete the run once you've downloaded it.
+# Runs only when started by hand: Actions → Build Windows installer and Store package → Run workflow.
+# It runs packaging/build.ps1 (the itch.io installer, with the same smoke tests as on a PC) and
+# packaging/build-msix.ps1 (the MSIX for the Microsoft Store), then keeps both as downloads on the run
+# page for one day. The Actions tab is public, so publish them on itch.io and the Store, not here;
+# delete the run once you've downloaded them.
 
 on:
   workflow_dispatch:
@@ -31,6 +32,10 @@ jobs:
         shell: pwsh
         run: .\packaging\build.ps1
 
+      - name: Build the Store package (packaging/build-msix.ps1)
+        shell: pwsh
+        run: .\packaging\build-msix.ps1
+
       - name: Read version
         id: ver
         shell: pwsh
@@ -39,7 +44,7 @@ jobs:
       - name: Report size
         shell: pwsh
         run: |
-          Get-ChildItem dist\installer | ForEach-Object {
+          Get-ChildItem dist\installer\*.exe, dist\msix\*.msix | ForEach-Object {
             "::notice title=$($_.Name)::$([math]::Round($_.Length / 1MB, 1)) MB"
           }
 
@@ -47,5 +52,12 @@ jobs:
         with:
           name: Stemquill-Setup-${{ steps.ver.outputs.version }}
           path: dist/installer/*.exe
+          retention-days: 1
+          if-no-files-found: error
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: Stemquill-Store-${{ steps.ver.outputs.version }}
+          path: dist/msix/*.msix
           retention-days: 1
           if-no-files-found: error
