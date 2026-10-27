@@ -47,7 +47,7 @@ Before opening an issue:
 1. Fork the repo and create your branch from `dev`, not `main`.
 2. Name your branch `feature/short-description` or `fix/short-description`.
 3. Keep PRs focused — one feature or fix per PR.
-4. Run the checks locally (see **Tests and lint** below). On GitHub, **Lint and test** must pass. If you change anything in `packaging/`, run the **Build Windows installer** workflow (or `.\packaging\build.ps1` on Windows) and say so in the PR.
+4. Run the checks locally (see **Tests and lint** below). On GitHub, **Lint and test** must pass. If you change anything in `packaging/`, run the **Build Windows installer and Store package** workflow (or `.\packaging\build.ps1` on Windows) and say so in the PR.
 5. Write a clear PR description — what changed and why. Before/after note counts on a test stem are great for detection changes.
 6. Link any related issue in the PR body (`Closes #123`).
 
@@ -94,15 +94,18 @@ pytest                  # all tests, about 15 seconds
 
 ## Releasing
 
-The Windows installer is built with `packaging/build.ps1`, either on GitHub or on a Windows PC. Both run the same build and checks: the app and the chord add-on convert test stems, and the packaged app opens its window, with and without the add-on.
+Each release goes out in two forms: an installer for [itch.io](https://skynrlabs.itch.io/stemquill) and an MSIX package for the Microsoft Store. Both are built with `packaging/build.ps1` and `packaging/build-msix.ps1`, either on GitHub or on a Windows PC. Both ways run the same build and checks: the app and the chord add-on convert test stems, and the packaged app opens its window, with and without the add-on. The Store package always includes the chord add-on.
 
 1. Bump `__version__` in `stemquill/__init__.py`, and get the change into `main` through `dev`.
 2. Build the installer, one of two ways:
-   - **On GitHub:** go to **Actions → Build Windows installer → Run workflow** (on `main`). When it finishes, download `Stemquill-Setup-x.y.z` from the run's **Artifacts**. It's kept for one day; the Actions tab is public and downloads go through itch.io, so delete the run once you have it.
-   - **On a Windows PC:** you need Python 3.12 or 3.11 (found through the `py` launcher, so other Python versions can stay installed), [Inno Setup 6](https://jrsoftware.org/isdl.php) and the [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe). Build from a folder on your own drive (not a synced Google Drive or OneDrive folder). On `main`, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, then `.\packaging\build.ps1`. It writes `dist\installer\Stemquill-Setup-x.y.z.exe`.
+   - **On GitHub:** go to **Actions → Build Windows installer and Store package → Run workflow** (on `main`). When it finishes, download `Stemquill-Setup-x.y.z` and `Stemquill-Store-x.y.z` from the run's **Artifacts**. They're kept for one day; the Actions tab is public, so delete the run once you have them.
+   - **On a Windows PC:** you need Python 3.12 or 3.11 (found through the `py` launcher, so other Python versions can stay installed), [Inno Setup 6](https://jrsoftware.org/isdl.php) and the [Microsoft Visual C++ Redistributable (x64)](https://aka.ms/vs/17/release/vc_redist.x64.exe). Build from a folder on your own drive (not a synced Google Drive or OneDrive folder). On `main`, run `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`, then `.\packaging\build.ps1`. It writes `dist\installer\Stemquill-Setup-x.y.z.exe`. For the Store package you also need the [Windows SDK](https://developer.microsoft.com/windows/downloads/windows-sdk/); then run `.\packaging\build-msix.ps1`, which writes `dist\msix\Stemquill-x.y.z.0-x64.msix`.
 3. Install it and give it a quick try.
-4. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.3.0`), list what changed, and click **Publish release**. Don't attach the installer.
+4. On GitHub, go to **Releases → Draft a new release**, create the tag `v` + the version (for example `v1.3.0`), list what changed, and click **Publish release**. Don't attach the files.
 5. Upload the installer to the [itch.io page](https://skynrlabs.itch.io/stemquill).
+6. In Partner Center, start a new submission, upload the `.msix` under **Packages**, and submit. The Store signs it, so no certificate is needed. Each Store version must be higher than the last one.
+
+The MSIX takes its identity from `packaging/msix/identity.json`, which must match **Partner Center → Product identity** exactly. While it still says `REPLACE`, `build-msix.ps1` makes a `-TEST` package the Store won't accept.
 
 ---
 
