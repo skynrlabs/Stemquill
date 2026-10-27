@@ -48,7 +48,7 @@ jobs:
             "::notice title=$($_.Name)::$([math]::Round($_.Length / 1MB, 1)) MB"
           }
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: Stemquill-Setup-${{ steps.ver.outputs.version }}
           path: dist/installer/*.exe
