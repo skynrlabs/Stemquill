@@ -2,6 +2,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)
 [![Tests](https://img.shields.io/github/actions/workflow/status/skynrlabs/Stemquill/test.yml?branch=main&style=flat-square&label=tests)](https://github.com/skynrlabs/Stemquill/actions/workflows/test.yml)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/search?query=Stemquill)
 [![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 [![Contributions Welcome](https://img.shields.io/badge/contributions-welcome-brightgreen?style=flat-square)](CONTRIBUTING.md)
@@ -10,10 +11,11 @@
 > Drums, bass, vocals, keys and synths, ready to play through your own instruments.
 
 <p>
-  <a href="https://skynrlabs.itch.io/stemquill"><img src="https://img.shields.io/badge/Download_for_Windows-18c6cc?style=for-the-badge&logo=windows&logoColor=white" alt="Download for Windows"></a>
+  <a href="https://apps.microsoft.com/search?query=Stemquill"><img src="https://img.shields.io/badge/Get_it_on_the_Microsoft_Store-0078D6?style=for-the-badge&logo=microsoft&logoColor=white" alt="Get it on the Microsoft Store"></a>
+  <a href="https://skynrlabs.itch.io/stemquill"><img src="https://img.shields.io/badge/Download_from_itch.io-18c6cc?style=for-the-badge&logo=itchdotio&logoColor=white" alt="Download from itch.io"></a>
 </p>
 
-Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/stemquill) if it saves you time.
+$4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer? It's also on [itch.io](https://skynrlabs.itch.io/stemquill), where it's pay what you want: the suggested price is $4.99, and $0 is fine too.
 
 ![Stemquill screenshot](docs/screenshot.png)
 
@@ -21,7 +23,7 @@ Free to download. Pay what you want on [itch.io](https://skynrlabs.itch.io/stemq
 
 ## What Is Stemquill?
 
-Stemquill is a free desktop tool that listens to an audio stem and writes out what it hears as a MIDI file. Drop in a drum stem and you get kick, snare, hats, toms and cymbals on the right notes for your drum plugin. Drop in a bass or vocal stem and you get the melody line. Guitar, keys and synth stems come out as chords.
+Stemquill is a desktop tool that listens to an audio stem and writes out what it hears as a MIDI file. Drop in a drum stem and you get kick, snare, hats, toms and cymbals on the right notes for your drum plugin. Drop in a bass or vocal stem and you get the melody line. Guitar, keys and synth stems come out as chords.
 
 It's made with AI stems in mind: drop in a whole folder of Suno stems and each one gets the right type and a matching instrument sound, and slightly off-pitch AI vocals still come out as the notes that were sung.
 
@@ -59,13 +61,20 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ## 📥 Install
 
-### Windows (recommended)
+### Windows: Microsoft Store (recommended)
 
-1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want, $0 is fine).
+1. Open **[Stemquill on the Microsoft Store](https://apps.microsoft.com/search?query=Stemquill)** and buy it ($4.99 USD, or the local price where you are).
+2. Open **Stemquill** from the Start menu.
+
+The Store version is signed by Microsoft, so there's no security warning, it includes better chord detection, and it **updates itself** automatically. Every update is free. To remove it, use **Settings → Apps → Stemquill → Uninstall**.
+
+### Windows: installer from itch.io
+
+1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want: $4.99 suggested, $0 is fine).
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
-> Windows may show **"Windows protected your PC"** because the app isn't code-signed yet. Click **More info → Run anyway**.
+> Windows may show **"Windows protected your PC"** because this installer isn't code-signed. Click **More info → Run anyway**, or get the signed version from the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill).
 
 To update, run the newer installer. To remove, use **Settings → Apps → Stemquill → Uninstall**.
 
@@ -221,7 +230,7 @@ Some DAWs name octaves differently, so the same kick note can show as C1 or C2. 
 
 | Problem | Fix |
 |---|---|
-| **"Windows protected your PC"** when installing | The app isn't code-signed yet. Click **More info → Run anyway**. |
+| **"Windows protected your PC"** when installing | That's the itch.io installer, which isn't code-signed. Click **More info → Run anyway**, or install the signed version from the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill). |
 | The first start is slow | Normal after installing: Windows checks every new file first, and the "Starting Stemquill..." window shows it's on its way. Later starts are much quicker. |
 | Stemquill won't open | End any **Stemquill.exe** in Task Manager and try again. If a message says it couldn't start, send the crash report from `%APPDATA%\Stemquill\crash.log` in [an issue](https://github.com/skynrlabs/Stemquill/issues). |
 | "Drag and drop is off for now" | On some PCs Windows gets stuck turning on drag and drop, so Stemquill started without it. Use **Add stems...**; it tries again after a week, and restarting your PC usually clears it sooner. |
@@ -306,7 +315,7 @@ Stemquill runs entirely on your computer. Your audio is never uploaded anywhere.
 
 ## 💚 Support Stemquill
 
-Stemquill is free and open source, made by one person. If it saves you time, you can pay what you want for it on [itch.io](https://skynrlabs.itch.io/stemquill), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It helps pay for code signing (so Windows stops warning about the installer) and keeps new features coming. Starring the repo and sharing it with other producers helps too.
+Stemquill is open source, made by one person. If it saves you time, you can buy it on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill), pay what you want for it on [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 is the suggested price), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill), starring the repo, and sharing it with other producers all help too.
 
 ---
 
@@ -335,4 +344,4 @@ The Windows app installs every bundled library's license in full as `THIRD_PARTY
 
 ---
 
-Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/stemquill) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
+Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/stemquill) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
