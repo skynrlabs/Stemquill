@@ -547,16 +547,21 @@ def test_drop_files_and_folders(app, stems, tmp_path):
     assert app.status_card.kind == "warn"
 
 
-def test_support_link_opens_the_sponsor_page(app, monkeypatch):
-    import webbrowser
+def test_no_support_or_donation_links_in_the_app(app):
+    """The app is sold on the Microsoft Store, so it doesn't ask for money anywhere."""
+    from stemquill.gui.dialogs import show_about
 
-    from stemquill.config import SUPPORT_URL
-
-    opened = []
-    monkeypatch.setattr(webbrowser, "open", opened.append)
-    app.sidebar.support.event_generate("<Button-1>")
-    app.root.update()
-    assert opened == [SUPPORT_URL] == ["https://github.com/sponsors/skynrlabs"]
+    about = show_about(app.root, app.fonts)
+    texts = []
+    stack = [app.root]
+    while stack:
+        w = stack.pop()
+        if "text" in w.keys():  # noqa: SIM118 (a Tk widget, not a dict)
+            texts.append(str(w.cget("text")))
+        stack.extend(w.winfo_children())
+    about.destroy()
+    assert not [t for t in texts if "Support" in t or "chipping" in t or "sponsor" in t.lower()]
+    assert not hasattr(app.sidebar, "support")
 
 
 def test_about_opens_the_open_source_licenses(app):
