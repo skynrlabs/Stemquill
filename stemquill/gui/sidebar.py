@@ -1,10 +1,8 @@
 """Left-hand navigation: brand, one entry per page, version footer."""
 
 import tkinter as tk
-import webbrowser
 
 from .. import __version__
-from ..config import SUPPORT_URL
 from .theme import THEME as T
 
 
@@ -47,16 +45,9 @@ class Sidebar(tk.Frame):
 
         foot = tk.Frame(self, bg=T["side"])
         foot.pack(side="bottom", fill="x", padx=18, pady=14)
-        self.support = tk.Label(
-            foot, text="Support Stemquill", bg=T["side"], fg=T["accent"], font=fonts["btn"], cursor="hand2"
-        )
-        self.support.pack(anchor="w", pady=(0, 6))
-        self.support.bind("<Button-1>", lambda e: webbrowser.open(SUPPORT_URL))
-        self.support.bind("<Enter>", lambda e: self.support.configure(fg=T["accent_hover"]))
-        self.support.bind("<Leave>", lambda e: self.support.configure(fg=T["accent"]))
         tk.Label(
             foot,
-            text="Free and open source.\nIf it saves you time,\nconsider chipping in.",
+            text="Open source and private:\neverything runs on\nyour own computer.",
             bg=T["side"],
             fg=T["muted"],
             font=fonts["small"],
