@@ -11,8 +11,7 @@
 > Drums, bass, vocals, keys and synths, ready to play through your own instruments.
 
 <p>
-  <a href="https://apps.microsoft.com/search?query=Stemquill"><img src="https://img.shields.io/badge/Get_it_on_the_Microsoft_Store-0078D6?style=for-the-badge&logo=microsoft&logoColor=white" alt="Get it on the Microsoft Store"></a>
-  <a href="https://skynrlabs.itch.io/stemquill"><img src="https://img.shields.io/badge/Download_from_itch.io-18c6cc?style=for-the-badge&logo=itchdotio&logoColor=white" alt="Download from itch.io"></a>
+  <a href="https://apps.microsoft.com/search?query=Stemquill"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
 $4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer? It's also on [itch.io](https://skynrlabs.itch.io/stemquill), where it's pay what you want: the suggested price is $4.99, and $0 is fine too.
