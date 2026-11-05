@@ -13,7 +13,7 @@
   <a href="https://apps.microsoft.com/search?query=Stemquill"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
-$4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/stemquill) and pay what you want (Windows and Mac), or grab the Linux app from [Releases](https://github.com/skynrlabs/Stemquill/releases/latest).
+$4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/stemquill) and pay what you want (Windows, Mac and Linux).
 
 ![Stemquill screenshot](docs/screenshot.png)
 
@@ -88,9 +88,9 @@ To update, run the newer installer. To remove, use **Settings → Apps → Stemq
 
 The Mac app is signed and notarized by Apple, so it opens without a security warning. It needs macOS 14 (Sonoma) or newer. The Apple Silicon version includes better chord detection built in. The Intel version uses Stemquill's own chord detection, because the library behind better chord detection no longer supports Intel Macs. To update, replace the old Stemquill in Applications with the new one; your settings are kept.
 
-### Linux
+### Linux: app from itch.io
 
-1. Download **`Stemquill-x.y.z-linux-x86_64.tar.gz`** from [Releases](https://github.com/skynrlabs/Stemquill/releases/latest) (free), or from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want).
+1. Download **`Stemquill-x.y.z-linux-x86_64.tar.gz`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want; $4.99 USD suggested).
 2. Unpack it and run **`./install.sh`** inside the folder. No sudo or Python needed: it installs into your home folder and adds **Stemquill** to your app menu, plus a `stemquill` command.
 3. Open **Stemquill** from your app menu, or run `stemquill`.
 
@@ -272,7 +272,7 @@ Stemquill is proprietary software under the [Stemquill License](LICENSE). Copyri
 
 - **You can** install and use Stemquill on computers you own or control, whatever you paid for it.
 - **The music is yours.** MIDI you make with Stemquill is yours to use however you like, commercial releases included.
-- **You can't** share, publish or sell Stemquill, changed or not, without written permission. Point people to [itch.io](https://skynrlabs.itch.io/stemquill), the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) or this repo's [Releases](https://github.com/skynrlabs/Stemquill/releases) instead.
+- **You can't** share, publish or sell Stemquill, changed or not, without written permission. Point people to [itch.io](https://skynrlabs.itch.io/stemquill) or the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) instead.
 
 Earlier versions released under the MIT License stay under it. See [LICENSE](LICENSE) for the full terms.
 
@@ -284,4 +284,4 @@ The Windows, Mac and Linux apps include every bundled library's license in full 
 
 ---
 
-Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/stemquill) &nbsp;·&nbsp; [Releases](https://github.com/skynrlabs/Stemquill/releases) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
+Made by [Skynr Labs](https://github.com/skynrlabs) &nbsp;·&nbsp; [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) &nbsp;·&nbsp; [itch.io](https://skynrlabs.itch.io/stemquill) &nbsp;·&nbsp; [GitHub Sponsors](https://github.com/sponsors/skynrlabs)
