@@ -1,0 +1,29 @@
+name: Feature request
+description: An idea that would make Stemquill better for your music.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: The problem or the step in your workflow this would help with. ("I convert whole Suno song folders and have to..." is more useful than a feature name.)
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would you like Stemquill to do?
+    validations:
+      required: true
+  - type: textarea
+    id: now
+    attributes:
+      label: How do you handle it today?
+      description: Another tool, a workaround, or not at all.
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Before you send
+      options:
+        - label: I searched the existing issues and this hasn't been suggested yet.
+          required: true
