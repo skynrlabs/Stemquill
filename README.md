@@ -272,9 +272,9 @@ Stemquill is proprietary software under the [Stemquill License](LICENSE). Copyri
 
 - **You can** install and use Stemquill on computers you own or control, whatever you paid for it.
 - **The music is yours.** MIDI you make with Stemquill is yours to use however you like, commercial releases included.
-- **You can't** share, publish or sell Stemquill, changed or not, without written permission. Point people to [itch.io](https://skynrlabs.itch.io/stemquill) or the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) instead.
+- **You can't** share, sell or reverse-engineer Stemquill without written permission (except as the open-source libraries' own licenses allow). Point people to [itch.io](https://skynrlabs.itch.io/stemquill) or the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) instead.
 
-Earlier versions released under the MIT License stay under it. See [LICENSE](LICENSE) for the full terms.
+Earlier versions released under the MIT License, and the source code once published under the earlier source-available Stemquill License, stay under those licenses. See [LICENSE](LICENSE) for the full terms.
 
 ### Third-party libraries
 
