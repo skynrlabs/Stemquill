@@ -272,7 +272,7 @@ Stemquill is proprietary software under the [Stemquill License](LICENSE). Copyri
 
 - **You can** install and use Stemquill on computers you own or control, whatever you paid for it.
 - **The music is yours.** MIDI you make with Stemquill is yours to use however you like, commercial releases included.
-- **You can't** share, sell or reverse-engineer Stemquill without written permission (except as the open-source libraries' own licenses allow). Point people to [itch.io](https://skynrlabs.itch.io/stemquill) or the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) instead.
+- **You can't** share, sell or reverse-engineer Stemquill without written permission (except as the third-party libraries' own licenses allow). Point people to [itch.io](https://skynrlabs.itch.io/stemquill) or the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) instead.
 
 Earlier versions released under the MIT License, and the source code once published under the earlier source-available Stemquill License, stay under those licenses. See [LICENSE](LICENSE) for the full terms.
 
@@ -280,7 +280,7 @@ Earlier versions released under the MIT License, and the source code once publis
 
 Stemquill is built on [librosa](https://librosa.org) (ISC), [NumPy](https://numpy.org) and [SciPy](https://scipy.org) (BSD), [soundfile](https://github.com/bastibe/python-soundfile) (BSD, with libsndfile under the LGPL), [mido](https://github.com/mido/mido) and [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) (MIT), and the libraries they use. The optional chord add-on uses [basic-pitch](https://github.com/spotify/basic-pitch) (Apache 2.0) and [ONNX Runtime](https://onnxruntime.ai) (MIT).
 
-The Windows, Mac and Linux apps include every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Open-source licenses**.
+The Windows, Mac and Linux apps include every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Third-party licenses**.
 
 ---
 
