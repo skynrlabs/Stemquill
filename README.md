@@ -75,7 +75,7 @@ The Store version is signed by Microsoft, so there's no security warning, it inc
 
 ### Windows: installer from itch.io
 
-1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD).
+1. Download **`Stemquill-Setup-x.y.z.zip`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD).
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
