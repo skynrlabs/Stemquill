@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/license-Stemquill_License-blue?style=flat-square)](LICENSE)
 [![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/search?query=Stemquill)
-[![itch.io](https://img.shields.io/badge/itch.io-pay_what_you_want-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
+[![itch.io](https://img.shields.io/badge/itch.io-%244.99-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 [![Discord](https://img.shields.io/badge/Discord-Skynr_Labs-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/25mPUWUAa)
 
@@ -13,7 +13,9 @@
   <a href="https://apps.microsoft.com/search?query=Stemquill"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
-$4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/stemquill) and pay what you want (Windows, Mac and Linux).
+$4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/stemquill) (Windows, Mac and Linux), also $4.99.
+
+🎉 **Launch offer:** 25% off on itch.io until February 11, 2027.
 
 ![Stemquill screenshot](docs/screenshot.png)
 
@@ -39,7 +41,7 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ## ✨ Features
 
-- 🥁 **Full drum kit detection**: kick, snare, closed and open hi-hat, high/mid/low toms, crash and ride
+- 🥁 **Full drum kit detection**: kick, snare, closed and open hi-hat, high/mid/low toms, crash and ride, including fast hi-hat patterns and hats hidden under ringing cymbals
 - 🎸 **Melodic stems**: bass and vocal lines as single notes, guitar, keys and synths as chords
 - 🎤 **Natural vocals and bass**: corrects a voice that sits a little sharp or flat, holds notes through vibrato, and keeps slides as two notes instead of a run of short ones
 - 🏷️ **Knows your stems**: Suno's stem names (Vocals, Backing Vocals, Drums, Percussion, Bass, Guitar, Keyboard, Strings, Brass, Woodwinds, Synth, FX) pick the right type and a matching instrument sound in your DAW
@@ -56,7 +58,8 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 - 🧠 **Remembers your settings**: the next Drums, Bass or Vocals stem you add starts with the settings you used last time
 - 📦 **Drag and drop**: drop stems or a whole folder onto the window and convert them in one go
 - ✅ **Always know where you stand**: each stem shows when it's saved, and says *changed · convert again* if you tweak it afterwards
-- 🧭 **Clean navigation**: sidebar pages and keyboard shortcuts
+- 🧭 **Clean navigation**: a top menu bar and keyboard shortcuts
+- 🪟 **Modern look**: dark title bar on Windows 10 and 11, rounded panels and the Roboto font
 - 💻 **GUI and command line**: point and click, or script it
 
 ---
@@ -72,7 +75,7 @@ The Store version is signed by Microsoft, so there's no security warning, it inc
 
 ### Windows: installer from itch.io
 
-1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want; $4.99 USD suggested).
+1. Download **`Stemquill-Setup-x.y.z.exe`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD).
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
@@ -82,7 +85,7 @@ To update, run the newer installer. To remove, use **Settings → Apps → Stemq
 
 ### Mac: app from itch.io
 
-1. Download the Mac zip from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want; $4.99 USD suggested). Pick **Apple Silicon** if **Apple menu → About This Mac** says Apple M1 or newer, or **Intel** if it says Intel.
+1. Download the Mac zip from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD). Pick **Apple Silicon** if **Apple menu → About This Mac** says Apple M1 or newer, or **Intel** if it says Intel.
 2. Open the zip and drag **Stemquill** into your **Applications** folder. No Python needed.
 3. Open **Stemquill** from Applications.
 
@@ -90,7 +93,7 @@ The Mac app is signed and notarized by Apple, so it opens without a security war
 
 ### Linux: app from itch.io
 
-1. Download **`Stemquill-x.y.z-linux-x86_64.tar.gz`** from [itch.io](https://skynrlabs.itch.io/stemquill) (pay what you want; $4.99 USD suggested).
+1. Download **`Stemquill-x.y.z-linux-x86_64.tar.gz`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD).
 2. Unpack it and run **`./install.sh`** inside the folder. No sudo or Python needed: it installs into your home folder and adds **Stemquill** to your app menu, plus a `stemquill` command.
 3. Open **Stemquill** from your app menu, or run `stemquill`.
 
@@ -254,7 +257,7 @@ Stemquill runs entirely on your computer. Your audio is never uploaded anywhere.
 
 ## 💚 Support Stemquill
 
-Stemquill is made by one person. If it saves you time, you can buy it for $4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) or pay what you want on [itch.io](https://skynrlabs.itch.io/stemquill), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill), starring the repo, and sharing it with other producers all help too.
+Stemquill is made by one person. If it saves you time, you can buy it for $4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) or on [itch.io](https://skynrlabs.itch.io/stemquill), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill), starring the repo, and sharing it with other producers all help too.
 
 ---
 
@@ -278,7 +281,7 @@ Earlier versions released under the MIT License, and the source code once publis
 
 ### Third-party libraries
 
-Stemquill is built on [librosa](https://librosa.org) (ISC), [NumPy](https://numpy.org) and [SciPy](https://scipy.org) (BSD), [soundfile](https://github.com/bastibe/python-soundfile) (BSD, with libsndfile under the LGPL), [mido](https://github.com/mido/mido) and [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) (MIT), and the libraries they use. The optional chord add-on uses [basic-pitch](https://github.com/spotify/basic-pitch) (Apache 2.0) and [ONNX Runtime](https://onnxruntime.ai) (MIT).
+Stemquill is built on [librosa](https://librosa.org) (ISC), [NumPy](https://numpy.org) and [SciPy](https://scipy.org) (BSD), [soundfile](https://github.com/bastibe/python-soundfile) (BSD, with libsndfile under the LGPL), [mido](https://github.com/mido/mido) and [tkinterdnd2](https://github.com/Eliav2/tkinterdnd2) (MIT), the [Roboto](https://fonts.google.com/specimen/Roboto) font (Apache 2.0), and the libraries they use. The optional chord add-on uses [basic-pitch](https://github.com/spotify/basic-pitch) (Apache 2.0) and [ONNX Runtime](https://onnxruntime.ai) (MIT).
 
 The Windows, Mac and Linux apps include every bundled library's license in full as `THIRD_PARTY_LICENSES.txt`, and you can read it in the app under **Help → About → Third-party licenses**.
 
