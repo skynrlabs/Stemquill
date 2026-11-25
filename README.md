@@ -12,7 +12,7 @@
   <a href="https://apps.microsoft.com/search?query=Stemquill"><img src="https://get.microsoft.com/images/en-us%20dark.svg" alt="Get it from Microsoft" width="200"></a>
 </p>
 
-$11.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/stemquill) (Windows, Mac and Linux), also $4.99.
+$11.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/stemquill) (Windows, Mac and Linux), also $11.99.
 
 🎉 **Launch offer:** 25% off on itch.io until February 11, 2027.
 
