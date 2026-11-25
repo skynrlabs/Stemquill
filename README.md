@@ -1,8 +1,9 @@
 # <img src="docs/icon-64.png" alt="" width="48" align="center"> Stemquill
 
 [![License](https://img.shields.io/badge/license-Stemquill_License-blue?style=flat-square)](LICENSE)
-[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/search?query=Stemquill)
-[![itch.io](https://img.shields.io/badge/itch.io-%244.99-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%2411.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/search?query=Stemquill)
+[![itch.io](https://img.shields.io/badge/itch.io-%2411.99-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
+[![Free demo](https://img.shields.io/badge/free_demo-Windows_%7C_Mac_%7C_Linux-2EA44F?style=flat-square)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
 
 > Turn audio stems into MIDI for any DAW.  
@@ -13,6 +14,8 @@
 </p>
 
 $11.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill): signed by Microsoft, installs in one click, updates itself and includes better chord detection. Prefer a regular installer, or on a Mac or Linux? Get it on [itch.io](https://skynrlabs.itch.io/stemquill) (Windows, Mac and Linux), also $11.99.
+
+🎧 **Try it free first.** The free demo is on [itch.io](https://skynrlabs.itch.io/stemquill) for Windows, Mac and Linux, and as the free trial on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill). Converting, every setting and the whole-stem preview work in full. Saved MIDI stops at 1:00, it converts up to 3 stems at a time, and the all-stems file and the command line are in the full version.
 
 🎉 **Launch offer:** 25% off on itch.io until February 11, 2027.
 
@@ -67,14 +70,14 @@ Stemquill is the bridge: audio in, MIDI out, with a preview so you can hear the 
 
 ### Windows: Microsoft Store (recommended)
 
-1. Open **[Stemquill on the Microsoft Store](https://apps.microsoft.com/search?query=Stemquill)** and buy it ($4.99 USD, or the local price where you are).
+1. Open **[Stemquill on the Microsoft Store](https://apps.microsoft.com/search?query=Stemquill)** and buy it ($11.99 USD, or the local price where you are), or choose **Free trial** to try the demo first. Buying later unlocks it after a restart, with no reinstall.
 2. Open **Stemquill** from the Start menu.
 
 The Store version is signed by Microsoft, so there's no security warning, it includes better chord detection, and it **updates itself** automatically. Every update is free. To remove it, use **Settings → Apps → Stemquill → Uninstall**.
 
 ### Windows: installer from itch.io
 
-1. Download **`Stemquill-Setup-x.y.z.zip`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD).
+1. Download **`Stemquill-Setup-x.y.z.zip`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($11.99 USD; the free **Stemquill Demo** download is there too).
 2. Run it and click through the installer. No Python or admin rights needed. On the **Additional tasks** page, keep **Better chord detection** ticked for more accurate chords on guitar, keys and synth stems (it adds about 45 MB).
 3. Open **Stemquill** from the Start menu (or the desktop shortcut, if you ticked it).
 
@@ -84,7 +87,7 @@ To update, run the newer installer. To remove, use **Settings → Apps → Stemq
 
 ### Mac: app from itch.io
 
-1. Download the Mac zip from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD). Pick **Apple Silicon** if **Apple menu → About This Mac** says Apple M1 or newer, or **Intel** if it says Intel.
+1. Download the Mac zip from [itch.io](https://skynrlabs.itch.io/stemquill) ($11.99 USD; the free **Stemquill Demo** download is there too). Pick **Apple Silicon** if **Apple menu → About This Mac** says Apple M1 or newer, or **Intel** if it says Intel.
 2. Open the zip and drag **Stemquill** into your **Applications** folder. No Python needed.
 3. Open **Stemquill** from Applications.
 
@@ -92,7 +95,7 @@ The Mac app is signed and notarized by Apple, so it opens without a security war
 
 ### Linux: app from itch.io
 
-1. Download **`Stemquill-x.y.z-linux-x86_64.tar.gz`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($4.99 USD).
+1. Download **`Stemquill-x.y.z-linux-x86_64.tar.gz`** from [itch.io](https://skynrlabs.itch.io/stemquill) ($11.99 USD; the free **Stemquill Demo** download is there too).
 2. Unpack it and run **`./install.sh`** inside the folder. No sudo or Python needed: it installs into your home folder and adds **Stemquill** to your app menu, plus a `stemquill` command.
 3. Open **Stemquill** from your app menu, or run `stemquill`.
 
@@ -256,7 +259,7 @@ Stemquill runs entirely on your computer. Your audio is never uploaded anywhere.
 
 ## 💚 Support Stemquill
 
-Stemquill is made by one person. If it saves you time, you can buy it for $4.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) or on [itch.io](https://skynrlabs.itch.io/stemquill), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill), starring the repo, and sharing it with other producers all help too.
+Stemquill is made by one person. If it saves you time, you can buy it for $11.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill) or on [itch.io](https://skynrlabs.itch.io/stemquill), or sponsor Skynr Labs on [GitHub Sponsors](https://github.com/sponsors/skynrlabs). It keeps new features coming. A rating or review on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill), starring the repo, and sharing it with other producers all help too.
 
 ---
 
