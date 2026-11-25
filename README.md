@@ -4,7 +4,6 @@
 [![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-%244.99-0078D6?style=flat-square&logo=microsoft&logoColor=white)](https://apps.microsoft.com/search?query=Stemquill)
 [![itch.io](https://img.shields.io/badge/itch.io-%244.99-FA5C5C?style=flat-square&logo=itchdotio&logoColor=white)](https://skynrlabs.itch.io/stemquill)
 ![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-0078D6?style=flat-square)
-[![Discord](https://img.shields.io/badge/Discord-Skynr_Labs-5865F2?style=flat-square&logo=discord&logoColor=white)](https://discord.gg/25mPUWUAa)
 
 > Turn audio stems into MIDI for any DAW.  
 > Drums, bass, vocals, keys and synths, ready to play through your own instruments.
@@ -265,9 +264,9 @@ Stemquill is made by one person. If it saves you time, you can buy it for $4.99 
 
 Found a bug, a sound problem, or have an idea? [Open an issue](https://github.com/skynrlabs/Stemquill/issues/new/choose). This repo is where Stemquill is released and supported; the source code itself is private.
 
-## 💬 Community
+## 💬 Help
 
-Join the [Skynr Labs Discord](https://discord.gg/25mPUWUAa) to ask questions, report bugs, share what you've made and hear about new releases. It's one server for all the Skynr Labs apps: Hearthloop, WavMasta, Stemquill and SemaBuzz.
+Questions about using it? Email [support@skynrlabs.com](mailto:support@skynrlabs.com).
 
 ## 📄 License
 
