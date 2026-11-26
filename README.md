@@ -17,8 +17,6 @@ $11.99 on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquil
 
 🎧 **Try it free first.** The free demo is on [itch.io](https://skynrlabs.itch.io/stemquill) for Windows, Mac and Linux, and as the free trial on the [Microsoft Store](https://apps.microsoft.com/search?query=Stemquill). Converting, every setting and the whole-stem preview work in full. Saved MIDI stops at 1:00, it converts up to 3 stems at a time, and the all-stems file and the command line are in the full version.
 
-🎉 **Launch offer:** 25% off on itch.io until February 11, 2027.
-
 ![Stemquill screenshot](docs/screenshot.png)
 
 ---
